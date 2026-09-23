@@ -55,6 +55,20 @@ import 'package:uuid/uuid.dart';
 ///
 /// The reclaim is a compare-and-swap against the exact row that was read, so
 /// two processes racing to take the same dead lease cannot both win.
+///
+/// ## A replaced UI isolate, in a process that is still alive
+///
+/// Back destroys the Activity and its FlutterEngine, but Android keeps the
+/// process. Reopening starts a new UI isolate under the SAME pid. The old
+/// isolate's release is async and never ran, and "same pid, so alive" made
+/// the new isolate wait out the full expiry.
+///
+/// So the UI isolate, the one that runs `main()` and calls [markUiIsolate],
+/// stamps its rows with a token of its own. A process hosts one UI isolate at
+/// a time. A same-pid row stamped by a DIFFERENT UI token therefore belongs to
+/// an isolate that has been replaced, and the new UI isolate reclaims it. Rows
+/// with no stamp (WorkManager's background isolate) and rows stamped by this
+/// very isolate are judged exactly as before.
 class DeviceLease {
   DeviceLease(
     this.store, {
@@ -69,6 +83,12 @@ class DeviceLease {
   /// This process. Recorded with the lease so a later owner can ask whether the
   /// holder still exists rather than waiting out [expiry].
   static final int _pid = pid;
+
+  /// This isolate's stamp when it is the UI isolate; null in any other.
+  static String? _uiIsolate;
+
+  /// Declares this isolate the UI one. Called once, from `main()`.
+  static void markUiIsolate() => _uiIsolate ??= const Uuid().v4();
   Timer? _renewal;
   static const expiry = Duration(minutes: 30);
   static const heartbeat = Duration(minutes: 1);
@@ -108,7 +128,8 @@ class DeviceLease {
   /// stops at the first non-digit, and every existing row without a pid parses
   /// exactly as it did before.
   String _claim() =>
-      '$_owner:${now().add(expiry).millisecondsSinceEpoch}:$_pid';
+      '$_owner:${now().add(expiry).millisecondsSinceEpoch}:$_pid'
+      '${_uiIsolate == null ? '' : ':$_uiIsolate'}';
 
   /// Takes the lease when the recorded process no longer exists.
   ///
@@ -133,13 +154,22 @@ class DeviceLease {
     // docstring. Anything else is judged on whether its process still exists.
     final owner = parts.length < 3 ? null : int.tryParse(parts[2]);
     final legacy = owner == null;
-    if (!legacy && (owner == _pid || _isRunning(owner))) {
+    final holderUi = parts.length < 4 ? null : parts[3];
+    // See the class docstring. Only a UI isolate may conclude this.
+    final replacedUi =
+        owner == _pid &&
+        _uiIsolate != null &&
+        holderUi != null &&
+        holderUi != _uiIsolate;
+    if (!legacy && !replacedUi && (owner == _pid || _isRunning(owner))) {
       return 0;
     }
     AppLog.info(
       'sync',
       legacy
           ? 'reclaimed $resource from a pre-upgrade owner'
+          : replacedUi
+          ? 'reclaimed $resource from a UI isolate that was replaced'
           : 'reclaimed $resource from dead process $owner',
     );
     return store.customUpdate(

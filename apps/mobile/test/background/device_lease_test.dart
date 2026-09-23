@@ -80,40 +80,69 @@ void main() {
       );
     });
 
-    test('a lease held by a LIVE process is respected until it expires', () async {
-      final store = await freshStore();
-      var now = DateTime.utc(2026, 1, 1);
-      final until = now.add(DeviceLease.expiry).millisecondsSinceEpoch;
-      // This test's own process, which is emphatically running.
-      await plant(store, '00000000-0000-0000-0000-000000000000:$until:$pid');
+    test(
+      'a lease held by a LIVE process is respected until it expires',
+      () async {
+        final store = await freshStore();
+        var now = DateTime.utc(2026, 1, 1);
+        final until = now.add(DeviceLease.expiry).millisecondsSinceEpoch;
+        // This test's own process, which is emphatically running.
+        await plant(store, '00000000-0000-0000-0000-000000000000:$until:$pid');
 
-      final lease = DeviceLease(store, now: () => now);
-      addTearDown(lease.release);
-      expect(
-        await lease.acquire(),
-        isFalse,
-        reason: 'a busy owner that missed a heartbeat must not be robbed',
-      );
-      now = now.add(DeviceLease.expiry + const Duration(seconds: 1));
-      expect(await lease.acquire(), isTrue, reason: 'the timeout still ends it');
-    });
+        final lease = DeviceLease(store, now: () => now);
+        addTearDown(lease.release);
+        expect(
+          await lease.acquire(),
+          isFalse,
+          reason: 'a busy owner that missed a heartbeat must not be robbed',
+        );
+        now = now.add(DeviceLease.expiry + const Duration(seconds: 1));
+        expect(
+          await lease.acquire(),
+          isTrue,
+          reason: 'the timeout still ends it',
+        );
+      },
+    );
 
-    test('a row written before pids were recorded is reclaimed, not waited out', () async {
+    test('a UI-isolate row in this live process is respected by an isolate that '
+        'is not the UI one', () async {
+      // This file never calls `DeviceLease.markUiIsolate()`, so it runs as a
+      // background isolate would. Such an isolate cannot tell whether the UI
+      // isolate that wrote the row is still running, so it waits (only a
+      // NEW UI isolate may reclaim; see device_lease_ui_isolate_test.dart).
       final store = await freshStore();
       final now = DateTime.utc(2026, 1, 1);
       final until = now.add(DeviceLease.expiry).millisecondsSinceEpoch;
-      // The old two-field shape, unexpired. Nothing running can have written
-      // it: two builds of one package cannot run together, and installing the
-      // build that reads this killed the one that wrote it.
-      await plant(store, '00000000-0000-0000-0000-000000000000:$until');
+      await plant(
+        store,
+        '00000000-0000-0000-0000-000000000000:$until:$pid:some-ui-isolate',
+      );
 
       final lease = DeviceLease(store, now: () => now);
       addTearDown(lease.release);
-      expect(
-        await lease.acquire(),
-        isTrue,
-        reason: 'the writer of a pid-less row cannot still be alive',
-      );
+      expect(await lease.acquire(), isFalse);
     });
+
+    test(
+      'a row written before pids were recorded is reclaimed, not waited out',
+      () async {
+        final store = await freshStore();
+        final now = DateTime.utc(2026, 1, 1);
+        final until = now.add(DeviceLease.expiry).millisecondsSinceEpoch;
+        // The old two-field shape, unexpired. Nothing running can have written
+        // it: two builds of one package cannot run together, and installing the
+        // build that reads this killed the one that wrote it.
+        await plant(store, '00000000-0000-0000-0000-000000000000:$until');
+
+        final lease = DeviceLease(store, now: () => now);
+        addTearDown(lease.release);
+        expect(
+          await lease.acquire(),
+          isTrue,
+          reason: 'the writer of a pid-less row cannot still be alive',
+        );
+      },
+    );
   });
 }

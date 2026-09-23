@@ -155,6 +155,10 @@ class ForegroundLink {
     try {
       if (lease != null && !await lease!.acquire()) {
         AppLog.info('sync', 'background sync owns the strap; retrying shortly');
+        // Say when the strap last synced. Silence left the controller's initial
+        // `Disconnected()`, which has no date, and the screen read "Nothing has
+        // been read from your strap yet" seconds after a sync.
+        onState(Disconnected(lastCompleteSync: await lastCompleteSync()));
         _scheduleRetry();
         return;
       }

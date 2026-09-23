@@ -137,7 +137,6 @@ dependencies:
   shared_preferences: ^2.5.5
 
   crypto: any
-  refresh_rate: ^1.0.2
   gotrue: ^2.27.2
 dev_dependencies:
   flutter_test:
@@ -158,6 +157,8 @@ dev_dependencies:
   # ── lints ────────────────────────────────────────────────────────────────
   flutter_lints: ^6.0.0
   shared_preferences_platform_interface: ^2.4.2
+  # Lets test/ble/strap_scan_test.dart put a fake radio under flutter_blue_plus.
+  flutter_blue_plus_platform_interface: ^9.0.3
   http: ^1.6.0
   flutter_launcher_icons: ^0.14.4
   # Neither custom_lint nor riverpod_lint is here, and that is a reported

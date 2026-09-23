@@ -16,6 +16,7 @@ library;
 import 'dart:async';
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:healthee/ble/strap_scanner.dart';
 import 'package:healthee/core/logging.dart';
@@ -52,7 +53,7 @@ class BluetoothStrapScanner implements StrapScanner {
       );
     }
 
-    return _scanFor(mac, window);
+    return scanForStrap(mac, window);
   }
 
   /// Asks Android whether any app on this phone holds a live GATT connection to
@@ -112,7 +113,7 @@ class BluetoothStrapScanner implements StrapScanner {
     // Android 11 and below have no BLUETOOTH_SCAN and gate BLE scanning behind
     // ACCESS_FINE_LOCATION instead. permission_handler reports the unsupported
     // permission as granted there, so this check passes and `startScan` is what
-    // fails — which [_scanFor] catches and reports as a permission problem
+    // fails — which [scanForStrap] catches and reports as a permission problem
     // rather than as a strap that is not there. Asking for location up front on
     // every Android instead would break the promise for the majority to serve
     // the minority.
@@ -165,51 +166,63 @@ class BluetoothStrapScanner implements StrapScanner {
         throw const PairingException(BluetoothOff());
     }
   }
+}
 
-  Future<ScanOutcome> _scanFor(String mac, Duration window) async {
-    final wanted = mac.toUpperCase();
-    final sighting = Completer<StrapSighted>();
+/// Scans for [mac] for up to [window] and reports the first sighting.
+///
+/// Top-level so a test can drive it through a fake radio:
+/// [BluetoothStrapScanner.confirmInRange] returns before scanning on the macOS
+/// test host.
+@visibleForTesting
+Future<ScanOutcome> scanForStrap(String mac, Duration window) async {
+  final wanted = mac.toUpperCase();
+  final sighting = Completer<StrapSighted>();
 
-    final subscription = FlutterBluePlus.scanResults.listen((results) {
-      for (final result in results) {
-        if (result.device.remoteId.str.toUpperCase() == wanted &&
-            !sighting.isCompleted) {
-          sighting.complete(
-            StrapSighted(
-              rssi: result.rssi,
-              advertisedName: result.advertisementData.advName,
-            ),
-          );
-        }
+  // `onScanResults`, never `scanResults`: the latter re-emits the PREVIOUS
+  // scan's results to a new listener. From the second sync on, that stale
+  // sighting completed this scan about 5 ms after `startScan`, which answered
+  // "in range" from old evidence and sent `stopScan` before Android had
+  // registered the scanner. Android drops such a stop (`stopLeScan(): Error
+  // state, mScannerId=0`), and the LOW_LATENCY scan then ran for as long as the
+  // process lived (test/ble/strap_scan_test.dart).
+  final subscription = FlutterBluePlus.onScanResults.listen((results) {
+    for (final result in results) {
+      if (result.device.remoteId.str.toUpperCase() == wanted &&
+          !sighting.isCompleted) {
+        sighting.complete(
+          StrapSighted(
+            rssi: result.rssi,
+            advertisedName: result.advertisementData.advName,
+          ),
+        );
       }
-    });
-
-    try {
-      await FlutterBluePlus.startScan(timeout: window);
-      return await sighting.future.timeout(window + const Duration(seconds: 1));
-    } on TimeoutException {
-      AppLog.info(
-        'pairing',
-        'strap did not advertise within ${window.inSeconds}s',
-      );
-      throw PairingException(StrapNotInRange(seconds: window.inSeconds));
-    } on FlutterBluePlusException catch (error) {
-      // A scan that will not start is a permission problem far more often than
-      // anything else — on Android 11 and below, the ACCESS_FINE_LOCATION case
-      // described in [_requirePermission] lands exactly here. Reporting it as
-      // "not in range" would blame the strap for something we did not ask for.
-      AppLog.warning(
-        'pairing',
-        'scan refused by the platform (${error.function})',
-      );
-      throw const PairingException(
-        BluetoothPermissionDenied(permanently: false),
-      );
-    } finally {
-      // Both run whichever way this ends: a scan left running drains the battery
-      // of a phone whose owner has moved on to another screen.
-      await subscription.cancel();
-      await FlutterBluePlus.stopScan();
     }
+  });
+
+  try {
+    await FlutterBluePlus.startScan(timeout: window);
+    return await sighting.future.timeout(window + const Duration(seconds: 1));
+  } on TimeoutException {
+    AppLog.info(
+      'pairing',
+      'strap did not advertise within ${window.inSeconds}s',
+    );
+    throw PairingException(StrapNotInRange(seconds: window.inSeconds));
+  } on FlutterBluePlusException catch (error) {
+    // A scan that will not start is a permission problem far more often than
+    // anything else — on Android 11 and below, the ACCESS_FINE_LOCATION case
+    // described in the scanner's permission check lands exactly here.
+    // Reporting it as "not in range" would blame the strap for something we
+    // did not ask for.
+    AppLog.warning(
+      'pairing',
+      'scan refused by the platform (${error.function})',
+    );
+    throw const PairingException(BluetoothPermissionDenied(permanently: false));
+  } finally {
+    // Both run whichever way this ends: a scan left running drains the battery
+    // of a phone whose owner has moved on to another screen.
+    await subscription.cancel();
+    await FlutterBluePlus.stopScan();
   }
 }

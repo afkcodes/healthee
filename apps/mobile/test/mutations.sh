@@ -3519,6 +3519,34 @@ mutate 'a program quotes its first rung as the commitment' \
   "        '\${program.rungs.length} rungs, one at a time'" \
   "        '\${program.rungs.first.target.round()} steps'"
 
+# The preflight scan answered from the PREVIOUS scan's results, stopped the
+# new scan before Android registered it, and left a LOW_LATENCY scan running.
+mutate 'the strap scan listens to the replaying scanResults stream again' \
+  test/ble/strap_scan_test.dart lib/ble/bluetooth_strap_scanner.dart \
+  '  final subscription = FlutterBluePlus.onScanResults.listen((results) {' \
+  '  final subscription = FlutterBluePlus.scanResults.listen((results) {'
+# Back destroys the engine but not the process; the next UI isolate must
+# reclaim a lease the replaced one never released, and must not rob anyone else.
+mutate 'a replaced UI isolate keeps the strap until expiry again' \
+  test/background/device_lease_ui_isolate_test.dart lib/data/sync/device_lease.dart \
+  '    if (!legacy && !replacedUi && (owner == _pid || _isRunning(owner))) {' \
+  '    if (!legacy && (owner == _pid || _isRunning(owner))) {'
+mutate 'a UI isolate robs another lease inside itself' \
+  test/background/device_lease_ui_isolate_test.dart lib/data/sync/device_lease.dart \
+  '        holderUi != _uiIsolate;' \
+  '        true;'
+mutate 'a background isolate reclaims a live UI isolate lease' \
+  test/background/device_lease_test.dart lib/data/sync/device_lease.dart \
+  '        _uiIsolate != null &&' \
+  ''
+mutate 'the UI isolate stops stamping its lease rows' \
+  test/background/device_lease_ui_isolate_test.dart lib/data/sync/device_lease.dart \
+  "      '\${_uiIsolate == null ? '' : ':\$_uiIsolate'}';" \
+  "      '';"
+mutate 'a link refused the lease goes silent again' \
+  test/sync/foreground_link_lease_test.dart lib/data/sync/foreground_link.dart \
+  '        onState(Disconnected(lastCompleteSync: await lastCompleteSync()));' \
+  ''
 
 echo
 echo "caught $PASS, survived $FAIL"
