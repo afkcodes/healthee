@@ -4,7 +4,7 @@ description: "Healthee — an honest, self-hosted AI health companion."
 publish_to: "none"
 
 # The build number is set by CI at release time (--build-number), not bumped by hand.
-version: 1.0.7+9
+version: 1.0.8+10
 
 environment:
   sdk: ^3.12.0

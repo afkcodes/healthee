@@ -63,6 +63,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:healthee/core/routes.dart';
+import 'package:healthee/core/theme/dimensions.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/data/coach/coach_client.dart';
@@ -73,6 +74,7 @@ import 'package:healthee/features/coach/coach_history_provider.dart';
 import 'package:healthee/features/coach/v02/coach_composer.dart';
 import 'package:healthee/features/coach/v02/coach_page.dart';
 import 'package:healthee/shared/states/async_view.dart';
+import 'package:healthee/shared/v02/buttons.dart';
 import 'package:healthee/shared/v02/screen_head.dart';
 import 'package:solar_icons/solar_icons.dart';
 
@@ -220,19 +222,69 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
         _ => const SizedBox.shrink(),
       },
       children: <Widget>[
-        AsyncView<Entitlement>(
-          value: entitlement,
-          loadingLabel: 'Checking what your account includes',
-          errorMessage: "Couldn't read what your account includes",
-          onRetry: () => ref.invalidate(coachEntitlementProvider),
-          builder: (context, resolved) => CoachBody(
-            entitlement: resolved,
+        // The meter is re-read after EVERY answer (`coach_controller.ask`'s
+        // finally), and this column is the whole thread. Rendering the thread
+        // through the meter's own loading/error states meant one failed
+        // re-read on a phone network replaced a just-delivered answer with
+        // "Couldn't read what your account includes" — the answer "went off".
+        // Once a balance has ever been read, the thread stays on the last known
+        // balance and a failed refresh is a one-line notice with a retry.
+        if (entitlement.hasValue) ...<Widget>[
+          if (entitlement.hasError)
+            _BalanceRefreshFailed(
+              onRetry: () => ref.invalidate(coachEntitlementProvider),
+            ),
+          CoachBody(
+            entitlement: entitlement.value!,
             topic: topic,
             now: now,
             onGrow: _stickToEnd,
           ),
-        ),
+        ] else
+          AsyncView<Entitlement>(
+            value: entitlement,
+            loadingLabel: 'Checking what your account includes',
+            errorMessage: "Couldn't read what your account includes",
+            onRetry: () => ref.invalidate(coachEntitlementProvider),
+            builder: (context, resolved) => CoachBody(
+              entitlement: resolved,
+              topic: topic,
+              now: now,
+              onGrow: _stickToEnd,
+            ),
+          ),
       ],
+    );
+  }
+}
+
+/// What a failed balance re-read says when there is already a thread to keep.
+const String kCoachBalanceRefreshFailed =
+    "Couldn't refresh your question balance. The thread and the last known "
+    'balance are shown as they were.';
+
+class _BalanceRefreshFailed extends StatelessWidget {
+  const _BalanceRefreshFailed({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Insets.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              kCoachBalanceRefreshFailed,
+              style: TypeScale.formNote.copyWith(color: context.colors.ink2),
+            ),
+          ),
+          const SizedBox(width: Insets.md),
+          HLinkButton(label: 'Retry', onPressed: onRetry),
+        ],
+      ),
     );
   }
 }
