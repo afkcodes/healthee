@@ -117,7 +117,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     get_settings.cache_clear()
 
 
-def _json(client: TestClient, path: str, sub: UUID, **params: object) -> dict:
+def _json(client: TestClient, path: str, sub: UUID, **params: str | int) -> dict:
     resp = client.get(path, params=params or None, headers=_auth(sub))
     assert resp.status_code == 200, f"{path} as {sub}: {resp.status_code} {resp.text[:200]}"
     return resp.json()

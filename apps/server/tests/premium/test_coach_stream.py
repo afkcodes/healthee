@@ -21,6 +21,7 @@ import json
 import logging
 
 import httpx
+import httpx2
 import openai
 import pytest
 from fastapi.testclient import TestClient
@@ -78,7 +79,7 @@ def _parse_sse(text: str) -> list[tuple[str, dict]]:
     return events
 
 
-def _stream(bed: TestClient, body: dict) -> httpx.Response:
+def _stream(bed: TestClient, body: dict) -> httpx2.Response:
     return bed.post(_STREAM_PATH, json=body, headers=AUTH)
 
 
