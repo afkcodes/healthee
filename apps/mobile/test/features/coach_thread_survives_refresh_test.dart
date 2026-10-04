@@ -16,7 +16,7 @@ import '_coach_overrides.dart';
 Entitlement _premium() => Entitlement.fromJson(const <String, Object?>{
   'premium': true,
   'status': 'active',
-  'locked': const <String>[],
+  'locked': <String>[],
   'included': <Object?>[
     <String, Object?>{
       'feature': 'coach',
