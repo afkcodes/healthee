@@ -20,6 +20,7 @@ dependencies = [
     # has no torch anywhere; the eval group's sentence-transformers pull above is the one
     # torch dependency in this project, and it must stay opt-in only).
     "fastembed>=0.8.0",
+    "mcp>=2.3.0",
 ]
 
 [build-system]

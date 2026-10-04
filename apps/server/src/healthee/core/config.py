@@ -147,6 +147,7 @@ class Settings(BaseSettings):
     # own and still want a bound on spend.
     # The DEFAULT only: `subscription.coach_questions` (0022) overrides it per owner.
     premium_coach_questions: int = 20
+    mcp_enabled: bool = True  # read-only /mcp for AI tools (docs/MCP.md); false = plain 404
     # Where a locked card sends someone. Carried in the 402 body and by
     # `/api/entitlement` so the upgrade destination is deployment config rather than a
     # URL compiled into the app — a self-hoster has no checkout page to point at, and

@@ -45,6 +45,7 @@ from healthee.core.dob import DobError
 from healthee.core.entitlement import warn_if_self_host_unlocked
 from healthee.core.logging import configure_logging, get_logger, silence_access_log_for
 from healthee.core.map_tiles import TILE_PATH_PREFIX
+from healthee.mcp.server import mcp_lifespan, mount_mcp
 
 log = get_logger(__name__)
 
@@ -81,7 +82,7 @@ def _measurement_error_is_a_client_error(_request: Request, exc: Exception) -> J
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Startup/shutdown: configure logging on the way up, close the pool on the
     way down. The pool itself opens lazily on first query."""
     configure_logging()
@@ -92,7 +93,10 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     silence_access_log_for(TILE_PATH_PREFIX)
     log.info("healthee server starting")
     warn_if_self_host_unlocked()
-    yield
+    # The MCP session manager must run for the app's life (a mounted SDK app has no
+    # lifespan of its own); a no-op when `mcp_enabled` is false.
+    async with mcp_lifespan(app):
+        yield
     close_pool()
     log.info("healthee server stopped")
 
@@ -172,6 +176,9 @@ def create_app() -> FastAPI:
     # bytes rather than JSON, and the only one whose request PATH is personal —
     # `api/routers/map_tiles.py` says what follows from that.
     app.include_router(map_tiles.router)
+    # The MCP endpoint, last: its own bearer check (device token) runs inside the mount,
+    # and it is absent entirely when `mcp_enabled` is false. See `healthee.mcp.server`.
+    mount_mcp(app)
     return app
 
 
