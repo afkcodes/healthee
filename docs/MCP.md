@@ -51,6 +51,12 @@ curl -sX POST https://<host>/api/device \
 The response holds `device_token`. It is returned once and cannot be recovered; copy
 it now. An account can hold ten live tokens.
 
+Self-hosting and no access token to hand? Mint on the box, inside the container, into
+a file only you can read — the README's section 8 has the exact command. It looks the
+account up by email, mints with the label you give, and writes the raw token to
+stdout and the row id to stderr, so a `> file` redirection keeps the value off the
+terminal and out of the shell history.
+
 ## 2. Connect a tool
 
 Claude Code:

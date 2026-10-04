@@ -734,9 +734,65 @@ Then bump `apps/mobile/pubspec.yaml` and tag. **Both halves of the version matte
 
 
 ### 8. Connecting an AI tool (MCP)
-The server also speaks the Model Context Protocol at `/mcp`: read-only, one device
-token per tool, revocable. Setup for Claude Code and Codex, the tool list and the
-privacy statement are in [docs/MCP.md](docs/MCP.md). `MCP_ENABLED=false` turns it off.
+
+The server speaks the Model Context Protocol at `/mcp`: read-only, authenticated by a
+device token (the same kind your phone holds — hashed, labelled, revocable), one token
+per tool. Every metric in the catalogue, the daily reads and the graded research
+corpus are tools; nothing can be written through it.
+
+**Mint a token.** Two ways, pick one:
+
+- From a signed-in session (any client that has your Supabase access token):
+
+  ```bash
+  curl -sX POST https://<host>/api/device \
+    -H "Authorization: Bearer <sign-in access token>" \
+    -H "Content-Type: application/json" -d '{"label": "claude-code"}'
+  ```
+
+  The reply's `device_token` is shown once and cannot be recovered.
+
+- On the box, inside the running container, written straight to a file only you can
+  read — the self-hoster's path, no access token needed:
+
+  ```bash
+  umask 077
+  docker exec healthee-api python -c "
+  import sys
+  from healthee.core.db import transaction
+  from healthee.core.device_token import mint_device_token
+  with transaction() as cur:
+      cur.execute('SELECT id FROM app_user WHERE email = %s', (sys.argv[1],))
+      (uid,) = cur.fetchone()
+  raw, tid = mint_device_token(uid, 'claude-code')
+  sys.stdout.write(raw)
+  print('token row', tid, file=sys.stderr)
+  " you@example.com > ~/healthee-mcp-token.txt
+  ```
+
+  The token lands in `~/healthee-mcp-token.txt`; the row id on stderr is what you
+  revoke by. An account holds at most ten live tokens.
+
+**Connect Claude Code** (`--scope user` makes it available in every project):
+
+```bash
+claude mcp add --scope user --transport http healthee https://<host>/mcp \
+  --header "Authorization: Bearer $(cat ~/healthee-mcp-token.txt)"
+claude mcp list        # healthee: … ✔ Connected
+```
+
+**Connect Codex**, in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.healthee]
+url = "https://<host>/mcp"
+http_headers = { Authorization = "Bearer <token>" }
+```
+
+**Revoke** with `DELETE /api/device/<token row id>` (your sign-in token authorises it).
+`MCP_ENABLED=false` removes the endpoint altogether.
+The full tool list, the Codex variants and the privacy statement are in
+[docs/MCP.md](docs/MCP.md).
 
 ## Development
 
