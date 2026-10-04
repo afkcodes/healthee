@@ -50,6 +50,7 @@ green rings.
 - [Self-hosting guide](#self-hosting-guide)
   - [Building the app](#6-building-the-app)
   - [Cutting a release](#7-cutting-a-release)
+  - [Connecting an AI tool (MCP)](#8-connecting-an-ai-tool-mcp)
 - [Development](#development)
 - [Supporting this](#supporting-this)
 - [Roadmap](#roadmap)
@@ -468,7 +469,7 @@ signups. New accounts are otherwise gated by `SIGNUP_ALLOWLIST` (see
 
 **Identity** (Supabase JWT only — the shared token is rejected here)
 - `GET  /api/me` — the authenticated owner
-- `POST /api/device` — mint a device token for background ingest (returned once; stored hash-only)
+- `POST /api/device` — mint a device token for background ingest or an AI tool at `/mcp` (returned once; stored hash-only)
 
 **Today & metrics**
 - `GET /api/today` — the home screen: recovery, VO₂max, cardio load, sleep, MVPA,
@@ -731,6 +732,11 @@ Then bump `apps/mobile/pubspec.yaml` and tag. **Both halves of the version matte
 > strap first: the server has your history and the strap keys come back from Zepp on
 > login, but anything unsent dies with the local store.
 
+
+### 8. Connecting an AI tool (MCP)
+The server also speaks the Model Context Protocol at `/mcp`: read-only, one device
+token per tool, revocable. Setup for Claude Code and Codex, the tool list and the
+privacy statement are in [docs/MCP.md](docs/MCP.md). `MCP_ENABLED=false` turns it off.
 
 ## Development
 

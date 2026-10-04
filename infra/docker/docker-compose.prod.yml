@@ -74,6 +74,8 @@ services:
       # must reach the container or the claim procedure cannot be run.
       SIGNUPS_OPEN: ${SIGNUPS_OPEN:-false}
       SIGNUP_ALLOWLIST: ${SIGNUP_ALLOWLIST:-}
+      # MCP endpoint (docs/MCP.md): read-only, device-token authenticated.
+      MCP_ENABLED: ${MCP_ENABLED:-true}
       # Entitlement (§12). Premium is the `subscription` table; this flag is the
       # self-hosted deployment-wide override and must be false on the hosted box.
       SELF_HOST_UNLOCKED: ${SELF_HOST_UNLOCKED:-false}
