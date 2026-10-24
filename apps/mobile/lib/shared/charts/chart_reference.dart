@@ -316,7 +316,7 @@ class ChartReferenceCaption extends StatelessWidget {
                         reference.label.toUpperCase(),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: HType.label(colors.ink3, tracking: 0.04),
+                        style: HType.label(colors.ink2),
                       ),
                     ),
                   ],

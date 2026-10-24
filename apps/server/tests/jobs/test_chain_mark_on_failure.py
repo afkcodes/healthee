@@ -33,7 +33,7 @@ _OWNER = UUID("55555555-5555-5555-5555-555555555555")
 _TZ = "Asia/Kolkata"
 
 # Every step, so a seventh added to the chain has to be added here too.
-_STEPS: tuple[str, ...] = ("illness", "challenges", "correlate", "recs", "warm", "briefing")
+_STEPS: tuple[str, ...] = ("illness", "challenges", "correlate", "coach_today", "warm", "briefing")
 
 
 @pytest.fixture

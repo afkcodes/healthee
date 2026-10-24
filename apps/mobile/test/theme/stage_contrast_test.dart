@@ -56,7 +56,8 @@ double _chroma(Color c) {
   final r = lin(c.r);
   final g = lin(c.g);
   final b = lin(c.b);
-  double cbrt(double v) => math.pow(v.abs(), 1 / 3).toDouble() * (v < 0 ? -1 : 1);
+  double cbrt(double v) =>
+      math.pow(v.abs(), 1 / 3).toDouble() * (v < 0 ? -1 : 1);
   final l = cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
   final m = cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
   final s = cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
@@ -113,16 +114,16 @@ void main() {
   // to `V02StagePrototype` is caught instead of compared against itself.
   const shipped = <String, Map<String, Color>>{
     'light': <String, Color>{
-      'deep': Color(0xFF5E38C1),
-      'light': Color(0xFF89A9F1),
-      'rem': Color(0xFFC96BCC),
-      'awake': Color(0xFFEDA253),
+      'deep': Color(0xFF3634A3),
+      'light': Color(0xFF007AFF),
+      'rem': Color(0xFF32ADE6),
+      'awake': Color(0xFFE5603F),
     },
     'dark': <String, Color>{
-      'deep': Color(0xFF7859E3),
-      'light': Color(0xFF9EBDFF),
-      'rem': Color(0xFFDA7BDD),
-      'awake': Color(0xFFFFBD76),
+      'deep': Color(0xFF5E5CE6),
+      'light': Color(0xFF0A84FF),
+      'rem': Color(0xFF64D2FF),
+      'awake': Color(0xFFFF7A59),
     },
   };
 
@@ -132,7 +133,7 @@ void main() {
     final names = stages.keys.toList();
 
     group('${entry.key} — the shipped stage set', () {
-      test('IS v02’S, BY HEX — `richer.css`, digit for digit', () {
+      test('IS THE KIT’S, BY HEX — colour kit v3, digit for digit', () {
         // The one gate this file still holds, and the reason the values are
         // written out above rather than read from `V02StagePrototype`: a
         // constant compared against itself agrees with every typo.
@@ -143,7 +144,7 @@ void main() {
             stage.value,
             reason:
                 '${stage.key} is ${_hex(stages[stage.key]!)}, '
-                '`richer.css` says ${_hex(stage.value)}',
+                'the colour kit says ${_hex(stage.value)}',
           );
         }
       });
@@ -164,8 +165,7 @@ void main() {
           }
         }
         _record(
-          '  worst pair ${_worstPair(stages.values.toList())
-              .toStringAsFixed(2)} '
+          '  worst pair ${_worstPair(stages.values.toList()).toStringAsFixed(2)} '
           '(the superseded ramp reached $kStagePairFloor)',
         );
         // Two stages painted the same colour is not a palette question — it is
@@ -174,8 +174,10 @@ void main() {
       });
 
       test('RECORDED — every stage on its card and on its page', () {
-        _record('${entry.key}: stage on surface ${_hex(colors.surface)} '
-            'and page ${_hex(colors.bg)}');
+        _record(
+          '${entry.key}: stage on surface ${_hex(colors.surface)} '
+          'and page ${_hex(colors.bg)}',
+        );
         for (final stage in stages.entries) {
           final card = _contrast(stage.value, colors.surface);
           final page = _contrast(stage.value, colors.bg);
@@ -202,7 +204,8 @@ void main() {
         expect(
           _isDescending(stages.values.toList()),
           isFalse,
-          reason: 'v02 orders by hue, not by depth — if this passes, the '
+          reason:
+              'v02 orders by hue, not by depth — if this passes, the '
               'shipped set is no longer v02’s',
         );
         expect(
@@ -274,9 +277,11 @@ void main() {
       DarkStagePalette.rem,
       DarkStagePalette.awake,
     ];
-    _record('superseded ramp: worst pair '
-        'light ${_worstPair(light).toStringAsFixed(2)}  '
-        'dark ${_worstPair(dark).toStringAsFixed(2)}');
+    _record(
+      'superseded ramp: worst pair '
+      'light ${_worstPair(light).toStringAsFixed(2)}  '
+      'dark ${_worstPair(dark).toStringAsFixed(2)}',
+    );
     expect(_worstPair(light), greaterThanOrEqualTo(kStagePairFloor));
     expect(_worstPair(dark), greaterThanOrEqualTo(kStagePairFloor));
     for (final stage in light) {

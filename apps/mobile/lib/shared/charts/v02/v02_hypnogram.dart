@@ -1,6 +1,6 @@
-/// [V02Hypnogram] — the night's stage timeline, drawn as one stepped ribbon.
+/// [V02Hypnogram] — the night's stage timeline, drawn as one continuous band.
 ///
-/// The mark itself, and the pills-and-connector it replaced, are documented on
+/// The mark itself, and the two shapes it replaced, are documented on
 /// `HypnogramPainter`. This half is the chart's contract: the window is the
 /// night's own, the hues are never handed in, and the axis is built here rather
 /// than in the painter because it is the one part that needs a calendar.

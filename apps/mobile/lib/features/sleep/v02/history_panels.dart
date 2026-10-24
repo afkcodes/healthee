@@ -43,6 +43,7 @@ import 'package:healthee/features/sleep/sleep_format.dart';
 import 'package:healthee/shared/charts/h_stacked_sleep.dart';
 import 'package:healthee/shared/charts/v02/chart_curve.dart';
 import 'package:healthee/shared/charts/v02/v02_line_chart.dart';
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/instrument/h_tap.dart';
 import 'package:healthee/shared/metric_info/metric_detail.dart';
 import 'package:healthee/shared/reveal_once.dart';
@@ -81,12 +82,14 @@ class SleepDurationPanel extends StatelessWidget {
   final VoidCallback? onDetails;
 
   /// Oldest first, with an unmeasured night kept as a gap.
-  List<double?> get series =>
-      <double?>[for (final night in nights.reversed) night.tstMin.valueOrNull];
+  List<double?> get series => <double?>[
+    for (final night in nights.reversed) night.tstMin.valueOrNull,
+  ];
 
   /// One short date per night, oldest first.
-  List<String> get dates =>
-      <String>[for (final night in nights.reversed) shortDate(night.date)];
+  List<String> get dates => <String>[
+    for (final night in nights.reversed) shortDate(night.date),
+  ];
 
   /// How many of those nights carry a total.
   int get measured => series.where((value) => value != null).length;
@@ -182,7 +185,9 @@ class NightStagesPanel extends StatelessWidget {
         icon: SolarIconsOutline.moonSleep,
         infoKey: 'sleep',
         detail: MetricDetail(
-          method: <String>['Each stage keeps the same colour throughout the app.'],
+          method: <String>[
+            'Each stage keeps the same colour throughout the app.',
+          ],
         ),
       ),
       child: Column(
@@ -250,7 +255,7 @@ class NightRow extends StatelessWidget {
   /// `6h 20m`, or an em dash when nothing was measured.
   static String duration(SleepNight night) {
     final minutes = night.tstMin.valueOrNull;
-    return minutes == null ? '—' : hoursMinutes(minutes);
+    return minutes == null ? '—' : durationText(minutes);
   }
 
   @override
@@ -290,7 +295,11 @@ class NightRow extends StatelessWidget {
           ),
           if (onOpen != null) ...<Widget>[
             const SizedBox(width: gap),
-            Icon(SolarIconsOutline.altArrowRight, size: chevronSize, color: colors.ink3),
+            Icon(
+              SolarIconsOutline.altArrowRight,
+              size: chevronSize,
+              color: colors.ink2,
+            ),
           ],
         ],
       ),

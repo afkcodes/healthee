@@ -59,7 +59,11 @@ void main() {
       for (final (name, hues) in [('light', lightHues), ('dark', darkHues)]) {
         for (final tone in Tone.values) {
           expect(tone.family(hues), isNotNull, reason: '$name ${tone.name}');
-          expect(tone.familySoft(hues), isNotNull, reason: '$name ${tone.name}');
+          expect(
+            tone.familySoft(hues),
+            isNotNull,
+            reason: '$name ${tone.name}',
+          );
           expect(
             tone.family(hues),
             isNot(tone.familySoft(hues)),
@@ -69,14 +73,12 @@ void main() {
       }
     });
 
-    test('THE THREE ALIASES RESOLVE TO THEIR FAMILY, and nothing else does', () {
-      // richer.css gives three families a second tone name. Any OTHER pair
-      // sharing a colour would mean two categories the owner cannot tell apart.
-      const aliases = <Tone, Tone>{
-        Tone.recovery: Tone.fitness,
-        Tone.load: Tone.heart,
-        Tone.activity: Tone.movement,
-      };
+    test('THE ONE ALIAS RESOLVES TO ITS FAMILY, and nothing else does', () {
+      // Activity is the only tone with a second name. Strain was split from
+      // heart and recovery lost its fitness hue (it is neutral ink2), so any
+      // OTHER pair sharing a colour would mean two categories the owner cannot
+      // tell apart.
+      const aliases = <Tone, Tone>{Tone.activity: Tone.movement};
       for (final hues in [lightHues, darkHues]) {
         for (final entry in aliases.entries) {
           expect(entry.key.family(hues), entry.value.family(hues));
@@ -106,10 +108,26 @@ void main() {
         expect(sleepStageColor(hues, 'a_code_nobody_decoded'), hues.unstaged);
         expect(drawn, isNot(contains(hues.unstaged)));
         for (final tone in kToneFamilies) {
-          expect(drawn, isNot(contains(tone.family(hues))));
+          // The colour kit deliberately gives dark Core the Strain hex
+          // (0A84FF) and dark REM the Breathing hex (64D2FF); every other
+          // stage/family pair is distinct.
+          if (hues == darkHues && (tone == Tone.load || tone == Tone.oxygen)) {
+            continue;
+          }
+          expect(drawn, isNot(contains(tone.family(hues))), reason: '$tone');
         }
       }
     });
+
+    test(
+      'the kit’s stage/family coincidences are exactly the two dark ones',
+      () {
+        expect(darkHues.stageLight, darkHues.strain);
+        expect(darkHues.stageRem, darkHues.oxygen);
+        expect(lightHues.stageLight, isNot(lightHues.strain));
+        expect(lightHues.stageRem, isNot(lightHues.oxygen));
+      },
+    );
   });
 
   group('the cascade — a declaring ancestor, a resolving descendant', () {
@@ -183,17 +201,27 @@ void main() {
       expect(toneFor('respiratory_rate'), Tone.oxygen);
       expect(toneFor('spo2_overnight'), Tone.oxygen);
       expect(toneFor('stress'), Tone.stress);
-      expect(toneFor('skin_temp_c'), Tone.stress);
-      expect(toneFor('hrv'), Tone.recovery);
-      expect(toneFor('vo2max_estimate'), Tone.fitness);
+      expect(toneFor('skin_temp_c'), Tone.fitness);
+      expect(toneFor('hrv'), Tone.heart);
+      expect(toneFor('readiness'), Tone.recovery);
+      expect(toneFor('vo2max_estimate'), Tone.heart);
       expect(toneFor('a_metric_nobody_listed'), Tone.fitness);
     });
 
     test('hueFor is exactly the tone, resolved — not a second table', () {
       const metrics = <String>[
-        'sleep_debt_min', 'rhr_daily', 'cardio_load', 'steps_total',
-        'active_calories', 'respiratory_rate', 'spo2', 'stress',
-        'skin_temp_c', 'hrv', 'vo2max_estimate', 'nothing_at_all',
+        'sleep_debt_min',
+        'rhr_daily',
+        'cardio_load',
+        'steps_total',
+        'active_calories',
+        'respiratory_rate',
+        'spo2',
+        'stress',
+        'skin_temp_c',
+        'hrv',
+        'vo2max_estimate',
+        'nothing_at_all',
       ];
       for (final hues in [lightHues, darkHues]) {
         for (final metric in metrics) {
@@ -216,7 +244,7 @@ void main() {
     test('a tone table that collapsed two families is caught', () {
       // The mutation `Tone.oxygen => hues.sleep` in tone.dart would keep every
       // "resolves a colour" assertion green. This proves the distinctness sweep
-      // in "THE THREE ALIASES…" is what catches it, by running that sweep over
+      // in "THE ONE ALIAS…" is what catches it, by running that sweep over
       // a set with two families already collapsed.
       final collapsed = lightHues.copyWith(oxygen: lightHues.sleep);
       var clashes = 0;
@@ -233,7 +261,7 @@ void main() {
     test('a cascade that ignored its scope is caught', () {
       // If `ToneScope.of` returned the default instead of reading the tree,
       // every toned resolution would come back fitness. The scope test asserts
-      // a specific per-tone colour, so it fails for five of the six — proved
+      // a specific per-tone colour, so it fails for all but one family — proved
       // here by showing those five differ from the default.
       final defaulted = Tone.fitness.family(darkHues);
       final differ = kToneFamilies

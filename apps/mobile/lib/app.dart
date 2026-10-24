@@ -59,11 +59,8 @@ class _HealtheeAppState extends ConsumerState<HealtheeApp>
             defaultTargetPlatform == TargetPlatform.iOS)) {
       ref.listen(notificationDestinationProvider, (previous, next) {
         next.whenData(
-          (destination) => unawaited(
-            _router.push(
-              destination == 'sleep' ? Routes.sleep : Routes.actions,
-            ),
-          ),
+          (destination) =>
+              unawaited(_router.push(notificationRoute(destination))),
         );
       });
       ref.watch(notificationLifecycleProvider);

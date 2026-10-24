@@ -1,4 +1,4 @@
-/// **BioHero, SectionHead, ColourKey, ContextBridge and IconTile, measured.**
+/// **SectionHead, ColourKey, ContextBridge and IconTile, measured.**
 ///
 /// The other half of the v02 primitive set; see `v02_primitives_test.dart` for
 /// the method and `_v02_harness.dart` for the pump both halves share.
@@ -16,8 +16,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:healthee/core/theme/tone.dart';
-import 'package:healthee/shared/v02/bio_hero.dart';
-import 'package:healthee/shared/v02/bio_hero_parts.dart';
 import 'package:healthee/shared/v02/colour_key.dart';
 import 'package:healthee/shared/v02/context_bridge.dart';
 import 'package:healthee/shared/v02/icon_tile.dart';
@@ -27,95 +25,15 @@ import 'package:solar_icons/solar_icons.dart';
 import '_v02_harness.dart';
 
 void main() {
-  group('BioHero — 28px radius, 22px padding, its own surface', () {
-    testWidgets('the corner, the ground and the ink are the bio tokens', (
-      tester,
-    ) async {
-      await pumpV02(
-        tester,
-        const BioHero(eyebrow: 'Biological age', value: '31.8'),
-      );
-      final decoration = decorationOf(
-        tester,
-        find.descendant(
-          of: find.byType(BioHero),
-          matching: find.byType(Container),
-        ),
-      );
-      expect(groundOf(decoration), kColors.bioBackground);
-      expect(radiusOf(decoration), 28);
-      expect(
-        tester.widget<Text>(find.text('Biological age')).style!.color,
-        kColors.bioInk,
-      );
-      expect(
-        tester.widget<Text>(find.text('31.8')).style!.color,
-        kColors.bioInk,
-      );
-    });
-
-    testWidgets('the 88px figure sits 20 under the eyebrow, inset 22+1', (
-      tester,
-    ) async {
-      await pumpV02(
-        tester,
-        const BioHero(eyebrow: 'Biological age', value: '31.8'),
-      );
-      final hero = tester.getRect(find.byType(BioHero));
-      final eyebrow = tester.getRect(find.text('Biological age'));
-      final value = tester.getRect(find.text('31.8'));
-      expect(eyebrow.left - hero.left, 23);
-      expect(eyebrow.top - hero.top, 23);
-      expect(value.top - eyebrow.bottom, 20);
-      final style = tester.widget<Text>(find.text('31.8')).style!;
-      expect(style.fontSize, 88);
-      expect(style.letterSpacing, -6);
-      expect(style.height, 1);
-    });
-
-    testWidgets('the rule is FULL BLEED — it reaches both inner edges', (
-      tester,
-    ) async {
-      await pumpV02(
-        tester,
-        const BioHero(
-          eyebrow: 'Biological age',
-          value: '31.8',
-          caption: 'Two years under your chronological age.',
-          stats: <BioStat>[BioStat('VO₂max', '40.6'), BioStat('RHR', '54')],
-        ),
-      );
-      final hero = tester.getRect(find.byType(BioHero));
-      final rule = tester.getRect(
-        find.descendant(
-          of: find.byType(BioHero),
-          matching: find.byType(ColoredBox),
-        ),
-      );
-      expect(rule.height, 1);
-      // 1 px in from each side: the border, which `overflow: clip` sits inside.
-      expect(rule.left - hero.left, 1);
-      expect(hero.right - rule.right, 1);
-
-      final caption = tester.getRect(
-        find.text('Two years under your chronological age.'),
-      );
-      final stat = tester.getRect(find.text('VO₂max'));
-      expect(rule.top - caption.bottom, 18);
-      expect(stat.top - rule.bottom, 14);
-      expect(stat.left - hero.left, 23);
-    });
-  });
-
-  group('SectionHead — 18px title, 12 above whatever follows', () {
-    testWidgets('the title is 18px at 700 and the block ends 12 below it', (
+  group('SectionHead — the headline step, 12 above whatever follows', () {
+    testWidgets('the title is 17px at 600 and the block ends 12 below it', (
       tester,
     ) async {
       await pumpV02(tester, const SectionHead(title: 'Last night'));
       final style = tester.widget<Text>(find.text('Last night')).style!;
-      expect(style.fontSize, 18);
-      expect(style.fontWeight, FontWeight.w700);
-      expect(style.letterSpacing, -0.6);
+      expect(style.fontSize, 17);
+      expect(style.fontWeight, FontWeight.w600);
+      expect(style.letterSpacing, 0);
       final head = tester.getRect(find.byType(SectionHead));
       final title = tester.getRect(find.text('Last night'));
       expect(head.bottom - title.bottom, 12);
@@ -231,7 +149,7 @@ void main() {
             )
             .style!
             .fontSize,
-        11,
+        12,
       );
     });
 
@@ -262,8 +180,10 @@ void main() {
     });
   });
 
-  group('IconTile — 40 × 40 at radius 13, family on family-soft', () {
-    testWidgets('the box, the corner and both colours', (tester) async {
+  group('IconTile — a bare 24 px ink2 glyph, no tile (the brief)', () {
+    testWidgets('the box is the glyph, in ink2, with nothing behind it', (
+      tester,
+    ) async {
       await pumpV02(
         tester,
         const IconTile(SolarIconsOutline.wind),
@@ -271,34 +191,32 @@ void main() {
         width: null,
       );
       final rect = tester.getRect(find.byType(IconTile));
-      expect(rect.width, 40);
-      expect(rect.height, 40);
-      final decoration = decorationOf(
-        tester,
+      expect(rect.width, 24);
+      expect(rect.height, 24);
+      expect(
         find.descendant(
           of: find.byType(IconTile),
-          matching: find.byType(Container),
+          matching: find.byType(DecoratedBox),
         ),
+        findsNothing,
+        reason: 'an icon is never drawn inside a tile, circle or tint',
       );
-      expect(groundOf(decoration), kHues.oxygenSoft);
-      expect(radiusOf(decoration), 13);
-      expect(
-        tester.widget<Icon>(find.byIcon(SolarIconsOutline.wind)).color,
-        kHues.oxygen,
-      );
+      final icon = tester.widget<Icon>(find.byIcon(SolarIconsOutline.wind));
+      expect(icon.color, kColors.ink2);
+      expect(icon.size, 24);
     });
 
-    testWidgets('with no scope it takes fitness — richer.css :root', (
+    testWidgets('the family never reaches it, with or without a scope', (
       tester,
     ) async {
       await pumpV02(
         tester,
-        const IconTile(SolarIconsOutline.wind),
+        const IconTile.chrome(SolarIconsOutline.wind),
         width: null,
       );
       expect(
         tester.widget<Icon>(find.byIcon(SolarIconsOutline.wind)).color,
-        kHues.fitness,
+        kColors.ink2,
       );
     });
   });

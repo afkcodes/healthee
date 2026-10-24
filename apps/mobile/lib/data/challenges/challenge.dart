@@ -21,6 +21,12 @@ class Challenge {
     this.progress,
     this.programId,
     this.outcome,
+    this.adoptedAt,
+    this.daysRequired,
+    this.actionText,
+    this.slot,
+    this.floor,
+    this.countsWhen,
   });
 
   factory Challenge.fromJson(Map<String, Object?> json) => Challenge(
@@ -42,6 +48,14 @@ class Challenge {
     howTo: json['how_to'] as String?,
     expectedOutcome: json['expected_outcome'] as String?,
     programId: (json['program_id'] as num?)?.toInt(),
+    daysRequired: (json['days_required'] as num?)?.toInt(),
+    actionText: json['action_text'] as String?,
+    slot: json['slot_text'] as String?,
+    floor: json['floor_text'] as String?,
+    countsWhen: json['counts_when'] as String?,
+    adoptedAt: DateTime.tryParse(
+      json['adopted_at'] as String? ?? '',
+    )?.toLocal(),
     outcome: json['outcome'] == null
         ? null
         : ChallengeOutcome.fromJson(json['outcome']! as Map<String, Object?>),
@@ -66,6 +80,24 @@ class Challenge {
   final ChallengeProgress? progress;
   final int? programId;
   final ChallengeOutcome? outcome;
+
+  /// When the owner started this rung, if they have.
+  final DateTime? adoptedAt;
+
+  /// Days out of seven, set only on a coach job.
+  final int? daysRequired;
+
+  /// The coach's one-line action, set only on a coach job.
+  final String? actionText;
+
+  /// When the coach job is to be done.
+  final String? slot;
+
+  /// The coach job's bad-day version.
+  final String? floor;
+
+  /// The rule the strap checks for a coach job.
+  final String? countsWhen;
 
   /// Everything backing this challenge's server-written prose: the inline
   /// `[note_id]` markers in **both** [title] and [why], merged with the

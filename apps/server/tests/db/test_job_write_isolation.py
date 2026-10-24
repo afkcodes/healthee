@@ -34,6 +34,7 @@ tests).
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 from datetime import date, datetime, time, timedelta
 from uuid import UUID
@@ -42,13 +43,13 @@ from zoneinfo import ZoneInfo
 import pytest
 from tests.contracts import seed
 from tests.contracts.seed_owner_b import OWNER_B, OWNER_B_TZ
-from tests.insights._ids import ESTABLISHED_ID
 from tests.insights._stub import StubLLM
 
 from healthee.core.db import admin_connection, tenant_transaction, transaction
 from healthee.core.tenancy import SENTINEL_TZ, SENTINEL_USER_ID, user_today
+from healthee.jobs import coach_kv
+from healthee.jobs.coach_weekly import generate_week
 from healthee.jobs.correlate import run_correlate
-from healthee.jobs.recs import generate_recs
 
 pytestmark = pytest.mark.integration
 
@@ -259,7 +260,7 @@ def test_correlate_for_a_leaves_bs_findings_untouched(
     )
 
 
-# ── the sibling chain step with a write path: recs ────────────────────────────
+# ── the sibling chain step with a write path: the weekly coach ────────────────
 #
 # `briefing`, the third step, is deliberately absent: it has NO database write at
 # all (it reads context, calls the choke point, and hands the text to
@@ -267,65 +268,32 @@ def test_correlate_for_a_leaves_bs_findings_untouched(
 # anything there would be theatre.
 
 
-# Each owner's OWN local today, not a shared constant and not a far-future one.
-# `generate_recs` refuses any day but the owner's today, because every input it has is
-# today's — a row dated otherwise would carry a date its content never answered for
-# (B2). The two owners are in different zones, so "today" is genuinely two dates and
-# asking for it per-owner is also the more honest fixture.
-def _recs_day(tz: str) -> date:
-    return user_today(tz)
-
-
-# One structurally valid, citable rec — enough for `_persist` to write a row. The
-# LLM is a stub, so this runs offline and deterministically.
-_STUB_REC = """{"recommendations": [
-  {"action": "Aim for a 30-minute brisk walk today.",
-   "rationale": "Consistent moderate activity may support recovery [__EST__].",
-   "category": "activity", "evidence_grade": 3,
-   "research_note_ids": ["__EST__"], "signal_source": "mvpa_gap"}
-]}""".replace("__EST__", ESTABLISHED_ID)
-
-
-def _seed_recommendation(user_id: UUID, tz: str, action: str) -> None:
+def _stored_review(user_id: UUID, tz: str) -> dict | None:
     with tenant_transaction(user_id) as cur:
-        cur.execute(
-            "INSERT INTO recommendation (user_id, date, rank, action, rationale, category, "
-            "evidence_grade, research_note_ids, signal_source) "
-            "VALUES (%s,%s,1,%s,'seeded rationale','sleep',3,%s,'seeded') "
-            "ON CONFLICT (user_id, date, rank) DO UPDATE SET action = EXCLUDED.action",
-            (user_id, _recs_day(tz), action, ["sleep_need_debt"]),
-        )
+        return coach_kv.get_json(cur, user_id, coach_kv.key_for_week(user_today(tz)))
 
 
-def _actions(user_id: UUID, tz: str) -> list[str]:
-    with tenant_transaction(user_id) as cur:
-        cur.execute(
-            "SELECT action FROM recommendation WHERE user_id = %s AND date = %s ORDER BY rank",
-            (user_id, _recs_day(tz)),
-        )
-        return [r[0] for r in cur.fetchall()]
-
-
-def test_recs_for_b_leaves_as_recommendations_untouched(
+def test_weekly_review_for_b_leaves_as_review_untouched(
     two_owners_with_cutoffs: None,  # noqa: ARG001
 ) -> None:
-    """`recs._persist` DELETEs the owner's rows for the day, then inserts — the SAME
-    replace shape as the cutoff bug, so it gets the same guard.
+    """The weekly review is the AI text a person reads as advice about their own body, and
+    it is written under a per-owner ``kv`` key and a per-owner challenge row. B's
+    generation must not touch A's."""
+    from tests.jobs._coach_fixtures import answer
 
-    Recs are the highest-stakes write in the chain: they are the AI text a person
-    reads as advice about their own body. B's generation must not touch A's.
-    """
-    _seed_recommendation(SENTINEL_USER_ID, SENTINEL_TZ, "OWNER A ACTION")
-    _seed_recommendation(OWNER_B, OWNER_B_TZ, "OWNER B ACTION")
+    marker = {"week": "A", "generated_at": "2026-01-01T00:00:00+00:00", "review": "OWNER A"}
+    with tenant_transaction(SENTINEL_USER_ID) as cur:
+        coach_kv.put_json(
+            cur, SENTINEL_USER_ID, coach_kv.key_for_week(user_today(SENTINEL_TZ)), marker
+        )
 
-    generate_recs(OWNER_B, OWNER_B_TZ, _recs_day(OWNER_B_TZ), client=StubLLM([_STUB_REC]))
-
-    assert _actions(SENTINEL_USER_ID, SENTINEL_TZ) == ["OWNER A ACTION"], (
-        "owner B's recs generation rewrote owner A's recommendations"
+    generate_week(
+        OWNER_B,
+        OWNER_B_TZ,
+        client=StubLLM(json_text=json.dumps(answer())),
     )
-    # B's own row WAS replaced — proof the run did real work, so A's survival above
-    # is isolation and not a no-op.
-    assert _actions(OWNER_B, OWNER_B_TZ) != ["OWNER B ACTION"], (
-        "B's own recs generation did nothing"
+
+    assert _stored_review(SENTINEL_USER_ID, SENTINEL_TZ) == marker, (
+        "owner B's weekly review rewrote owner A's"
     )
-    assert "walk" in _actions(OWNER_B, OWNER_B_TZ)[0].lower()
+    assert _stored_review(OWNER_B, OWNER_B_TZ) != marker

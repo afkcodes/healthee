@@ -36,6 +36,7 @@ import 'package:flutter/material.dart';
 import 'package:healthee/core/theme/shapes.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/tone_scope.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/shared/v02/panel_density.dart';
 
@@ -273,48 +274,56 @@ class StatRow extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final colors = context.colors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    // A row of labels over a row of numbers, not a column per cell: a label
+    // that wraps grows the label row for every cell, and bottom-aligned labels
+    // keep each number under its own, so the figures share one baseline.
+    Widget across(CrossAxisAlignment align, Widget Function(Stat) cell) => Row(
+      crossAxisAlignment: align,
       children: <Widget>[
         for (var i = 0; i < stats.length; i++) ...<Widget>[
           if (i > 0) const SizedBox(width: gap),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  stats[i].label,
-                  style: TypeScale.statLabel.copyWith(color: colors.ink2),
+          Expanded(child: cell(stats[i])),
+        ],
+      ],
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        across(
+          CrossAxisAlignment.end,
+          (stat) => Text(
+            stat.label,
+            style: TypeScale.statLabel.copyWith(color: colors.ink2),
+            // A third of a row: the label wraps rather than being cut.
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        across(
+          CrossAxisAlignment.start,
+          (stat) => Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: <Widget>[
+              Flexible(
+                child: Text(
+                  stat.value,
+                  style: TypeScale.statValue.copyWith(color: colors.ink),
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  overflow: TextOverflow.clip,
                 ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: <Widget>[
-                    Flexible(
-                      child: Text(
-                        stats[i].value,
-                        style: TypeScale.statValue.copyWith(color: colors.ink),
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.clip,
-                      ),
-                    ),
-                    if (stats[i].unit case final String unit) ...<Widget>[
-                      const SizedBox(width: unitGap),
-                      Text(
-                        unit,
-                        style: TypeScale.statUnit.copyWith(color: colors.ink2),
-                      ),
-                    ],
-                  ],
+              ),
+              if (stat.unit case final String unit) ...<Widget>[
+                const SizedBox(width: unitGap),
+                Text(
+                  unit,
+                  style: TypeScale.statUnit.copyWith(color: colors.ink2),
                 ),
               ],
-            ),
+            ],
           ),
-        ],
+        ),
       ],
     );
   }
@@ -372,25 +381,19 @@ class ProgressTrack extends StatelessWidget {
 /// computed — so the wrong reading was indistinguishable from the right one.
 /// The label costs one line and removes the ambiguity entirely.
 ///
-/// Set in the family, not the accent: it describes a group of readings, and on
-/// a toned panel the family is what every other mark in that group already is.
+/// Set in ink3: the brief reserves family hues for data marks, so a label names
+/// its group in the quietest text colour rather than tinting itself.
 class WindowLabel extends StatelessWidget {
   /// Names the window.
   const WindowLabel(this.text, {super.key});
 
-  /// Uppercase, tracked — structure, not prose.
-  static const double tracking = 1.1;
-
-  /// The window's name.
+  /// The window's name, set uppercase as a [TypeLadder.label]: structure, not
+  /// prose.
   final String text;
 
   @override
   Widget build(BuildContext context) => Text(
     text.toUpperCase(),
-    style: TypeScale.tinyLabel.copyWith(
-      color: context.family,
-      letterSpacing: tracking,
-      fontWeight: FontWeight.w700,
-    ),
+    style: TypeLadder.label.copyWith(color: context.colors.ink2),
   );
 }

@@ -1,29 +1,27 @@
-/// Insights is the v02 prototype's screen, in the prototype's order — held here.
+/// Insights is the colour-system screen, in its order — held here.
 ///
-/// `design/mobile-preview/screens-overview.js::H.screens.insights` is one
-/// template literal, and the only way a re-ordering, a dropped panel or a panel
-/// that crept back in gets caught is by reading the section list and comparing
-/// it to the prototype entry by entry. A rendered scroll cannot do it: most of
-/// the screen is off the viewport and a lazy sliver list has not built it.
+/// The only way a re-ordering, a dropped section or one that crept back in gets
+/// caught is by reading the section list and comparing it entry by entry. A
+/// rendered scroll cannot do it: most of the screen is off the viewport and a
+/// lazy sliver list has not built it.
 ///
-/// The order below was transcribed with the prototype open in a browser
-/// (`python3 -m http.server --directory design/mobile-preview`), scrolled top to
-/// bottom at 390 px. Every entry names the prototype construct it came from.
+/// The order is the kit's (`kit/3-insights.png`): the hero tiles, Effort &
+/// stress, Longer patterns, What moved together, the link list.
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:healthee/data/device/device_day.dart';
 import 'package:healthee/features/insights/insights_sections.dart';
+import 'package:healthee/features/insights/v02/coach_question_panel.dart';
+import 'package:healthee/features/insights/v02/effort_stress_card.dart';
+import 'package:healthee/features/insights/v02/insight_links.dart';
+import 'package:healthee/features/insights/v02/moved_together.dart';
 import 'package:healthee/features/insights/v02/pattern_panels.dart';
-import 'package:healthee/features/insights/widgets/notable_events.dart';
+import 'package:healthee/features/insights/v02/section_title.dart';
 import 'package:healthee/features/insights/widgets/trends_section.dart';
-import 'package:healthee/shared/findings_section.dart';
 import 'package:healthee/shared/page_section.dart';
-import 'package:healthee/shared/v02/context_bridge.dart';
 import 'package:healthee/shared/v02/data_footer.dart';
-import 'package:healthee/shared/v02/entry_card.dart';
-import 'package:healthee/shared/v02/list_rows.dart';
 import 'package:healthee/shared/v02/page_header.dart';
-import 'package:healthee/shared/v02/section_head.dart';
 
 import '../_today_stubs.dart';
 import '_screen_data.dart';
@@ -53,61 +51,54 @@ int _nthOf<T>(List<PageSection> list, int n) {
   return -1;
 }
 
+/// The titles of the section heads, in order.
+List<String> _titles(List<PageSection> list) => <String>[
+  for (final section in list)
+    if (section.child is InsightSectionTitle)
+      (section.child as InsightSectionTitle).title,
+];
+
 void main() {
-  group("the prototype's order, entry by entry", () {
-    test('EVERY SECTION THE PROTOTYPE DRAWS IS DRAWN, AND IN ITS ORDER', () {
+  group('the kit’s order, entry by entry', () {
+    test('EVERY SECTION THE KIT DRAWS IS DRAWN, AND IN ITS ORDER', () {
       final list = sections();
       final order = <int>[
-        // `H.header('Insights', …)`.
         _indexOf<V02PageHeader>(list),
-        // `.relationship-grid` — one pattern of the owner's own, and the age.
-        _indexOf<EntryGrid>(list),
-        // `H.panel('Effort & stress, side by side', …)`.
-        _indexOf<EffortStressPanel>(list),
-        // `H.bridge('stress', …, 'journal')`.
-        _indexOf<ContextBridge>(list),
-        // `H.section('Your longer patterns', …, 'metrics','All metrics')`.
-        _nthOf<SectionHead>(list, 0),
-        // The `.twin-panels` of `H.miniTrend(...)` under it.
+        _indexOf<HeroRow>(list),
+        _nthOf<InsightSectionTitle>(list, 0),
+        _indexOf<EffortStressCard>(list),
+        _nthOf<InsightSectionTitle>(list, 1),
         _indexOf<TrendsGrid>(list),
-        // `H.section('What changed together?', …)`.
-        _nthOf<SectionHead>(list, 1),
-        // The findings themselves, in the block whose heading is their framing.
-        _indexOf<FindingsSection>(list),
-        // The notable days — this app's own server surface, kept.
-        _indexOf<NotableEvents>(list),
-        // The section's two `.list-row`s: outcomes, and the journal.
-        _indexOf<FlushCard>(list),
-        // `H.panel('A useful question comes next', …, 'coach')`.
+        _nthOf<InsightSectionTitle>(list, 2),
+        _indexOf<MovedTogetherCard>(list),
+        _indexOf<InsightLinks>(list),
+        // Kept: the screen's only door to the coach.
         _indexOf<CoachQuestionPanel>(list),
-        // `H.footer()`.
         _indexOf<DataFooter>(list),
       ];
       for (final index in order) {
-        expect(index, isNonNegative, reason: 'a prototype section is missing');
+        expect(index, isNonNegative, reason: 'a section is missing');
       }
       for (var i = 1; i < order.length; i++) {
         expect(
           order[i],
           greaterThan(order[i - 1]),
-          reason: 'section $i is out of the prototype’s order',
+          reason: 'section $i is out of the kit’s order',
         );
       }
     });
 
-    test('the two section heads are the prototype’s two, in its words', () {
-      final list = sections();
-      final heads = <String>[
-        for (final section in list)
-          if (section.child is SectionHead)
-            (section.child as SectionHead).title,
-      ];
-      expect(heads, <String>['Your longer patterns', 'What changed together?']);
+    test('the three section heads are the kit’s, in its words', () {
+      expect(_titles(sections()), <String>[
+        'Effort & stress',
+        'Longer patterns',
+        'What moved together',
+      ]);
     });
   });
 
   group('the gaps are v02’s two rungs, not legacy’s four', () {
-    test('THE SCREEN USES THOSE TWO AND NOT LEGACY’S LADDER', () {
+    test('THE SCREEN USES CARD GAP AND SECTION GAP AND NOTHING ELSE', () {
       final gaps = <double>{
         for (final section in sections())
           if (section.gap > 0) section.gap,
@@ -131,43 +122,27 @@ void main() {
         },
       );
       expect(_indexOf<TrendsGrid>(none), -1);
-      final heads = <String>[
-        for (final section in none)
-          if (section.child is SectionHead)
-            (section.child as SectionHead).title,
-      ];
-      expect(heads, isNot(contains('Your longer patterns')));
+      expect(_titles(none), isNot(contains('Longer patterns')));
       // And the block that follows is untouched: a silent section is not a
       // truncated screen.
-      expect(_indexOf<FindingsSection>(none), isNonNegative);
+      expect(_indexOf<MovedTogetherCard>(none), isNonNegative);
     });
 
-    test('no findings means no findings block, and no pattern card', () {
+    test('no findings means no findings card and no heading over it', () {
       final none = sections(
         mutate: (json) => <String, Object?>{
           ...json,
           'top_findings': const <Object?>[],
         },
       );
-      expect(_indexOf<FindingsSection>(none), -1);
-      expect(_indexOf<FindingEntryCard>(none), -1);
-      // The heading stays, because the two rows and the notable days are still
-      // under it — this is a section with content, not a heading over nothing.
-      expect(_indexOf<FlushCard>(none), isNonNegative);
+      expect(_indexOf<MovedTogetherCard>(none), -1);
+      expect(_titles(none), isNot(contains('What moved together')));
+      expect(_indexOf<InsightLinks>(none), isNonNegative);
     });
 
-    test('ONE ENTRY CARD DRAWS ALONE RATHER THAN BESIDE A HOLE', () {
-      final oneCard = sections(
-        mutate: (json) => <String, Object?>{
-          ...json,
-          'top_findings': const <Object?>[],
-        },
-      );
-      expect(_indexOf<EntryGrid>(oneCard), -1);
-      expect(_indexOf<AgeEntryCard>(oneCard), isNonNegative);
-    });
-
-    test('neither card means no grid at all', () {
+    test('THE HERO ROW IS ALWAYS THERE WHEN THE SERVER HAS ANSWERED', () {
+      // Neither tile has anything behind it, and the row is still drawn: each
+      // tile says "Not enough readings yet" in its own hatched strip.
       final none = sections(
         mutate: (json) => <String, Object?>{
           ...json,
@@ -178,9 +153,9 @@ void main() {
           },
         },
       );
-      expect(_indexOf<EntryGrid>(none), -1);
-      expect(_indexOf<AgeEntryCard>(none), -1);
-      expect(_indexOf<FindingEntryCard>(none), -1);
+      final row = none.map((s) => s.child).whereType<HeroRow>().single;
+      expect(row.pattern, isNull);
+      expect(row.age, isNull);
     });
 
     test(
@@ -193,12 +168,35 @@ void main() {
             'today_stress_series': const <Object?>[],
           },
         );
-        expect(_indexOf<EffortStressPanel>(thin), -1);
-        // The bridge belongs to that panel and goes with it — a connective
-        // sentence between two things, one of which is not there, connects
-        // nothing.
-        expect(_indexOf<ContextBridge>(thin), -1);
+        expect(_indexOf<EffortStressCard>(thin), -1);
+        // The heading belongs to the card and goes with it.
+        expect(_titles(thin), isNot(contains('Effort & stress')));
       },
     );
+  });
+
+  group('a past day keeps only what is not dated', () {
+    List<PageSection> past() => insightsSections(
+      screenData(day: DeviceDay.empty('2026-07-01'), server: todayView()),
+      const InsightsExtras(),
+    );
+
+    test(
+      'THE PATTERNS, THE PAIRS AND THE HOURS ARE TODAY’S, NOT THIS DAY’S',
+      () {
+        final list = past();
+        expect(_indexOf<HeroRow>(list), -1);
+        expect(_indexOf<EffortStressCard>(list), -1);
+        expect(_indexOf<TrendsGrid>(list), -1);
+        expect(_indexOf<MovedTogetherCard>(list), -1);
+        expect(_titles(list), isEmpty);
+      },
+    );
+
+    test('the ways into the history are not dated, and stay', () {
+      final list = past();
+      expect(_indexOf<InsightLinks>(list), isNonNegative);
+      expect(_indexOf<CoachQuestionPanel>(list), isNonNegative);
+    });
   });
 }

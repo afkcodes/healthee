@@ -13,6 +13,7 @@
 library;
 
 import 'package:flutter/widgets.dart';
+import 'package:healthee/core/theme/dimensions.dart';
 
 /// The gap under a section — **the only place a screen's vertical rhythm lives**.
 ///
@@ -50,23 +51,19 @@ abstract final class PageSpacing {
   /// Under the last card of a section, before the next heading. Legacy's 24.
   static const double section = 34;
 
-  /// **v02's own two rungs.** `richer.css`, not legacy:
-  ///
-  /// ```css
-  /// .panel   { margin-top: 12px }
-  /// .section { margin-top: 24px }
-  /// ```
+  /// **v02's own two rungs, now the brief's tokens** ([Insets.cardGap] and
+  /// [Insets.section]; the prototype's `richer.css` said 12 and 24).
   ///
   /// They are tighter than the four above and that is not a regression of the
   /// owner's 2026-08-06 widening. Those four space **legacy's** cards, which
-  /// carry no internal rhythm of their own; a v02 panel has 18 px of padding
-  /// and a 22 px corner, so 12 between two of them reads wider than legacy's 10
+  /// carry no internal rhythm of their own; a v02 panel has 20 px of padding
+  /// and a 20 px corner, so 12 between two of them reads wider than legacy's 10
   /// between two flat modules. A screen uses one ladder or the other, never
   /// both — `today_order_test.dart` asserts Today uses this one.
-  static const double panel = 12;
+  static const double panel = Insets.cardGap;
 
-  /// v02's `.section { margin-top: 24px }` — between two groups of panels.
-  static const double block = 24;
+  /// Between two groups of panels: [Insets.section], 32.
+  static const double block = Insets.section;
 
   /// Between ANY page-level heading and the thing it names.
   ///
@@ -93,7 +90,12 @@ typedef SectionExtent = double Function(BuildContext context);
 @immutable
 class PageSection {
   /// Builds one entry of a screen's list.
-  const PageSection(this.child, {this.gap = PageSpacing.card, this.pinnedExtent});
+  const PageSection(
+    this.child, {
+    this.gap = PageSpacing.card,
+    this.pinnedExtent,
+    this.bleed = false,
+  });
 
   /// What to draw.
   final Widget child;
@@ -108,4 +110,8 @@ class PageSection {
   /// nav — and this is that, in the only shape a scroll view has for it. The
   /// screen shell reads it; nothing else needs to know.
   final SectionExtent? pinnedExtent;
+
+  /// True draws [child] edge to edge, without the page's side padding: the
+  /// Today hero, which fades into the page rather than sitting on it.
+  final bool bleed;
 }

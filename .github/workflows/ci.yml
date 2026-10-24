@@ -58,6 +58,9 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
+          # Without a pin uv picks the newest CPython, and a release can land before
+          # its wheels do (3.15 had no onnxruntime wheel). Match the server image.
+          python-version: "3.13"
           enable-cache: true
           cache-dependency-glob: apps/server/uv.lock
       - name: Sync dependencies
@@ -79,6 +82,41 @@ jobs:
           POSTGRES_PASSWORD: healthee
           REALTIME_INGEST_TOKEN: ci-test-token
         run: uv run pytest
+
+  # ── Zepp importer: a standard-library tool, tested where it has to run ──
+  # `scripts/zepp_import` must work on a bare server or a phone terminal with
+  # nothing installed, so there is no dependency step: the tests run on the
+  # oldest Python it supports and on the newest. Its tests READ the server
+  # source to catch drift in the constants it copies (sport names, limits, the
+  # upsert's COALESCE), which is why this checks out the whole repo.
+  # Ruff and pyright are the server's pinned versions, read from its lockfile,
+  # so the two halves of the repo cannot disagree about formatting.
+  zepp-import:
+    name: Zepp importer (unittest · ruff · pyright)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Unit tests (no dependencies)
+        run: python3 -m unittest discover -s scripts/zepp_import/tests -t scripts
+      - name: The launcher starts
+        run: python3 scripts/zepp-import --version
+      - name: Install uv
+        if: matrix.python-version == '3.13'
+        uses: astral-sh/setup-uv@v7
+      - name: Ruff and pyright at the server's pinned versions
+        if: matrix.python-version == '3.13'
+        run: |
+          pinned() { awk -v name="$1" '$0 == "name = \"" name "\"" { getline; gsub(/[^0-9.]/, ""); print; exit }' apps/server/uv.lock; }
+          uvx "ruff==$(pinned ruff)" check scripts/zepp_import
+          uvx "ruff==$(pinned ruff)" format --check scripts/zepp_import
+          uvx "pyright==$(pinned pyright)" -p scripts/zepp_import
 
   # ── Image: build the server Docker image and smoke-test it ─────────────
   # Closes the cutover gap where every test passed from source but the built
@@ -174,6 +212,9 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
+          # Without a pin uv picks the newest CPython, and a release can land before
+          # its wheels do (3.15 had no onnxruntime wheel). Match the server image.
+          python-version: "3.13"
           enable-cache: true
           cache-dependency-glob: apps/server/uv.lock
       - name: Sync dependencies

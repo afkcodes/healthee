@@ -238,7 +238,7 @@ class _ServerSignInFormState extends State<ServerSignInForm> {
                       ? SolarIconsOutline.eyeClosed
                       : SolarIconsOutline.eye,
                   size: 18,
-                  color: colors.ink3,
+                  color: colors.ink2,
                 ),
               ),
             ),

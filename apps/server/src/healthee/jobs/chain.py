@@ -25,10 +25,10 @@ health surface"). The chain then applies dependency logic:
     any computation, and an owner whose findings failed still deserves an honest
     outcome for it (WP-C2/WP-C4; the choice to finalize here rather than inside a
     list read is argued in ``challenges/lifecycle.py``);
-  * a ``correlate`` failure ABORTS ``recs`` AND ``warm`` (both read the findings
+  * a ``correlate`` failure ABORTS the coach steps AND ``warm`` (both read the findings
     correlate writes, via the choke point's context) — they are marked skipped, not
     run on stale inputs;
-  * a ``briefing`` failure does NOT undo the recs already persisted;
+  * a ``briefing`` failure does NOT undo the coach lines already stored;
   * a ``warm`` failure costs only the coaching lines — the chain continues.
 
 Non-fatal means "does not abort the run"; it does not mean "counts as done". Any
@@ -39,7 +39,7 @@ failed step leaves the day unmarked so the next tick retries it (:func:`_nothing
 Three of the six steps call a model, and generating output nobody is entitled to see
 is the cost hole 6.6a exists to close (``PRICING.md`` §6.1: at 5 % conversion each
 premium user carries ~19 free ones, so free-tier cost control is existential). So
-``recs``, ``warm`` and ``briefing`` are SKIPPED for a non-premium owner — named as
+the coach steps, ``warm`` and ``briefing`` are SKIPPED for a non-premium owner — named as
 ``skipped``, never silently absent, because a step that did not run and a step that
 ran and produced nothing are different facts (standards §Errors).
 
@@ -131,9 +131,10 @@ from healthee.insights.client import LLMClient
 from healthee.jobs.steps import (
     step_briefing,
     step_challenges,
+    step_coach_today,
+    step_coach_weekly,
     step_correlate,
     step_illness,
-    step_recs,
     step_warm,
 )
 
@@ -149,11 +150,14 @@ _DONE_KEY = "job:chain_done"
 # The steps that call a model, in the order the chain runs them. Named once so the
 # skip and the reason can never drift from what is actually gated — and so a sixth
 # step added later has to make a deliberate choice about which list it joins.
-LLM_STEPS: tuple[str, ...] = ("recs", "warm", "briefing")
+LLM_STEPS: tuple[str, ...] = ("coach_weekly", "coach_today", "warm", "briefing")
+
+# The weekly review runs on the owner's local Sunday; the daily check-in every day.
+_SUNDAY = 6
 
 # What a skipped step says. It is the owner's entitlement, not a failure, and the
 # distinction matters on the job health surface: "skipped — not premium" must never
-# read like "recs broke again".
+# read like "the coach broke again".
 _NOT_PREMIUM = "owner is not premium — the AI steps are skipped (MULTI_USER.md §12.3)"
 
 
@@ -208,10 +212,10 @@ def run_chain(
     client: LLMClient | None = None,
     force: bool = False,
 ) -> ChainResult:
-    """Run ONE owner's illness → challenges → correlate → recs → warm → briefing, deduped.
+    """Run ONE owner's illness → challenges → correlate → coach → warm → briefing, deduped.
 
-    Dependency: a ``correlate`` failure skips ``recs`` and ``warm`` (both consume the
-    findings it writes). A ``briefing`` failure never undoes persisted recs, and a
+    Dependency: a ``correlate`` failure skips the coach steps and ``warm`` (both consume the
+    findings it writes). A ``briefing`` failure never undoes stored coach lines, and a
     ``warm`` failure costs only the coaching lines. A second call for a day this owner's
     chain completed CLEANLY — or for any day at or before it — is a no-op unless
     ``force``; a day on which any step failed stays unmarked and is retried
@@ -252,7 +256,7 @@ def run_chain(
     if correlate.status == "ok":
         steps.extend(_after_correlate(day, user_id, tz, client=client, premium=premium))
     else:
-        steps.extend(_skipped_after_correlate())
+        steps.extend(_skipped_after_correlate(day))
 
     steps.append(_briefing_step(day, user_id, tz, client=client, premium=premium))
     # LAST, and only on a clean run. See `_nothing_failed`: the marker is written after
@@ -284,39 +288,47 @@ def _nothing_failed(steps: Sequence[StepOutcome]) -> bool:
 
     A ``skipped`` step is deliberately NOT a failure. There are exactly two skips: the
     free owner's three LLM steps, which are their entitlement and not a fault
-    (``test_a_free_owners_day_is_still_marked_done`` pins that); and ``recs``/``warm``
+    (``test_a_free_owners_day_is_still_marked_done`` pins that); and the coach steps/``warm``
     after a ``correlate`` failure, which can only happen when ``correlate`` itself
     failed and therefore already blocks the mark.
 
     **What this costs, stated rather than discovered.** A ``warm`` or ``briefing``
     failure now leaves the day unmarked, so the next tick re-runs the whole chain —
-    re-spending ``recs`` and re-sending the briefing. That is not a new behaviour: a
+    re-spending the coach steps and re-sending the briefing. That is not a new behaviour: a
     ``correlate`` failure has always left the day unmarked and done exactly this, and
     ``scheduler._ATTEMPT_BUDGET`` exists to bound it to three attempts per owner per
     day. Every step in the chain is idempotent under a re-run (``illness`` upserts,
-    ``challenges`` reads stored statuses, ``correlate`` upserts on its key, ``recs``
-    is DELETE-then-INSERT for the day, ``warm`` rewrites a cache row); only the
+    ``challenges`` reads stored statuses, ``correlate`` upserts on its key, the coach steps
+    are write-once per week / overwrite per day, ``warm`` rewrites a cache row); only the
     briefing's Telegram message is repeated, and the budget is what caps it. Paying
     three attempts for a day is the price of not silently dropping one.
     """
     return all(step.status != "failed" for step in steps)
 
 
+def _coach_names(day: date) -> tuple[str, ...]:
+    """The coach steps due on ``day``: the weekly review on Sunday, the check-in always."""
+    return ("coach_weekly", "coach_today") if day.weekday() == _SUNDAY else ("coach_today",)
+
+
 def _after_correlate(
     day: date, user_id: UUID, tz: str, *, client: LLMClient | None, premium: bool
 ) -> list[StepOutcome]:
-    """``recs`` + ``warm``, or both skipped when the owner is not entitled to them.
+    """The coach steps + ``warm``, or all skipped when the owner is not entitled to them.
 
     Warming is NON-FATAL by construction (``_run_supervised`` returns, never raises): a
     missing coaching line is a degraded card, whereas aborting here would cost the owner
     their briefing over a one-liner. The failure is still reported.
     """
+    names = (*_coach_names(day), "warm")
     if not premium:
-        return [_not_premium(name) for name in ("recs", "warm")]
-    return [
-        _run_supervised("recs", lambda: step_recs(day, user_id, tz, client=client)),
-        _run_supervised("warm", lambda: step_warm(day, user_id, tz, client=client)),
-    ]
+        return [_not_premium(name) for name in names]
+    runners = {
+        "coach_weekly": lambda: step_coach_weekly(day, user_id, tz, client=client),
+        "coach_today": lambda: step_coach_today(day, user_id, tz, client=client),
+        "warm": lambda: step_warm(day, user_id, tz, client=client),
+    }
+    return [_run_supervised(name, runners[name]) for name in names]
 
 
 def _briefing_step(
@@ -333,10 +345,10 @@ def _not_premium(name: str) -> StepOutcome:
     return StepOutcome(name=name, status="skipped", error=_NOT_PREMIUM)
 
 
-def _skipped_after_correlate() -> list[StepOutcome]:
+def _skipped_after_correlate(day: date) -> list[StepOutcome]:
     """The steps that must NOT run once ``correlate`` failed — both read its findings.
 
-    ``recs`` reads them via ``recs_context``; ``warm`` reads them via the choke point's
+    the coach reads them via ``recs_context``; ``warm`` reads them via the choke point's
     ``findings_section``. Running either on stale findings would ship yesterday's
     correlations as today's advice, which is the honesty contract's exact failure mode.
     """
@@ -346,7 +358,7 @@ def _skipped_after_correlate() -> list[StepOutcome]:
             status="skipped",
             error="correlate failed — this step depends on its findings",
         )
-        for name in ("recs", "warm")
+        for name in (*_coach_names(day), "warm")
     ]
 
 

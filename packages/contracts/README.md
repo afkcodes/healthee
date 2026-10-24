@@ -24,7 +24,7 @@ so their JSON response **shapes** (keys, nesting, value types) must stay stable.
 | `history_batch.json` | `GET /api/history?metrics=a,b,c` |
 | `profile.json` | `GET /api/profile` |
 | `entitlement.json` | `GET /api/entitlement` |
-| `log_recent.json` | `GET /api/log/recent` |
+| `log_recent.json` | `GET /api/log/recent` (each manual entry carries `id`, the handle `DELETE /api/log/{id}` takes; the weight entry has none) |
 | `log_post.json` | `POST /api/log` |
 | `gps_list.json` | `GET /api/workout/gps` |
 | `map.json` | `GET /api/map` |
@@ -32,6 +32,8 @@ so their JSON response **shapes** (keys, nesting, value types) must stay stable.
 | `challenges.json` | `GET /api/challenges` |
 | `challenge_outcomes.json` | `GET /api/challenges/outcomes` |
 | `challenge_adopt.json` | `POST /api/challenges/{id}/adopt` |
+| `challenge_slot.json` | `PATCH /api/challenges/{id}/slot` (same `{ok, challenge}` shape as adopt) |
+| `coach_ledger.json` | `GET /api/coach/ledger?window=week\|month\|all` |
 
 ### `coach_stream_events.json` — `POST /api/coach/stream`, a different shape of contract
 

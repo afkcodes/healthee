@@ -32,6 +32,7 @@ import 'package:healthee/data/journal/log_kind.dart';
 import 'package:healthee/data/models/routine.dart';
 import 'package:healthee/data/models/vo2max.dart';
 import 'package:healthee/features/today/today_labels.dart';
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/format/metric_names.dart';
 import 'package:healthee/shared/metric_info/metric_detail.dart';
 import 'package:healthee/shared/reveal_once.dart';
@@ -242,13 +243,13 @@ class JournalPanel extends StatelessWidget {
             if (routine.workouts.isNotEmpty)
               Stat('Sessions', '${routine.workouts.length}'),
             if (routine.meditationCount > 0)
-              Stat(
-                'Meditation',
-                '${routine.meditationMinutes}',
-                unit: 'min',
-              ),
+              Stat('Meditation', '${routine.meditationMinutes}', unit: 'min'),
             if (routine.openFast != null)
-              Stat('Fasting', '${routine.openFast!.elapsedMin ~/ 60}', unit: 'h'),
+              Stat(
+                'Fasting',
+                '${routine.openFast!.elapsedMin ~/ 60}',
+                unit: 'h',
+              ),
           ]),
           // Each session by name, with the instrument that recorded it. The
           // counts alone would lose the one thing the block carries that
@@ -271,24 +272,20 @@ class JournalPanel extends StatelessWidget {
           if (routine.openFast case final OpenFast fast)
             _LoggedRow(
               title: 'Fasting, still open',
-              detail: hoursMinutes(fast.elapsedMin),
+              detail: durationText(fast.elapsedMin),
             ),
           // Everything else the day carried, from `routine.logs_summary`. Without it a
           // day whose only entry was caffeine drew no panel at all while the wire was
           // reporting that entry (audit C6). The kinds with a block of their own above
           // are excluded by `Routine.otherLogs`, not filtered again here.
           for (final tally in routine.otherLogs)
-            _LoggedRow(
-              title: logTitle(tally),
-              detail: logDetail(tally),
-            ),
+            _LoggedRow(title: logTitle(tally), detail: logDetail(tally)),
           const PanelNote(note),
         ],
       ),
     );
   }
 }
-
 
 /// One logged thing: what it was, and how much of it.
 class _LoggedRow extends StatelessWidget {
@@ -315,10 +312,7 @@ class _LoggedRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text(
-            detail,
-            style: TypeScale.panelNote.copyWith(color: colors.ink2),
-          ),
+          Text(detail, style: TypeScale.panelNote.copyWith(color: colors.ink2)),
         ],
       ),
     );

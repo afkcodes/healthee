@@ -36,6 +36,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:healthee/core/router.dart';
+import 'package:healthee/core/theme/dimensions.dart';
 import 'package:healthee/data/models/sleep_history.dart';
 import 'package:healthee/data/models/sleep_night.dart';
 import 'package:healthee/data/models/sleep_page.dart';
@@ -119,11 +120,11 @@ class SleepHistoryDetail extends StatelessWidget {
     super.key,
   });
 
-  /// `.panel { margin-top: 12px }`.
-  static const double panelGap = 12;
+  /// Between two cards: [Insets.cardGap].
+  static const double panelGap = Insets.cardGap;
 
-  /// `.section { margin-top: 24px }`.
-  static const double blockGap = 24;
+  /// Between two sections: [Insets.section].
+  static const double blockGap = Insets.section;
 
   /// `/api/sleep`.
   final SleepPage page;

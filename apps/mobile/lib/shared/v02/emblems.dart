@@ -44,12 +44,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:healthee/core/theme/dimensions.dart';
-import 'package:healthee/core/theme/shapes.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/type_scale_forms.dart';
 import 'package:solar_icons/solar_icons.dart';
 
-/// `.device-visual` — the strap, large, on a recessed ground.
+/// `.device-visual` — the strap, large; no recessed ground (the brief).
 class DeviceVisual extends StatelessWidget {
   /// Builds the figure.
   const DeviceVisual({super.key});
@@ -76,18 +75,14 @@ class DeviceVisual extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: margin),
       child: Center(
-        child: Container(
+        // Bare: the strap's glyph on the page, with no recessed ground.
+        child: SizedBox(
           width: width,
           height: height,
-          alignment: Alignment.center,
-          decoration: ShapeDecoration(
-            color: colors.surface2,
-            shape: hSquircle(radius),
-          ),
           child: Icon(
             SolarIconsOutline.watchRound,
             size: iconSize,
-            color: colors.accent,
+            color: colors.ink2,
           ),
         ),
       ),
@@ -122,16 +117,8 @@ class CoachSymbol extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: bottomGap),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Container(
-          width: size,
-          height: size,
-          alignment: Alignment.center,
-          decoration: ShapeDecoration(
-            color: colors.accentSoft,
-            shape: hSquircle(radius),
-          ),
-          child: Icon(icon, size: iconSize, color: colors.accent),
-        ),
+        // Bare: an icon is never drawn inside a tile, a circle or a tint.
+        child: Icon(icon, size: iconSize, color: colors.ink2),
       ),
     );
   }
@@ -287,7 +274,7 @@ class HTimeline extends StatelessWidget {
                             style: FormType.timelineNode.copyWith(
                               color: steps[i].active
                                   ? colors.accent
-                                  : colors.ink3,
+                                  : colors.ink2,
                             ),
                           ),
                         ),

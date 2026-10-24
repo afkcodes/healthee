@@ -31,8 +31,8 @@ import 'package:healthee/data/honesty/reading.dart';
 import 'package:healthee/data/models/sleep_debt.dart';
 import 'package:healthee/data/models/sleep_health.dart';
 import 'package:healthee/data/models/sleep_history.dart';
-import 'package:healthee/features/today/today_labels.dart';
 import 'package:healthee/shared/charts/h_stacked_sleep.dart';
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/metric_info/metric_detail.dart';
 import 'package:healthee/shared/reveal_once.dart';
 import 'package:healthee/shared/v02/colour_key.dart';
@@ -103,7 +103,7 @@ class SleepWeekPanel extends StatelessWidget {
             // panel; a second vocabulary for the same fact would be worse than a
             // dash the owner already knows.
             switch (nights.last.durationMin) {
-              final int minutes => hoursMinutes(minutes),
+              final int minutes => durationText(minutes),
               null => '—',
             },
             context_:
@@ -184,7 +184,7 @@ class SleepHealthPanel extends StatelessWidget {
           // figures here are what the drawing is measured against.
           references: <String>[
             for (final dimension in health.dimensions)
-              '${dimension.name} — reference ${dimension.cutoff}',
+              '${dimension.name}: reference ${dimension.cutoff}',
           ],
           notes: health.researchNotes,
           // The breathing reading's own caveat, moved off the card at the
@@ -268,18 +268,18 @@ class SleepNeedPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          PanelValue(decimalHours(debt.debtMin), unit: 'debt'),
+          PanelValue(hoursText(debt.debtMin / 60), unit: 'debt'),
           if (asleep != null && hasNeed) ...<Widget>[
             const SizedBox(height: comparisonGap),
-            StatRow(<Stat>[Stat('Asleep', hoursMinutes(asleep))]),
+            StatRow(<Stat>[Stat('Asleep', durationText(asleep))]),
             const SizedBox(height: trackGap),
             ProgressTrack(fraction: asleep / need),
             PanelNote(
-              '${hoursMinutes(need)} need · '
-              '${hoursMinutes((need - asleep).clamp(0, need))} short',
+              '${durationText(need)} need · '
+              '${durationText((need - asleep).clamp(0, need))} short',
             ),
           ] else if (hasNeed)
-            PanelNote('${hoursMinutes(need)} need')
+            PanelNote('${durationText(need)} need')
           else
             const PanelNote(kNoSleepNeed),
         ],

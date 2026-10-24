@@ -61,12 +61,14 @@ import 'package:healthee/data/models/finding.dart';
 import 'package:healthee/data/pairing/pairing_repository.dart';
 import 'package:healthee/data/store/view_date.dart';
 import 'package:healthee/features/actions/challenge_detail_screen.dart';
-import 'package:healthee/features/actions/outcomes_screen.dart';
 import 'package:healthee/features/actions/program_detail_screen.dart';
 import 'package:healthee/features/actions/recommendation_history_screen.dart';
 import 'package:healthee/features/activity/fitness_screen.dart';
+import 'package:healthee/features/coach/breathing_plan_screen.dart';
+import 'package:healthee/features/coach/breathing_player_screen.dart';
 import 'package:healthee/features/coach/coach_history_screen.dart';
 import 'package:healthee/features/coach/coach_screen.dart';
+import 'package:healthee/features/coach/every_yes_screen.dart';
 import 'package:healthee/features/gps/gps_screen.dart';
 import 'package:healthee/features/gps/route_detail_screen.dart';
 import 'package:healthee/features/gps/routes_screen.dart';
@@ -76,6 +78,7 @@ import 'package:healthee/features/insights/v02/finding_detail_screen.dart';
 import 'package:healthee/features/sleep/sleep_history_screen.dart';
 import 'package:healthee/features/today/body_screen.dart';
 import 'package:healthee/features/today/recovery_screen.dart';
+import 'package:healthee/features/trends/trends_screen.dart';
 import 'package:healthee/features/workouts/workout_detail_screen.dart';
 import 'package:healthee/features/workouts/workout_history_screen.dart';
 import 'package:healthee/shared/app_shell.dart';
@@ -184,8 +187,8 @@ GoRouter buildRouter(WidgetRef ref) {
         ),
       ),
       GoRoute(
-        path: Routes.outcomes,
-        builder: (context, state) => const OutcomesScreen(),
+        path: Routes.coachLedger,
+        builder: (context, state) => const EveryYesScreen(),
       ),
       GoRoute(
         path: Routes.coach,
@@ -199,6 +202,17 @@ GoRouter buildRouter(WidgetRef ref) {
         builder: (context, state) => const CoachHistoryScreen(),
       ),
       GoRoute(
+        path: Routes.breathingPlan,
+        builder: (context, state) => const BreathingPlanScreen(),
+      ),
+      GoRoute(
+        path: Routes.breathingPlayer,
+        builder: (context, state) => BreathingPlayerScreen(
+          item: state.uri.queryParameters['item'],
+          patternId: state.uri.queryParameters['pattern'],
+        ),
+      ),
+      GoRoute(
         path: Routes.body,
         builder: (context, state) => const BodyScreen(),
       ),
@@ -209,6 +223,10 @@ GoRouter buildRouter(WidgetRef ref) {
       GoRoute(
         path: Routes.recovery,
         builder: (context, state) => const RecoveryScreen(),
+      ),
+      GoRoute(
+        path: Routes.trends,
+        builder: (context, state) => const TrendsScreen(),
       ),
       GoRoute(
         path: Routes.sleepHistory,

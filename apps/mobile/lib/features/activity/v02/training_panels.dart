@@ -31,6 +31,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:healthee/core/theme/metric_hue.dart';
 import 'package:healthee/core/theme/tone.dart';
 import 'package:healthee/data/honesty/disclosure.dart';
 import 'package:healthee/data/models/activity_today.dart';
@@ -111,8 +112,11 @@ class TrainingLoadPanel extends StatelessWidget {
                 semanticLabel: 'Training load over the recent days',
               ),
             ),
-          if (_stats() case final List<Stat> stats when stats.isNotEmpty)
-            ...<Widget>[const SizedBox(height: statsGap), StatRow(stats)],
+          if (_stats() case final List<Stat> stats
+              when stats.isNotEmpty) ...<Widget>[
+            const SizedBox(height: statsGap),
+            StatRow(stats),
+          ],
           const PanelNote(kLoadNote),
         ],
       ),
@@ -169,7 +173,7 @@ class FitnessSourcePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Panel(
-      tone: Tone.fitness,
+      tone: toneFor('vo2max_estimate'),
       label: 'VO₂max · estimate',
       // 300+ characters of server prose about how this number was made. Printed
       // inline it is the essay the owner asked us to stop printing; dropped it
@@ -229,7 +233,6 @@ class FitnessSourcePanel extends StatelessWidget {
         '$sessions recorded ${sessions == 1 ? 'session' : 'sessions'}',
     ].join('\n');
   }
-
 }
 
 /// The prototype's own line under the rail: this estimate is session-based, and

@@ -59,10 +59,7 @@ class FlushCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: ShapeDecoration(
         color: colors.surface,
-        shape: hSquircle(
-          radius,
-          side: BorderSide(color: colors.line, width: hairline),
-        ),
+        shape: hSquircle(radius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -165,7 +162,7 @@ class V02ListRow extends StatelessWidget {
               Icon(
                 SolarIconsOutline.altArrowRight,
                 size: chevronSize,
-                color: colors.ink3,
+                color: colors.ink2,
               ),
             ],
           ],

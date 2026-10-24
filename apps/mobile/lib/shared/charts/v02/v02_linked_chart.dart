@@ -34,6 +34,8 @@ import 'package:healthee/shared/charts/v02/chart_ticks.dart';
 import 'package:healthee/shared/charts/v02/chart_void.dart';
 import 'package:healthee/shared/charts/v02/linked_painter.dart';
 
+export 'package:healthee/shared/charts/v02/linked_lane_marks.dart'
+    show LaneReference;
 export 'package:healthee/shared/charts/v02/linked_painter.dart' show LinkedPane;
 
 /// Two panes, one cursor, independent labelled scales.
@@ -102,7 +104,12 @@ class V02LinkedChart extends StatelessWidget {
           // lets the step stay round: heart rate becomes 60 · 65 · 70 · 75.
           // Fewer labels on a half-height lane is not less information — six
           // numbers you cannot read is less than four you can.
-          ticks: ChartTicks.nice(pane.values.whereType<double>(), target: 2),
+          ticks: ChartTicks.nice(
+            pane.values.whereType<double>(),
+            include: _headroom(pane),
+            target: 2,
+            zeroBased: pane.bars,
+          ),
         ),
     ];
     final chart = Column(
@@ -213,3 +220,19 @@ class _PaneReading extends StatelessWidget {
     ],
   );
 }
+
+/// What a pane's axis must also reach: its reference line and, below it, room
+/// for the reference's label, so the words never land on the next lane.
+List<double> _headroom(LinkedPane pane) {
+  final reference = pane.reference?.value;
+  if (reference == null) {
+    return const <double>[];
+  }
+  final values = <double>[...pane.values.whereType<double>(), reference];
+  final low = values.reduce((a, b) => a < b ? a : b);
+  final high = values.reduce((a, b) => a > b ? a : b);
+  return <double>[reference, low - (high - low) * _labelRoom];
+}
+
+/// The fraction of the lane's span kept clear under a reference line.
+const double _labelRoom = 0.25;

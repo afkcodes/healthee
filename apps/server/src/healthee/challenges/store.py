@@ -62,6 +62,14 @@ COLUMNS = (
     # `0010`. `standard` on every standalone challenge; `deload` only on a rung the
     # ladder inserted after one timed out unmet (``challenges.ladder``).
     "kind",
+    # `0023`. The weekly coach job's own words and bad-day floor; every one nullable
+    # ("not authored"), and none of them changes how the rule is scored.
+    "action_text",
+    "slot_text",
+    "floor_value",
+    "floor_text",
+    "counts_when",
+    "days_required",
 )
 
 SELECT = ", ".join(COLUMNS)  # a module constant of column names, never input
@@ -162,6 +170,17 @@ def delete_suggestions(cur: Cur, user_id: UUID) -> int:
     return cur.rowcount
 
 
+# The optional `0023` fields `insert_suggested` accepts, in the order the INSERT lists them.
+_COACH_FIELDS = (
+    "action_text",
+    "slot_text",
+    "floor_value",
+    "floor_text",
+    "counts_when",
+    "days_required",
+)
+
+
 def insert_suggested(cur: Cur, user_id: UUID, gen_date: date, challenge: dict) -> int:
     """Persist one generated challenge as ``suggested``; returns its id.
 
@@ -173,8 +192,10 @@ def insert_suggested(cur: Cur, user_id: UUID, gen_date: date, challenge: dict) -
     cur.execute(
         "INSERT INTO challenge (user_id, gen_date, title, why, category, difficulty, "
         "  metric, comparator, target_value, cadence, window_days, expected_outcome, "
-        "  how_to, research_note_ids, status) "
-        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'suggested') RETURNING id",
+        "  how_to, research_note_ids, action_text, slot_text, floor_value, floor_text, "
+        "  counts_when, days_required, status) "
+        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'suggested') "
+        "RETURNING id",
         (
             user_id,
             gen_date,
@@ -190,6 +211,7 @@ def insert_suggested(cur: Cur, user_id: UUID, gen_date: date, challenge: dict) -
             challenge.get("expected_outcome"),
             challenge.get("how_to"),
             list(challenge["research_note_ids"]),
+            *(challenge.get(field) for field in _COACH_FIELDS),
         ),
     )
     row = cur.fetchone()
@@ -234,6 +256,19 @@ def set_target(cur: Cur, user_id: UUID, challenge_id: int, target_value: float) 
         "UPDATE challenge SET target_value = %s "
         "WHERE user_id = %s AND id = %s AND status = 'active'",
         (target_value, user_id, challenge_id),
+    )
+    return cur.rowcount == 1
+
+
+def set_slot_text(cur: Cur, user_id: UUID, challenge_id: int, slot_text: str) -> bool:
+    """Rewrite ONLY ``slot_text`` on a suggested or active challenge. False ⇒ neither.
+
+    A label for when the owner will do it; it feeds no rule, target or verdict.
+    """
+    cur.execute(
+        "UPDATE challenge SET slot_text = %s "
+        "WHERE user_id = %s AND id = %s AND status IN ('suggested', 'active')",
+        (slot_text, user_id, challenge_id),
     )
     return cur.rowcount == 1
 

@@ -66,16 +66,16 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:healthee/core/theme/tokens.dart';
+import 'package:healthee/core/theme/instrument_hues.dart';
 import 'package:healthee/core/theme/tone.dart';
 import 'package:healthee/data/honesty/disclosure.dart';
 import 'package:healthee/data/honesty/reading.dart';
 import 'package:healthee/data/models/sleep_debt.dart';
 import 'package:healthee/data/models/sleep_night.dart';
-import 'package:healthee/features/sleep/sleep_format.dart';
 import 'package:healthee/features/sleep/sleep_windows.dart';
 import 'package:healthee/shared/charts/h_debt_bars.dart';
 import 'package:healthee/shared/charts/v02/chart_void.dart';
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/reveal_once.dart';
 import 'package:healthee/shared/v02/colour_key.dart';
 import 'package:healthee/shared/v02/panel.dart';
@@ -162,7 +162,7 @@ class SleepNeedPanel extends StatelessWidget {
     if (need == null || need <= 0) {
       return kNoSleepNeed;
     }
-    return 'Measured against your ${hoursMinutes(need)} age-based need, summed '
+    return 'Measured against your ${durationText(need)} age-based need, summed '
         'over the ${nights.length} measured '
         '${nights.length == 1 ? 'night' : 'nights'} of the last seven. This is '
         'not the 14-night modelled debt.';
@@ -189,9 +189,9 @@ class SleepNeedPanel extends StatelessWidget {
         children: <Widget>[
           if (shortfall != null && hasNeed)
             PanelValue(
-              hoursMinutes(shortfall),
+              durationText(shortfall),
               unit: 'debt',
-              context_: '${hoursMinutes(need)} need',
+              context_: '${durationText(need)} need',
             )
           else
             const WithheldPanel(
@@ -211,7 +211,7 @@ class SleepNeedPanel extends StatelessWidget {
             StatRow(<Stat>[
               if (percent != null)
                 Stat('Sleep performance', '${percent.round()}', unit: '%'),
-              if (gap != null) Stat('Short of need', hoursMinutes(gap)),
+              if (gap != null) Stat('Short of need', durationText(gap)),
             ]),
           ],
           // **`Nights counted` is gone and the bare track with it.** The count
@@ -247,11 +247,11 @@ class SleepNeedPanel extends StatelessWidget {
             // The ghost had NO legend entry, and it is the mark the card's own
             // title is about. Three entries for three things the chart draws.
             ColourKey(<ColourKeyEntry>[
-              ColourKeyEntry('Met ${hoursMinutes(need)}', tone: Tone.fitness),
-              const ColourKeyEntry('Slept', tone: Tone.heart),
+              ColourKeyEntry('Met ${durationText(need)}', tone: Tone.fitness),
+              const ColourKeyEntry('Slept', tone: Tone.sleep),
               ColourKeyEntry(
                 'Still needed',
-                colour: context.colors.alert.withValues(
+                colour: context.hues.sleep.withValues(
                   alpha: HDebtBars.ghostAlpha,
                 ),
               ),

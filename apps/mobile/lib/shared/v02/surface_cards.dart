@@ -1,10 +1,12 @@
 /// `.card`, `.card.flush` and `.divider` — the containers the settings screens
 /// are built out of.
 ///
+/// The owner's brief replaced the prototype's frame: a card is the surface
+/// colour with NO border and NO shadow, radius 20 ([Radii.card]), padding 20.
+///
 /// ```css
 /// .card         { background: var(--surface); color: var(--ink);
-///                 border: 1px solid var(--line); border-radius: 22px;
-///                 padding: 20px; }
+///                 border-radius: 20px; padding: 20px; }
 /// .card.flush   { padding: 0; overflow: clip; }
 /// .card .divider{ margin-inline: -20px; }
 /// .divider      { border: 0; height: 1px; background: var(--line);
@@ -13,14 +15,13 @@
 /// ```
 ///
 /// **`.card` is not `Panel`.** They are two containers in the prototype with two
-/// paddings — 20 against 18 — and `Panel` additionally carries a caveat scope, a
-/// tone declaration and a head. A settings card holds rows and prose, has no
+/// paddings (20 against a compact 16), and `Panel` additionally carries a
+/// caveat scope, a tone declaration and a head. A settings card holds rows and prose, has no
 /// number in it and therefore has nothing to disclose; borrowing the instrument
 /// container for it would put a disclosure carrier around a list of links.
 ///
-/// The radius is shared, and shared deliberately: `richer.css` sets
-/// `.card, .metric-card, .challenge-card { border-radius: 22px }` and `.panel`
-/// declares the same 22, so one corner runs through the whole product.
+/// The radius is shared, and shared deliberately: every card and panel takes
+/// [Radii.card], so one corner runs through the whole product.
 ///
 /// [FlushCard] draws the hairline BETWEEN its children rather than asking each
 /// child to draw its own top border. `.list-row + .list-row` is a sibling
@@ -34,7 +35,7 @@ import 'package:healthee/core/theme/shapes.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/type_scale_forms.dart';
 
-/// `.card` — a padded surface with a hairline edge.
+/// `.card` — a padded surface, no edge.
 class PlainCard extends StatelessWidget {
   /// Wraps [child] in the card frame.
   const PlainCard({required this.child, this.inset, super.key});
@@ -42,8 +43,8 @@ class PlainCard extends StatelessWidget {
   /// `padding: 20px` — `--space-xl`.
   static const double padding = 20;
 
-  /// `border-radius: 22px`.
-  static const double radius = 22;
+  /// The brief's card radius.
+  static const double radius = Radii.card;
 
   /// Overrides the card's inset. Null takes [padding].
   ///
@@ -62,10 +63,7 @@ class PlainCard extends StatelessWidget {
       padding: EdgeInsets.all(inset ?? padding),
       decoration: ShapeDecoration(
         color: colors.surface,
-        shape: hSquircle(
-          radius,
-          side: BorderSide(color: colors.line, width: hairline),
-        ),
+        shape: hSquircle(radius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -96,10 +94,7 @@ class FlushCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: ShapeDecoration(
         color: colors.surface,
-        shape: hSquircle(
-          PlainCard.radius,
-          side: BorderSide(color: colors.line, width: hairline),
-        ),
+        shape: hSquircle(PlainCard.radius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

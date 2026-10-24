@@ -42,14 +42,15 @@ import 'package:healthee/core/theme/tone.dart';
 import 'package:healthee/data/models/strength.dart';
 import 'package:healthee/data/workouts/workout_summary.dart';
 import 'package:healthee/shared/format/date_labels.dart';
-import 'package:healthee/shared/format/time_labels.dart';
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/metric_info/metric_detail.dart';
 import 'package:healthee/shared/metric_info/metric_info_sheet.dart';
 import 'package:healthee/shared/v02/controls.dart';
 import 'package:healthee/shared/v02/labels.dart';
 import 'package:healthee/shared/v02/list_rows.dart';
 import 'package:healthee/shared/v02/stat_block.dart';
-import 'package:healthee/shared/v02/surface_cards.dart' show PlainCard, SmallProse;
+import 'package:healthee/shared/v02/surface_cards.dart'
+    show PlainCard, SmallProse;
 import 'package:solar_icons/solar_icons.dart';
 
 /// `H.evidence(note)`'s default label.
@@ -113,7 +114,7 @@ class WorkoutDayGroup extends StatelessWidget {
 /// names the distance. Two payloads, two lines; a shared formatter would have to
 /// take a union of both types to say less than either.
 String sessionLine(WorkoutSummary workout) => <String>[
-  if (workout.durationMin case final int minutes) durationLabel(minutes),
+  if (workout.durationMin case final int minutes) durationText(minutes),
   if (workout.distanceM case final double metres)
     '${(metres / 1000).toStringAsFixed(1)} km',
   if (workout.avgHr case final int bpm) '$bpm bpm avg',
@@ -200,7 +201,6 @@ List<({String date, List<WorkoutSummary> sessions})> byDay(
     days.putIfAbsent(key, () => <WorkoutSummary>[]).add(session);
   }
   return <({String date, List<WorkoutSummary> sessions})>[
-    for (final entry in days.entries)
-      (date: entry.key, sessions: entry.value),
+    for (final entry in days.entries) (date: entry.key, sessions: entry.value),
   ];
 }

@@ -8,8 +8,8 @@ marker are stubbed, so these prove the supervision contract exactly —
     `challenges` consults the flag it writes in the very next step;
   * `challenges` runs before correlate and depends on nothing — a correlate failure
     must not reach back and skip closing out a commitment that already ended;
-  * a `correlate` failure ABORTS `recs` AND `warm` (both read its findings);
-  * a `briefing` failure does not undo the recs that already ran;
+  * a `correlate` failure ABORTS `coach_today` AND `warm` (both read its findings);
+  * a `briefing` failure does not undo the coach_today that already ran;
   * a `warm` failure is non-fatal — it costs the coaching lines, not the briefing;
   * a second run for the same day is a deduped no-op;
   * a NON-PREMIUM owner's chain runs the three deterministic steps — `illness` among
@@ -65,7 +65,7 @@ def _stub_steps(monkeypatch: pytest.MonkeyPatch, **raisers: bool) -> dict[str, i
         "illness": 0,
         "challenges": 0,
         "correlate": 0,
-        "recs": 0,
+        "coach_today": 0,
         "warm": 0,
         "briefing": 0,
     }
@@ -87,20 +87,20 @@ def _stub_steps(monkeypatch: pytest.MonkeyPatch, **raisers: bool) -> dict[str, i
 def test_a_raising_step_is_caught_reported_and_not_swallowed(
     monkeypatch: pytest.MonkeyPatch, notices: list[str]
 ) -> None:
-    calls = _stub_steps(monkeypatch, recs=True)
+    calls = _stub_steps(monkeypatch, coach_today=True)
     result = chain.run_chain(_OWNER, _TZ, DAY)  # must not raise
 
-    recs = next(s for s in result.steps if s.name == "recs")
-    assert recs.status == "failed"
-    assert "recs boom" in (recs.error or "")
+    coach_today = next(s for s in result.steps if s.name == "coach_today")
+    assert coach_today.status == "failed"
+    assert "coach_today boom" in (coach_today.error or "")
     # Reported to the health surface — the failure is visible, not hidden.
-    assert any("chain step 'recs' failed" in n and "recs boom" in n for n in notices)
+    assert any("chain step 'coach_today' failed" in n and "coach_today boom" in n for n in notices)
     # The other steps still ran; the process was not crashed.
     assert calls == {
         "illness": 1,
         "challenges": 1,
         "correlate": 1,
-        "recs": 1,
+        "coach_today": 1,
         "warm": 1,
         "briefing": 1,
     }
@@ -133,7 +133,7 @@ def test_challenges_runs_before_correlate_and_depends_on_nothing(
 ) -> None:
     """Closing out a finished commitment is not downstream of any computation.
 
-    A correlate failure — which legitimately aborts recs and warm — must not reach back
+    A correlate failure — which legitimately aborts coach_today and warm — must not reach back
     and skip it: an owner whose findings broke still deserves an honest outcome for the
     challenge that ended last night.
     """
@@ -160,7 +160,11 @@ def test_a_challenges_failure_is_reported_and_the_chain_continues(
 
     statuses = {s.name: s.status for s in result.steps}
     assert statuses["challenges"] == "failed"
-    assert (statuses["correlate"], statuses["recs"], statuses["briefing"]) == ("ok", "ok", "ok")
+    assert (statuses["correlate"], statuses["coach_today"], statuses["briefing"]) == (
+        "ok",
+        "ok",
+        "ok",
+    )
     assert calls["correlate"] == 1
     assert any("chain step 'challenges' failed" in n and "challenges boom" in n for n in notices)
 
@@ -171,9 +175,9 @@ def test_correlate_failure_aborts_recs(monkeypatch: pytest.MonkeyPatch, notices:
 
     statuses = {s.name: s.status for s in result.steps}
     assert statuses["correlate"] == "failed"
-    assert statuses["recs"] == "skipped"  # dependency abort
+    assert statuses["coach_today"] == "skipped"  # dependency abort
     assert statuses["warm"] == "skipped"  # ditto: warming reads correlate's findings too
-    assert calls["recs"] == 0  # recs was NOT executed on stale inputs
+    assert calls["coach_today"] == 0  # coach_today was NOT executed on stale inputs
     assert calls["warm"] == 0
     assert any("chain step 'correlate' failed" in n for n in notices)
 
@@ -185,8 +189,8 @@ def test_briefing_failure_does_not_undo_recs(
     result = chain.run_chain(_OWNER, _TZ, DAY)
 
     statuses = {s.name: s.status for s in result.steps}
-    assert statuses["recs"] == "ok"  # recs completed and its result stands
-    assert calls["recs"] == 1
+    assert statuses["coach_today"] == "ok"  # coach_today completed and its result stands
+    assert calls["coach_today"] == 1
     assert statuses["briefing"] == "failed"
     assert any("chain step 'briefing' failed" in n for n in notices)
 
@@ -206,7 +210,7 @@ def test_warm_failure_is_non_fatal_and_still_reported(
 
     statuses = {s.name: s.status for s in result.steps}
     assert statuses["warm"] == "failed"
-    assert statuses["recs"] == "ok"  # the recs already persisted stand
+    assert statuses["coach_today"] == "ok"  # the coach_today already persisted stand
     assert statuses["briefing"] == "ok"  # the chain continued past the dead line
     assert calls["briefing"] == 1
     assert any("chain step 'warm' failed" in n and "warm boom" in n for n in notices)
@@ -223,7 +227,7 @@ def test_second_run_same_day_is_a_deduped_no_op(
         "illness": 1,
         "challenges": 1,
         "correlate": 1,
-        "recs": 1,
+        "coach_today": 1,
         "warm": 1,
         "briefing": 1,
     }
@@ -235,7 +239,7 @@ def test_second_run_same_day_is_a_deduped_no_op(
         "illness": 1,
         "challenges": 1,
         "correlate": 1,
-        "recs": 1,
+        "coach_today": 1,
         "warm": 1,
         "briefing": 1,
     }  # nothing re-fired
@@ -246,7 +250,7 @@ def test_second_run_same_day_is_a_deduped_no_op(
         "illness": 2,
         "challenges": 2,
         "correlate": 2,
-        "recs": 2,
+        "coach_today": 2,
         "warm": 2,
         "briefing": 2,
     }
@@ -258,7 +262,7 @@ def test_second_run_same_day_is_a_deduped_no_op(
 def test_a_free_owners_chain_calls_none_of_the_three_llm_steps(
     monkeypatch: pytest.MonkeyPatch, notices: list[str]
 ) -> None:
-    """The cost hole, closed: recs / warm / briefing are never even CALLED.
+    """The cost hole, closed: coach_today / warm / briefing are never even CALLED.
 
     Asserted on the call counter, not on the outcome list — an implementation that ran
     the steps and threw their output away would produce identical `skipped` statuses
@@ -273,7 +277,7 @@ def test_a_free_owners_chain_calls_none_of_the_three_llm_steps(
         "illness": 1,
         "challenges": 1,
         "correlate": 1,
-        "recs": 0,
+        "coach_today": 0,
         "warm": 0,
         "briefing": 0,
     }
@@ -282,12 +286,12 @@ def test_a_free_owners_chain_calls_none_of_the_three_llm_steps(
         "illness": "ok",
         "challenges": "ok",
         "correlate": "ok",
-        "recs": "skipped",
+        "coach_today": "skipped",
         "warm": "skipped",
         "briefing": "skipped",
     }
     # Named, not silently absent: the health surface must be able to tell "this owner is
-    # not entitled" from "recs broke again" (standards §Errors).
+    # not entitled" from "coach_today broke again" (standards §Errors).
     skipped = [s for s in result.steps if s.status == "skipped"]
     assert all("not premium" in (s.error or "") for s in skipped)
     assert notices == []  # a skip is not a failure — nothing is alerted

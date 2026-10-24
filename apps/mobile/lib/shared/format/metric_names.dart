@@ -29,6 +29,13 @@ library;
 /// and every id it can emit is either here or deliberately absent.
 String metricName(String metric) => _names[metric] ?? metric;
 
+/// The unit word a target is quoted in: `min`, `steps`, else the metric's name.
+String metricUnitWord(String metric) => switch (metric) {
+  'mvpa_min' => 'min',
+  'steps_total' => 'steps',
+  final other => metricName(other),
+};
+
 /// The same name, cased for a heading rather than for a sentence.
 ///
 /// [metricName] answers "what do I call this inside a sentence", so its table

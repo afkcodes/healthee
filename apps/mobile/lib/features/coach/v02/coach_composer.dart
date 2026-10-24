@@ -207,7 +207,7 @@ class _CoachComposerState extends State<CoachComposer> {
                   child: Icon(
                     SolarIconsOutline.arrowUp,
                     size: CoachComposer.sendIcon,
-                    color: ready ? colors.onAccent : colors.ink3,
+                    color: ready ? colors.onAccent : colors.ink2,
                   ),
                 ),
               ),

@@ -23,7 +23,7 @@
 /// would produce yesterday's.
 ///
 /// The alternative was to draw today's numbers under yesterday's date. That is
-/// stale-as-current: the failure `LastKnown` exists for, the one `vo2max_tier`'s
+/// stale-as-current: the failure `vo2max_tier`'s
 /// freshness horizon exists for, and the one this repo has already swept three
 /// times. So the screens say what is missing and why, which is also why this is
 /// a *titled* block rather than a blank space — a screen that simply ends is

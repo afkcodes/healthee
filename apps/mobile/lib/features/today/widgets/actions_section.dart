@@ -181,14 +181,14 @@ class _ActionsSectionState extends State<ActionsSection> {
                         if (widget.action case final String daily)
                           GroundedProse(
                             text: daily,
-                            style: HType.sans(colors.ink3, size: 12),
+                            style: HType.sans(colors.ink2, size: 12),
                             maxLines: 2,
                           )
                         else
                           Text(
                             '${items.length} '
                             '${items.length == 1 ? 'way' : 'ways'} to improve today',
-                            style: HType.sans(colors.ink3, size: 12),
+                            style: HType.sans(colors.ink2, size: 12),
                           ),
                         // The rows' own day, said in words, whenever it is not
                         // the day on screen. Drawn under whichever subtitle ran
@@ -200,7 +200,7 @@ class _ActionsSectionState extends State<ActionsSection> {
                           const SizedBox(height: 2),
                           Text(
                             actionsFromDay(day),
-                            style: HType.sans(colors.ink3, size: 11),
+                            style: HType.sans(colors.ink2, size: 11),
                           ),
                         ],
                       ],
@@ -224,7 +224,7 @@ class _ActionsSectionState extends State<ActionsSection> {
                       child: Icon(
                         SolarIconsOutline.altArrowRight,
                         size: 18,
-                        color: colors.ink3,
+                        color: colors.ink2,
                       ),
                     ),
                 ],
@@ -314,7 +314,7 @@ class _ActionRowState extends State<ActionRow> {
                 child: Icon(
                   SolarIconsOutline.altArrowRight,
                   size: 16,
-                  color: colors.ink3,
+                  color: colors.ink2,
                 ),
               ),
             ],
@@ -349,10 +349,7 @@ class _Expanded extends StatelessWidget {
       children: [
         if (rec.rationale case final String why) ...[
           const SizedBox(height: 10),
-          GroundedProse(
-            text: why,
-            style: HType.sans(colors.ink2, size: 13, height: 1.5),
-          ),
+          GroundedProse(text: why, style: HType.sans(colors.ink2, size: 13)),
         ],
         if (rec.expectedEffect case final String effect) ...[
           const SizedBox(height: 10),
@@ -370,7 +367,7 @@ class _Expanded extends StatelessWidget {
                 Expanded(
                   child: GroundedProse(
                     text: effect,
-                    style: HType.sans(colors.ink3, size: 11.5, height: 1.4),
+                    style: HType.sans(colors.ink2, size: 11.5),
                   ),
                 ),
               ],

@@ -71,9 +71,12 @@ class ChapterNav extends StatelessWidget {
   /// `.chapter-nav { margin-block: 20px 8px }`.
   static const EdgeInsets margin = EdgeInsets.only(top: 20, bottom: 8);
 
-  /// `.chapter-nav button { padding: 9px 12px }`.
+  /// `.chapter-nav button { padding: 9px 12px }`, with the sides at 10. The
+  /// CSS's 12 framed a 10 px label; at the ladder's 12 px caption, the 16 px
+  /// this takes back across Sleep's four pills is what fits them on a 390 px
+  /// phone without the last one cut at the edge (narrower phones scroll).
   static const EdgeInsets buttonPadding = EdgeInsets.symmetric(
-    horizontal: 12,
+    horizontal: 10,
     vertical: 9,
   );
 
@@ -195,8 +198,8 @@ class ChapterHeading extends StatelessWidget {
     bottom: PageSpacing.afterHeading,
   );
 
-  /// `.chapter-heading .icon { width: 18px }`, and its `gap: 8px`.
-  static const double iconSize = 18;
+  /// An inline icon beside text is 16 px (the brief), in ink2 not the family.
+  static const double iconSize = 16;
 
   /// `.chapter-heading { gap: 8px }` and the rule's own `margin-left: 8px`.
   static const double gap = 8;
@@ -204,7 +207,7 @@ class ChapterHeading extends StatelessWidget {
   /// The chapter's name.
   final String title;
 
-  /// Drawn before it, in the family colour.
+  /// Drawn before it, 16 px in ink2.
   final IconData icon;
 
   /// The family for this heading. Null inherits.
@@ -215,7 +218,10 @@ class ChapterHeading extends StatelessWidget {
     final tone = this.tone;
     return tone == null
         ? _body(context)
-        : ToneScope(tone: tone, child: Builder(builder: _body));
+        : ToneScope(
+            tone: tone,
+            child: Builder(builder: _body),
+          );
   }
 
   /// The shortest the rule is allowed to get before the title gives way.
@@ -256,7 +262,8 @@ class ChapterHeading extends StatelessWidget {
       padding: margin,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final room = constraints.maxWidth - iconSize - gap - gap * 2 - minRule;
+          final room =
+              constraints.maxWidth - iconSize - gap - gap * 2 - minRule;
           final painter = TextPainter(
             text: TextSpan(text: title, style: style),
             maxLines: 1,
@@ -267,7 +274,7 @@ class ChapterHeading extends StatelessWidget {
           painter.dispose();
           return Row(
             children: <Widget>[
-              Icon(icon, size: iconSize, color: context.family),
+              Icon(icon, size: iconSize, color: colors.ink2),
               const SizedBox(width: gap),
               SizedBox(
                 width: wanted < room ? wanted : (room < 0 ? 0 : room),

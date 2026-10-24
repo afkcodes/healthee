@@ -24,10 +24,10 @@ import 'package:healthee/data/store/local_store.dart';
 import 'package:healthee/features/activity/activity_screen.dart';
 import 'package:healthee/features/activity/v02/movement_panels.dart';
 import 'package:healthee/features/insights/insights_screen.dart';
-import 'package:healthee/features/insights/widgets/trends_section.dart';
+import 'package:healthee/features/insights/widgets/pattern_tile.dart';
+import 'package:healthee/shared/charts/v02/signal_spark.dart';
 import 'package:healthee/shared/charts/v02/v02_bar_chart.dart';
 import 'package:healthee/shared/charts/v02/v02_linked_chart.dart';
-import 'package:healthee/shared/charts/v02/v02_sparkline.dart';
 import 'package:healthee/shared/v02/instruments/vo2max_rail.dart';
 
 import '../_today_stubs.dart';
@@ -151,9 +151,15 @@ void main() {
           // And nothing ran off the right edge of the page.
           for (final text in find.byType(Text).evaluate()) {
             final box = text.renderObject! as RenderBox;
-            final left = box.localToGlobal(Offset.zero).dx;
+            // The bottom-right CORNER, in page coordinates: a `Text` under a
+            // `FittedBox` (a hero figure scaled to fit its tile) has a layout
+            // size that is its unscaled natural width, and only the transformed
+            // corner says where it is actually painted.
+            final right = box
+                .localToGlobal(box.size.bottomRight(Offset.zero))
+                .dx;
             expect(
-              left + box.size.width,
+              right,
               lessThanOrEqualTo(width + 0.5),
               reason:
                   '"${(text.widget as Text).data}" runs past $width px on '
@@ -258,16 +264,17 @@ void main() {
   });
 
   group('Insights’ charts paint, at the size the layout gave them', () {
-    testWidgets('EVERY TREND SPARKLINE IS 30 px TALL AND DRAWS A PATH', (
+    testWidgets('EVERY PATTERN SPARK IS ITS HEIGHT TALL AND DRAWS A PATH', (
       tester,
     ) async {
       await open(tester, const InsightsScreen());
-      final chart = find.byType(V02Sparkline).first;
+      final chart = find.byType(SignalSpark).first;
       await reveal(tester, chart);
 
-      expect(tester.getSize(chart).height, TrendPanel.sparklineHeight);
-      // Body + trace. A chart that drew one of the two lost half its ink.
+      expect(tester.getSize(chart).height, PatternTile.sparkHeight);
+      // The line, and the band behind it as a rounded rect.
       expect(countOf(paintedAt(tester, chart), #drawPath), greaterThan(0));
+      expect(countOf(paintedAt(tester, chart), #drawRRect), greaterThan(0));
     });
 
     testWidgets('THE LINKED CHART DRAWS BOTH PANES, AT REAL HEIGHT', (
@@ -278,11 +285,16 @@ void main() {
       await reveal(tester, chart);
 
       expect(paintSize(tester, chart).height, greaterThan(100));
-      // Two panes, each an area and a trace, so at least four paths.
+      // Heart rate is an area and a trace; stress is columns.
       expect(
         countOf(paintedAt(tester, chart), #drawPath),
-        greaterThanOrEqualTo(4),
+        greaterThanOrEqualTo(2),
         reason: 'a linked chart with one live pane is a different chart',
+      );
+      expect(
+        countOf(paintedAt(tester, chart), #drawRRect),
+        greaterThan(0),
+        reason: 'stress is drawn as columns',
       );
     });
   });

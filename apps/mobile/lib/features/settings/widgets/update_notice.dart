@@ -92,7 +92,7 @@ class UpdateNotice extends ConsumerWidget {
       children: <Widget>[
         Text(
           updateLine(status),
-          style: FormType.fieldHint.copyWith(color: colors.ink3),
+          style: FormType.fieldHint.copyWith(color: colors.ink2),
         ),
         if (release != null) ...<Widget>[
           const SizedBox(height: 12),

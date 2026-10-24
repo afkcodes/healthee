@@ -53,6 +53,7 @@ class SleepWindows {
       latest: latest,
       previous: nights.length > 1 ? nights[1] : null,
       recent: nights.take(14).toList(),
+      earlier: nights.skip(14).take(14).toList(),
       week: <SleepNightSummary>[
         for (final night in nights.take(7).toList().reversed)
           SleepNightSummary(
@@ -79,6 +80,7 @@ class SleepWindows {
     required this.latest,
     required this.previous,
     required this.recent,
+    required this.earlier,
     required this.week,
     required this.debt,
     required this.bedtime,
@@ -117,6 +119,9 @@ class SleepWindows {
 
   /// The last fourteen nights, newest first.
   final List<SleepNight> recent;
+
+  /// The fourteen nights before those, newest first: the trends' usual.
+  final List<SleepNight> earlier;
 
   /// The last seven nights, oldest first, as the stacked chart's model.
   final List<SleepNightSummary> week;

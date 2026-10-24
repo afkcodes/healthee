@@ -86,10 +86,7 @@ class InsightsSection extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Text(
-              nothingYet,
-              style: HType.sans(colors.ink3, size: 13.5, height: 1.5),
-            ),
+            child: Text(nothingYet, style: HType.sans(colors.ink2, size: 13.5)),
           ),
         ],
       );
@@ -146,7 +143,7 @@ class _FindingRow extends StatelessWidget {
           describeFinding(finding).headline,
           // 15/1.3, not 16/1.4. Two lines of serif is most of one of these
           // cards, so the leading is where the height is.
-          style: HType.serif(colors.ink, size: 15, height: 1.3),
+          style: HType.serif(colors.ink, size: 15),
         ),
         const SizedBox(height: _blockGap),
         Row(
@@ -197,7 +194,7 @@ class _Subjects extends StatelessWidget {
         child: Icon(
           SolarIconsOutline.arrowRight,
           size: 11,
-          color: context.colors.ink3,
+          color: context.colors.ink2,
         ),
       ),
       Flexible(child: _Chip(pair.last)),
@@ -216,7 +213,7 @@ class _Chip extends StatelessWidget {
     child: Builder(
       builder: (context) => Text(
         metricName(metric).toUpperCase(),
-        style: HType.label(context.family, size: 9, tracking: 0.2),
+        style: HType.label(context.family),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),

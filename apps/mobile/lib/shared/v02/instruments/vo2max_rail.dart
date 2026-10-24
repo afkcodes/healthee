@@ -80,11 +80,7 @@ class Vo2maxRail extends StatelessWidget {
   /// The window the rail spans, widened to hold everything it must draw.
   ({double low, double high}) get window {
     final error = errorMagnitude ?? 0;
-    final values = <double>[
-      estimate - error,
-      estimate + error,
-      ?medianForAge,
-    ];
+    final values = <double>[estimate - error, estimate + error, ?medianForAge];
     final low = math.min(
       kRailDefaultLow,
       ((values.reduce(math.min) - 2) / kRailTickStep).floorToDouble() *
@@ -241,7 +237,7 @@ class _Vo2maxRailPainter extends CustomPainter {
       );
     }
 
-    final style = TypeScale.tileMeta.copyWith(color: ink2);
+    final style = TypeScale.colourKey.copyWith(color: ink2);
     for (
       var value = window.low;
       value <= window.high + 0.001;

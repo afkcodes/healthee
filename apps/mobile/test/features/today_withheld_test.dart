@@ -22,6 +22,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:healthee/data/store/local_store.dart';
+import 'package:healthee/features/today/v02/age_paused.dart';
 import 'package:healthee/features/today/v02/night_panels.dart';
 import 'package:healthee/features/today/v02/today_hero_withheld.dart';
 import 'package:healthee/shared/v02/dimension_list.dart';
@@ -93,9 +94,8 @@ void main() {
       ) async {
         await pump(tester, (json) => _withheld(json, entry.key));
 
-        // The remedy is on screen either way. The hero joins it to its pointer
-        // in one paragraph (`today_hero_withheld.dart`), so the match is on the
-        // sentence rather than the whole widget's text.
+        // The remedy is on screen either way: the hero's notice prints the
+        // server's sentence verbatim (`age_paused.dart`).
         expect(
           find.textContaining('Sentinel remedy for ${entry.key}.'),
           findsOneWidget,
@@ -129,6 +129,21 @@ void main() {
         // a broken screen were the same picture.
         await pump(tester, (json) => _absent(json, key));
 
+        if (key == 'biological_age') {
+          // The server sends this one as null ON PURPOSE (no date of birth, or
+          // no term current), so the app explains it instead of calling it a
+          // bug. `age_paused_test.dart` covers each sentence.
+          expect(find.text(kAgePausedTitle), findsOneWidget);
+          expect(
+            find.descendant(
+              of: find.byType(TodayBioHeroWithheld),
+              matching: find.textContaining('a bug on our side'),
+            ),
+            findsNothing,
+          );
+          expect(find.text(cases[key]!), findsNothing);
+          return;
+        }
         expect(find.textContaining('the server did not say why'), findsWidgets);
         expect(
           find.textContaining('Left out: regularity'),

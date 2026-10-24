@@ -9,9 +9,10 @@
 ///      a face without a `tnum` table would keep the `FontFeature` and simply
 ///      ignore it. So this measures two digit strings of the same length and
 ///      asserts they come out the same width, which is what tabular MEANS.
-///   2. **Overflow at display size.** Inter runs wider. The greeting and the
-///      hero figures are the strings with the least slack, so they are laid out
-///      at the narrowest phone this app targets and checked against the box.
+///   2. **Overflow at display size.** A face can run wider. The largest
+///      role's figures and the hero figures are the strings with the least
+///      slack, so they are laid out at the narrowest phone this app targets and
+///      checked against the box.
 ///   3. **A missing glyph.** Instrument Sans had **no U+2082**, so `SpO₂` drew a
 ///      tofu box on the live screen, and no `σ` for the recovery ladder's caption
 ///      either. Neither is caught by anything except looking — or by this, which
@@ -29,6 +30,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:healthee/core/theme/app_theme.dart';
 import 'package:healthee/core/theme/dimensions.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/core/theme/typography.dart';
 
@@ -37,7 +39,11 @@ import 'package:healthee/core/theme/typography.dart';
 const double _narrowContent = 320 - 16 * 2 - 13 * 2;
 
 /// Lays [text] out in [style] and returns its size.
-Size _measure(String text, TextStyle style, {double maxWidth = double.infinity}) {
+Size _measure(
+  String text,
+  TextStyle style, {
+  double maxWidth = double.infinity,
+}) {
   final painter = TextPainter(
     text: TextSpan(text: text, style: style),
     textDirection: TextDirection.ltr,
@@ -123,7 +129,10 @@ Set<int> _codepoints(String path) {
 }
 
 /// A single- or double-quoted Dart string with no escapes or interpolation.
-final RegExp _literal = RegExp(r"'([^'\\\n$]*)'" r'|"([^"\\\n$]*)"');
+final RegExp _literal = RegExp(
+  r"'([^'\\\n$]*)'"
+  r'|"([^"\\\n$]*)"',
+);
 
 /// Codepoints neither bundled face carries, and why each is safe anyway.
 ///
@@ -146,10 +155,9 @@ const Set<int> kFallbackGlyphs = <int>{0x24D8};
 
 void main() {
   setUpAll(() async {
-    final faces = Directory('assets/fonts')
-        .listSync()
-        .whereType<File>()
-        .where((file) => file.path.endsWith('.ttf'));
+    final faces = Directory(
+      'assets/fonts',
+    ).listSync().whereType<File>().where((file) => file.path.endsWith('.ttf'));
     final loader = FontLoader(healtheeFontFamily);
     for (final face in faces) {
       loader.addFont(
@@ -206,7 +214,8 @@ void main() {
       expect(
         covered,
         isNotEmpty,
-        reason: 'the cmap reader found nothing, so every check below is vacuous',
+        reason:
+            'the cmap reader found nothing, so every check below is vacuous',
       );
       // A control: a private-use codepoint no text font covers. Without it a
       // reader that silently answered "everything" would pass every case.
@@ -275,19 +284,24 @@ void main() {
   });
 
   group('display sizes still fit the narrowest phone', () {
-    test('the greeting does not overflow', () {
-      // Inter runs wider than the face it replaced, and the greeting is the
-      // largest type in the app.
-      for (final greeting in <String>[
-        'Good morning.',
-        'Good afternoon.',
-        'Still up.',
-      ]) {
-        final size = _measure(greeting, theme.displayLarge!);
+    test('the largest role still fits the narrowest phone', () {
+      // ## What this used to measure, and why it moved
+      //
+      // It measured the greeting (`Good morning.`) at `displayLarge`. The
+      // greeting is gone from the app (`today_header.dart` records why) and
+      // nothing in `lib/` sets `displayLarge` any more, so measuring it was a
+      // test of a sentence nobody draws. `displayLarge` is now the ladder's
+      // metric step, and what IS drawn at that step is a key number's or a
+      // panel's figure, so those are measured instead — the widest the
+      // payloads produce. The constraint is the one it always encoded: the
+      // largest type a role names must fit a 320 px card.
+      for (final figure in <String>['10,264', '100%', '23:58', '188 bpm']) {
+        final size = _measure(figure, theme.displayLarge!);
         expect(
           size.width,
           lessThan(_narrowContent),
-          reason: '"$greeting" is ${size.width.toStringAsFixed(1)} px of '
+          reason:
+              '"$figure" is ${size.width.toStringAsFixed(1)} px of '
               '${_narrowContent.toStringAsFixed(0)}',
         );
       }
@@ -295,9 +309,11 @@ void main() {
 
     test('a hero figure and its unit fit half a grid row', () {
       // Two cells share a 320 px phone: each has roughly (320 - 40) / 2 px.
-      const cell = (320 - 16 * 2 - 10) / 2 - 13 * 2;
+      // The figure is `HType.number`'s default, legacy's 27 px grid module,
+      // which the ladder sets at title1.
+      const cell = (320 - Insets.lg * 2 - 10) / 2 - 13 * 2;
       for (final figure in <String>['9,264', '2,350', '43.0', '6:20']) {
-        final size = _measure(figure, theme.displayLarge!.copyWith(fontSize: 27));
+        final size = _measure(figure, TypeLadder.title1);
         expect(
           size.width,
           lessThan(cell),
@@ -324,10 +340,7 @@ void main() {
       // ellipsise a metric’s own name) is still the right one. The 10 px insets
       // are SummaryTile.padding’s horizontal pair, inlined so the sum reads.
       const cell = (320 - Insets.lg * 2 - 10) / 2 - (10 + 10);
-      final size = _measure(
-        'Cardiovascular load',
-        TypeScale.tileTitle,
-      );
+      final size = _measure('Cardiovascular load', TypeScale.tileTitle);
       expect(size.width, lessThan(cell));
     });
   });

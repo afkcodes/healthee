@@ -112,15 +112,12 @@ abstract final class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: colors.surface,
-        // Legacy's modules carry no shadow at all; depth is the hairline.
+        // Legacy's modules carry no shadow at all; the brief removed the hairline too: a card is a surface on the page.
         elevation: 0,
         margin: EdgeInsets.zero,
         // The continuous-corner squircle legacy draws every card with, not a
         // circular-arc rounded rectangle. See shapes.dart.
-        shape: hSquircle(
-          Radii.card,
-          side: BorderSide(color: colors.line, width: hairline),
-        ),
+        shape: hSquircle(Radii.card),
       ),
       appBarTheme: AppBarTheme(
         // `chrome`, not `bg` — the app frame is its own surface in this design,

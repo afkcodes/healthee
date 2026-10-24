@@ -17,6 +17,7 @@
 /// definition waiting to drift.
 library;
 
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/format/iso_clock.dart';
 import 'package:meta/meta.dart';
 
@@ -136,7 +137,7 @@ class SleepHealth {
       SleepDimension(
         name: 'Duration',
         passed: point('point_duration'),
-        reading: '${tstMin ~/ 60}h ${tstMin % 60}m',
+        reading: durationText(tstMin),
         cutoff: hours == null ? '7–9 h' : '${hours.first}–${hours.last} h',
         // NSF 2015's expert consensus, not AASM's (audit D13, 2026-09-08).
         // `sleep_duration_mortality.md:146-151` attributes the 7-9 h band to NSF;
@@ -181,7 +182,6 @@ class SleepHealth {
       ),
     ];
   }
-
 
   static String _hourLabel(Object? hour) {
     final value = (hour as num?)?.toDouble() ?? 0;

@@ -168,7 +168,7 @@ class CoachClient {
       return CoachAnswer.fromJson(body);
     } on DioException catch (error, stackTrace) {
       AppLog.failure('coach', 'asking /api/coach', error, stackTrace);
-      final refusal = _refusalFrom(error);
+      final refusal = refusalFrom(error);
       if (refusal != null) {
         throw refusal;
       }
@@ -190,7 +190,7 @@ class CoachClient {
   /// app surfaces — it calls [ask] and emits its answer as the one event, so
   /// code written against this stream works unchanged against that server.
   /// Every OTHER pre-stream status (402, 401, 422, 429, a dead socket) reuses
-  /// [_refusalFrom], [_chargeFrom] and [_unreachableSentence] exactly as
+  /// [refusalFrom], [_chargeFrom] and [_unreachableSentence] exactly as
   /// [ask] does: one mapping from a status to this app's own exceptions, not
   /// two that could drift apart.
   ///
@@ -233,7 +233,7 @@ class CoachClient {
       }
       AppLog.failure('coach', 'asking /api/coach/stream', error, stackTrace);
       await materializeStreamError(error);
-      final refusal = _refusalFrom(error);
+      final refusal = refusalFrom(error);
       if (refusal != null) {
         throw refusal;
       }
@@ -275,7 +275,8 @@ class CoachClient {
   }
 
   /// The gate's 402 body, as this app's own refusal. Null for anything else.
-  static CoachRefusal? _refusalFrom(DioException error) {
+  /// Also read by the review repository: one parser for the gate's 402.
+  static CoachRefusal? refusalFrom(DioException error) {
     if (error.response?.statusCode != 402) {
       return null;
     }

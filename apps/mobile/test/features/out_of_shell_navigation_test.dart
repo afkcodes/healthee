@@ -44,6 +44,7 @@ import 'package:healthee/features/today/body_screen.dart';
 import 'package:healthee/features/today/today_screen.dart';
 import 'package:healthee/features/today/v02/today_header.dart';
 import 'package:healthee/shared/v02/buttons.dart';
+import 'package:healthee/shared/v02/instruments/age_sphere.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 import '_today_host.dart';
@@ -323,7 +324,7 @@ void main() {
 
       expect(find.byType(BodyScreen), findsOneWidget);
       expect(
-        find.byIcon(SolarIconsOutline.arrowLeft),
+        find.byIcon(SolarIconsOutline.altArrowLeft),
         findsOneWidget,
         reason: 'a restored detail screen has to offer a way off it',
       );
@@ -337,7 +338,7 @@ void main() {
       final platform = _watchPlatformCalls(tester);
       await deepLink(tester, Routes.body);
 
-      await tester.tap(find.byIcon(SolarIconsOutline.arrowLeft));
+      await tester.tap(find.byIcon(SolarIconsOutline.altArrowLeft));
       await tester.pumpAndSettle();
 
       expect(find.byType(ActivityScreen), findsOneWidget);
@@ -366,12 +367,11 @@ void main() {
       _tallViewport(tester);
       await tester.pumpWidget(routedApp(store));
       await tester.pumpAndSettle();
-      await reveal(tester, find.text('See the contributors'));
-      await tester.tap(find.text('See the contributors'));
+      await tester.tap(find.byType(AgeSphere));
       await tester.pumpAndSettle();
       expect(find.byType(BodyScreen), findsOneWidget);
 
-      await tester.tap(find.byIcon(SolarIconsOutline.arrowLeft));
+      await tester.tap(find.byIcon(SolarIconsOutline.altArrowLeft));
       await tester.pumpAndSettle();
 
       expect(find.byType(TodayScreen), findsOneWidget);

@@ -13,6 +13,7 @@ import 'package:healthee/data/honesty/reading.dart';
 import 'package:healthee/data/honesty/sleep_gap.dart';
 import 'package:healthee/data/models/sleep_consistency.dart';
 import 'package:healthee/features/sleep/sleep_format.dart';
+import 'package:healthee/shared/format/duration.dart';
 
 import '../_sleep_stubs.dart';
 
@@ -107,35 +108,40 @@ void main() {
       expect(withheld.disclosure.asOfDate, '2026-07-01');
     });
 
-    test('the tonight lever prefers the coach line over the deterministic one', () {
-      final withBoth = TonightLever.maybe(<String, Object?>{
-        'title': 'Tonight',
-        'lever': 'wake',
-        'coach': 'the model wrote this',
-        'action': 'the fallback',
-      })!;
-      expect(withBoth.prose, 'the model wrote this');
+    test(
+      'the tonight lever prefers the coach line over the deterministic one',
+      () {
+        final withBoth = TonightLever.maybe(<String, Object?>{
+          'title': 'Tonight',
+          'lever': 'wake',
+          'coach': 'the model wrote this',
+          'action': 'the fallback',
+        })!;
+        expect(withBoth.prose, 'the model wrote this');
 
-      final fallback = TonightLever.maybe(<String, Object?>{
-        'title': 'Tonight',
-        'lever': 'bedtime',
-        'coach': '   ',
-        'action': 'the fallback',
-      })!;
-      expect(fallback.prose, 'the fallback');
-    });
+        final fallback = TonightLever.maybe(<String, Object?>{
+          'title': 'Tonight',
+          'lever': 'bedtime',
+          'coach': '   ',
+          'action': 'the fallback',
+        })!;
+        expect(fallback.prose, 'the fallback');
+      },
+    );
   });
 
   group('the formatters', () {
     test('legacy’s strings, to the character', () {
-      expect(hoursMinutes(425), '7h 05m');
-      expect(hoursMinutes(60), '1h 00m');
-      expect(napDuration(35), '35m');
-      expect(napDuration(80), '1h 20m');
+      expect(durationText(425), '7\u00A0h 5\u00A0min');
+      expect(durationText(60), '1\u00A0h');
+      expect(durationText(35), '35\u00A0min');
+      expect(durationText(80), '1\u00A0h 20\u00A0min');
       expect(clock(DateTime(2026, 8, 4, 23, 30)), '11:30p');
       expect(clock(DateTime(2026, 8, 4, 0, 5)), '12:05a');
-      expect(napRange(DateTime(2026, 8, 4, 14, 30), DateTime(2026, 8, 4, 15, 5)),
-          '2:30 pm–3:05 pm');
+      expect(
+        napRange(DateTime(2026, 8, 4, 14, 30), DateTime(2026, 8, 4, 15, 5)),
+        '2:30 pm–3:05 pm',
+      );
       expect(weekdayInitials('2026-08-04'), 'Tu');
     });
 

@@ -7,8 +7,8 @@
 /// ## What the control must never be allowed to cause
 ///
 /// A date control creates a way to have one day's numbers on screen with another
-/// day's date above them, which is **stale-as-current**: the failure `LastKnown`
-/// exists for, the one `vo2max_tier.py`'s freshness horizon exists for, and the
+/// day's date above them, which is **stale-as-current**: the failure
+/// `vo2max_tier.py`'s freshness horizon exists for, and the
 /// one this repo has already swept three times.
 ///
 /// The answer used to be a refusal — `/api/today` took no day, so the screen drew
@@ -37,7 +37,7 @@ import 'package:healthee/features/today/today_sections.dart';
 import 'package:healthee/features/today/v02/date_calendar_sheet.dart';
 import 'package:healthee/features/today/v02/date_control.dart';
 import 'package:healthee/features/today/v02/today_header.dart';
-import 'package:healthee/features/today/v02/today_hero.dart';
+import 'package:healthee/features/today/v02/today_key_numbers.dart';
 import 'package:healthee/features/today/widgets/data_health_section.dart';
 import 'package:healthee/shared/page_section.dart';
 import 'package:healthee/shared/states/reading_view.dart';
@@ -171,7 +171,7 @@ void main() {
         isTrue,
         reason: 'the biological age, as of that day',
       );
-      expect(_has<TodaySummaryTiles>(past), isTrue, reason: 'the tiles');
+      expect(_has<TodayKeyNumbers>(past), isTrue, reason: 'the tiles');
     });
 
     test('AND IT IS THAT DAY’S CHAPTERS, NOT THE DATED-HISTORY ONES', () {
@@ -233,7 +233,7 @@ void main() {
       final today = _sectionsFor(todayDate);
       expect(_has<ReadingView<BiologicalAge>>(today), isTrue);
       expect(_has<ChapterHeading>(today), isTrue);
-      expect(_has<TodaySummaryTiles>(today), isTrue);
+      expect(_has<TodayKeyNumbers>(today), isTrue);
     });
 
     testWidgets('the header reads the day being shown', (tester) async {

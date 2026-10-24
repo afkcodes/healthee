@@ -26,12 +26,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:healthee/data/store/local_store.dart';
 import 'package:healthee/features/today/v02/mini_trend_panel.dart';
 import 'package:healthee/features/today/v02/night_panels.dart';
-import 'package:healthee/features/today/v02/today_hero.dart';
+import 'package:healthee/features/today/v02/today_key_numbers.dart';
 import 'package:healthee/shared/metric_info/metric_info_blocks.dart';
 import 'package:healthee/shared/metric_info/metric_info_sheet.dart';
-import 'package:healthee/shared/v02/bio_hero.dart';
+import 'package:healthee/shared/v02/age_orb_hero.dart';
+import 'package:healthee/shared/v02/key_number_card.dart';
 import 'package:healthee/shared/v02/panel.dart';
-import 'package:healthee/shared/v02/summary_tile.dart';
 
 import '../_today_stubs.dart';
 import '_today_host.dart';
@@ -158,7 +158,7 @@ void main() {
       tester
           .widget<MetricInfoDot>(
             find.descendant(
-              of: find.byType(BioHero),
+              of: find.byType(AgeOrbHero),
               matching: find.byType(MetricInfoDot),
             ),
           )
@@ -177,7 +177,7 @@ void main() {
       // replaced.
       await openToday(tester);
       final dot = find.descendant(
-        of: find.byType(BioHero),
+        of: find.byType(AgeOrbHero),
         matching: find.byType(MetricInfoDot),
       );
       await reveal(tester, dot);
@@ -269,19 +269,24 @@ void main() {
     );
   });
 
-  testWidgets('THE THREE SUMMARY TILES ARE THE SAME HEIGHT', (tester) async {
-    // The owner's old report about the grid, asked of the row that replaced it:
-    // three tiles of different heights in one row read as three different kinds
-    // of thing (`summary_tile.dart`).
+  testWidgets('THE THREE KEY NUMBERS ARE FULL WIDTH AND STACKED', (
+    tester,
+  ) async {
+    // The redesign the owner approved (`proposal.js`, `#p-today`) gave each
+    // key number the card's full width, one under the other, so the range bar
+    // has room to be read. Three across at a third of the width each is the
+    // layout it replaced.
     await openToday(tester);
-    await reveal(tester, find.byType(TodaySummaryTiles));
+    await reveal(tester, find.byType(TodayKeyNumbers));
 
-    final tiles = find.byType(SummaryTile);
-    expect(tiles, findsNWidgets(3));
-    final heights = <double>{
-      for (var i = 0; i < 3; i++) tester.getSize(tiles.at(i)).height,
-    };
-    expect(heights, hasLength(1), reason: 'saw heights $heights');
+    final cards = find.byType(KeyNumberCard);
+    expect(cards, findsNWidgets(3));
+    final rects = <Rect>[
+      for (var i = 0; i < 3; i++) tester.getRect(cards.at(i)),
+    ];
+    expect(<double>{for (final r in rects) r.width}, hasLength(1));
+    expect(rects[1].top, greaterThan(rects[0].bottom));
+    expect(rects[2].top, greaterThan(rects[1].bottom));
   });
 
   testWidgets('THE BLOOD-OXYGEN MODULE STOPPED SWALLOWING ITS CAVEAT', (

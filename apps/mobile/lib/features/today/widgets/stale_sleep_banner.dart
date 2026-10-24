@@ -39,10 +39,7 @@ class StaleSleepBanner extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: ShapeDecoration(
         color: tint.withValues(alpha: 0.12),
-        shape: hSquircle(
-          Radii.badge,
-          side: BorderSide(color: tint.withValues(alpha: 0.35)),
-        ),
+        shape: hSquircle(Radii.badge),
       ),
       child: Row(
         children: [
@@ -64,7 +61,7 @@ class StaleSleepBanner extends StatelessWidget {
                 Text(
                   'Overnight readings below are from your last sleep · '
                   '$nightLabel',
-                  style: HType.sans(colors.ink3, size: 11, height: 1.4),
+                  style: HType.sans(colors.ink2, size: 11),
                 ),
               ],
             ),

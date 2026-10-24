@@ -135,7 +135,7 @@ void main() {
     // Not just Sleep. The rule is about the branch index, so it has to hold for
     // every branch that is not the home one — including the two that landed in
     // this pass and have the least prose written about them.
-    for (final tab in <String>['Sleep', 'Activity', 'Insights', 'Actions']) {
+    for (final tab in <String>['Sleep', 'Activity', 'Insights', 'Coach']) {
       await tester.pumpWidget(routedApp(store));
       await tester.pumpAndSettle();
       await tapTab(tester, tab);

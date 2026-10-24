@@ -37,6 +37,8 @@ import 'package:healthee/features/today/v02/recovery_panel.dart';
 import 'package:healthee/features/today/v02/today_chapters.dart';
 import 'package:healthee/features/today/v02/today_hero.dart';
 import 'package:healthee/features/today/v02/today_hero_withheld.dart';
+import 'package:healthee/features/today/v02/today_key_numbers.dart';
+import 'package:healthee/features/today/v02/today_tonight.dart';
 import 'package:healthee/features/today/widgets/stale_sleep_banner.dart';
 import 'package:healthee/shared/instrument_screen.dart';
 import 'package:healthee/shared/page_section.dart';
@@ -48,17 +50,6 @@ import 'package:healthee/shared/v02/chapter.dart';
 import 'package:healthee/shared/v02/context_bridge.dart';
 import 'package:healthee/shared/v02/withheld_panel.dart';
 import 'package:solar_icons/solar_icons.dart';
-
-/// The bridge under the hero: what the estimate is, and what it is not.
-///
-/// **Kept, against one instruction and with another.** It was named as prose to
-/// move behind an ⓘ; it is `H.bridge('fitness', …)` in the prototype — a
-/// designed element BETWEEN chapters, not copy on a card — and the standing rule
-/// is to match the prototype and leave judgement to charts and data. A
-/// `ContextBridge` also has no ⓘ to move into: it belongs to no metric.
-const String kAgeBridge =
-    'This estimate combines fitness and sleep contributions. Recovery describes '
-    'a different timescale: how you start today.';
 
 /// The bridge under sleep health: sleep's share of the recovery model.
 const String kSleepBridge =
@@ -80,13 +71,16 @@ void todayBody(
   // the screen: it collapsed the card the owner reads first into a small dashed
   // box. `today_hero_withheld.dart` keeps the hero's ground, radius, padding,
   // eyebrow and model label, and puts the server's prose behind the ⓘ.
-  sections.add(
+  sections.addBleed(
     ReadingView<BiologicalAge>(
       reading: snapshot.biologicalAge,
       label: 'Biological age · estimate',
       caveatCarrier: CaveatCarrier.insideCard,
       withheldBuilder: (context, disclosure) => TodayBioHeroWithheld(
         withheld: disclosure,
+        block: snapshot.bioAgeBlock,
+        vo2maxWithheld: snapshot.vo2maxWithheld,
+        onOpen: extras.onOpenBody,
         exclusions: switch (snapshot.biologicalAge) {
           Withheld<BiologicalAge>(:final exclusions) => exclusions,
           _ => const <Disclosure>[],
@@ -94,29 +88,21 @@ void todayBody(
       ),
       builder: (context, age) => TodayBioHero(
         age: age,
-        reveals: reveals,
+        block: snapshot.bioAgeBlock,
         onOpenBody: extras.onOpenBody,
-        onOpenTerm: extras.onOpenTerm,
       ),
     ),
   );
   sections.add(
-    TodaySummaryTiles(
+    TodayKeyNumbers(
       facts: facts,
       onOpenRecovery: extras.onOpenRecovery,
       onOpenSleep: extras.onOpenSleep,
       onOpenActivity: extras.onOpenActivity,
+      onOpenTrends: extras.onOpenTrends,
     ),
   );
-  // No spacer: the bridge carries the gap itself so its rule can span it and
-  // reach the tiles above. See `ContextBridge.leadIn`.
-  sections.add(
-    ContextBridge.link(
-      kAgeBridge,
-      label: 'See the contributors',
-      onOpen: extras.onOpenBody,
-    ),
-  );
+  sections.add(TodayTonight(live: facts.snapshot.asOf?.isToday ?? true));
   if (extras.chapters case final TodayChapters chapters) {
     // Pinned: `richer.css` gives `.chapter-nav` `position: sticky; top: 0`, and
     // it is the one element on the page that has it.
@@ -307,6 +293,8 @@ String _baselineNote(int samples, double? baseline, String unit, [double? sd]) {
   if (baseline == null) {
     return nights;
   }
-  final spread = sd == null ? '' : ' ± ${sd.round()}';
-  return '$nights · baseline ${baseline.round()}$spread $unit';
+  // No-break spaces hold `55 ± 0 bpm` together: a narrow twin tile wraps the
+  // line, and a unit or a spread stranded on the next one reads as its own.
+  final spread = sd == null ? '' : '\u00a0±\u00a0${sd.round()}';
+  return '$nights · baseline ${baseline.round()}$spread\u00a0$unit';
 }

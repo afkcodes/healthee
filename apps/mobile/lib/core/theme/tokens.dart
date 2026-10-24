@@ -61,13 +61,9 @@ class HealtheeColors extends ThemeExtension<HealtheeColors> {
     required this.alert,
     required this.alertSoft,
     required this.hole,
+    required this.band,
     required this.overlay,
     required this.shadow,
-    required this.bioBackground,
-    required this.bioInk,
-    required this.bioGlow,
-    required this.bioLine,
-    required this.haloWarm,
     required this.mapLand,
   });
 
@@ -97,13 +93,9 @@ class HealtheeColors extends ThemeExtension<HealtheeColors> {
       alert = LightPalette.alert,
       alertSoft = LightPalette.alertSoft,
       hole = LightPalette.hole,
+      band = LightPalette.band,
       overlay = LightPalette.overlay,
       shadow = LightPalette.shadow,
-      bioBackground = LightPalette.bioBackground,
-      bioInk = LightPalette.bioInk,
-      bioGlow = LightPalette.bioGlow,
-      bioLine = LightPalette.bioLine,
-      haloWarm = LightPalette.haloWarm,
       mapLand = LightPalette.mapLand;
 
   /// The approved design, dark — authored, not derived from light.
@@ -132,13 +124,9 @@ class HealtheeColors extends ThemeExtension<HealtheeColors> {
       alert = DarkPalette.alert,
       alertSoft = DarkPalette.alertSoft,
       hole = DarkPalette.hole,
+      band = DarkPalette.band,
       overlay = DarkPalette.overlay,
       shadow = DarkPalette.shadow,
-      bioBackground = DarkPalette.bioBackground,
-      bioInk = DarkPalette.bioInk,
-      bioGlow = DarkPalette.bioGlow,
-      bioLine = DarkPalette.bioLine,
-      haloWarm = DarkPalette.haloWarm,
       mapLand = DarkPalette.mapLand;
 
   /// The ground the app shell sits on, behind [bg]. `--canvas`, new in v02.
@@ -233,37 +221,23 @@ class HealtheeColors extends ThemeExtension<HealtheeColors> {
   /// light, 5% white in dark — because the point is the shape, not the colour.
   final Color hole;
 
+  /// The personal usual-range band drawn behind a trend (`white 7%` dark,
+  /// `black 5%` light). The 30-day middle of the owner's own readings.
+  final Color band;
+
   /// The scrim behind a modal sheet. `--overlay`; already translucent.
   final Color overlay;
 
   /// The one shadow v02 casts, under a pressed segment. `--shadow-color`.
   final Color shadow;
 
-  /// The biological-age hero's own surface — dark in BOTH themes, which is
-  /// why it is a token and not `surface`. `--bio-background`.
-  final Color bioBackground;
-
-  /// Everything written on [bioBackground]. `--bio-ink`.
-  final Color bioInk;
-
-  /// The hero's halo. `--bio-glow`.
-  final Color bioGlow;
-
-  /// The hero's contour art and its divider. `--bio-line`.
-  final Color bioLine;
-
-  /// The halo's amber glint — one particle in eleven. `--halo-warm`.
-  ///
-  /// A role of its own rather than [LightFamilies.movement], which is the same
-  /// family of amber: `movement` MEANS steps, and the halo is decoration on the
-  /// biological-age card. See `shared/v02/instruments/halo_painter.dart`.
-  final Color haloWarm;
-
   /// The ground a recorded track is drawn on. `--map-land`. A role of its own
-  /// for the same reason [haloWarm] is one — it belongs to one drawing rather
-  /// than to a category. `features/gps/route_map.dart` draws **no basemap**.
+  /// because it belongs to one drawing rather than to a category.
+  /// `features/gps/route_map.dart` draws **no basemap**.
   final Color mapLand;
 
+  // Grouped by role, as the fields are; the formatter would put one a line.
+  // dart format off
   @override
   HealtheeColors copyWith({
     Color? canvas, Color? bg, Color? surface, Color? surface2, Color? chrome,
@@ -271,11 +245,11 @@ class HealtheeColors extends ThemeExtension<HealtheeColors> {
     Color? line, Color? line2, Color? rule, Color? grid, Color? reference,
     Color? accent, Color? accent2, Color? accentSoft, Color? onAccent,
     Color? fav, Color? favSoft, Color? unf, Color? unfSoft,
-    Color? alert, Color? alertSoft, Color? hole, Color? overlay, Color? shadow,
-    Color? bioBackground, Color? bioInk, Color? bioGlow, Color? bioLine,
-    Color? haloWarm,
+    Color? alert, Color? alertSoft, Color? hole, Color? band, Color? overlay,
+    Color? shadow,
     Color? mapLand,
   }) {
+    // dart format on
     return HealtheeColors(
       canvas: canvas ?? this.canvas,
       bg: bg ?? this.bg,
@@ -301,13 +275,9 @@ class HealtheeColors extends ThemeExtension<HealtheeColors> {
       alert: alert ?? this.alert,
       alertSoft: alertSoft ?? this.alertSoft,
       hole: hole ?? this.hole,
+      band: band ?? this.band,
       overlay: overlay ?? this.overlay,
       shadow: shadow ?? this.shadow,
-      bioBackground: bioBackground ?? this.bioBackground,
-      bioInk: bioInk ?? this.bioInk,
-      bioGlow: bioGlow ?? this.bioGlow,
-      bioLine: bioLine ?? this.bioLine,
-      haloWarm: haloWarm ?? this.haloWarm,
       mapLand: mapLand ?? this.mapLand,
     );
   }
@@ -342,13 +312,9 @@ class HealtheeColors extends ThemeExtension<HealtheeColors> {
       alert: Color.lerp(alert, other.alert, t)!,
       alertSoft: Color.lerp(alertSoft, other.alertSoft, t)!,
       hole: Color.lerp(hole, other.hole, t)!,
+      band: Color.lerp(band, other.band, t)!,
       overlay: Color.lerp(overlay, other.overlay, t)!,
       shadow: Color.lerp(shadow, other.shadow, t)!,
-      bioBackground: Color.lerp(bioBackground, other.bioBackground, t)!,
-      bioInk: Color.lerp(bioInk, other.bioInk, t)!,
-      bioGlow: Color.lerp(bioGlow, other.bioGlow, t)!,
-      bioLine: Color.lerp(bioLine, other.bioLine, t)!,
-      haloWarm: Color.lerp(haloWarm, other.haloWarm, t)!,
       mapLand: Color.lerp(mapLand, other.mapLand, t)!,
     );
   }
@@ -356,15 +322,17 @@ class HealtheeColors extends ThemeExtension<HealtheeColors> {
   /// Every role, in declaration order. **Add new roles here too** — this backs
   /// equality, and Flutter compares theme extensions to decide whether a theme
   /// change needs a rebuild.
+  // dart format off
   List<Color> get _roles => [
     canvas, bg, surface, surface2, chrome,
     ink, ink2, ink3,
     line, line2, rule, grid, reference,
     accent, accent2, accentSoft, onAccent,
     fav, favSoft, unf, unfSoft,
-    alert, alertSoft, hole, overlay, shadow,
-    bioBackground, bioInk, bioGlow, bioLine, haloWarm, mapLand,
+    alert, alertSoft, hole, band, overlay, shadow,
+    mapLand,
   ];
+  // dart format on
 
   @override
   bool operator ==(Object other) {

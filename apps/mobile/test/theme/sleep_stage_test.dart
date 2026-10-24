@@ -75,7 +75,7 @@ void main() {
         }
       });
 
-      test('THE FAMILIES ARE v02’s — only the stages are derived', () {
+      test('THE FAMILIES ARE THE KIT’s — only the stages are derived', () {
         // Restating the four family values here, independently of palette.dart,
         // is what makes the assertion above safe: it could otherwise be
         // satisfied by moving the FAMILY instead of the stage.
@@ -87,17 +87,23 @@ void main() {
         // own derived four.
         final expected = theme.key == 'dark'
             ? const <Color>[
-                Color(0xFFFABA59), Color(0xFF6EC6F7),
-                Color(0xFFC5A8FF), Color(0xFFFF9390),
+                Color(0xFFFF9F0A),
+                Color(0xFF64D2FF),
+                Color(0xFF7D7AFF),
+                Color(0xFFFF375F),
               ]
             : const <Color>[
-                Color(0xFF774000), Color(0xFF005A8D),
-                Color(0xFF6B35B5), Color(0xFFA51D2B),
+                Color(0xFFE58600),
+                Color(0xFF0098C9),
+                Color(0xFF5856D6),
+                Color(0xFFE8304F),
               ];
-        expect(
-          <Color>[hues.movement, hues.oxygen, hues.sleep, hues.heart],
-          expected,
-        );
+        expect(<Color>[
+          hues.movement,
+          hues.oxygen,
+          hues.sleep,
+          hues.heart,
+        ], expected);
       });
 
       test('MUTATION — no stage answers another stage’s colour', () {
@@ -144,7 +150,13 @@ void main() {
         // as LIGHT SLEEP — a named stage asserted about a measurement we could
         // not read. That is the failure this app exists to prevent, so it is the
         // one row of the mapping that is not ported.
-        for (final code in const <String>['0x7f', '', 'nap', 'LIGHT', 'unknown']) {
+        for (final code in const <String>[
+          '0x7f',
+          '',
+          'nap',
+          'LIGHT',
+          'unknown',
+        ]) {
           expect(hues.sleepStage(code), hues.unstaged, reason: code);
         }
       });
@@ -155,60 +167,87 @@ void main() {
         // `stageLight`. This is the one that fails if the fallback goes back to
         // being a stage.
         final four = <Color>[
-          hues.stageDeep, hues.stageLight, hues.stageRem, hues.stageAwake,
+          hues.stageDeep,
+          hues.stageLight,
+          hues.stageRem,
+          hues.stageAwake,
         ];
-        for (final code in const <String>['0x7f', '', 'nap', 'LIGHT', 'unknown']) {
+        for (final code in const <String>[
+          '0x7f',
+          '',
+          'nap',
+          'LIGHT',
+          'unknown',
+        ]) {
           expect(four, isNot(contains(hues.sleepStage(code))), reason: code);
         }
         expect(four, isNot(contains(hues.unstaged)));
       });
 
-      test('the unrecognised grey has NO CHROMA — it is not a fifth stage hue', () {
-        // Legacy's four are all chromatic. "Unrecognised" must read as the
-        // absence of a stage identity, not as one more of them.
-        final grey = hues.unstaged;
-        expect(grey.r, closeTo(grey.g, 0.001));
-        expect(grey.g, closeTo(grey.b, 0.001));
-        // And every real stage hue IS chromatic, so the distinction holds.
-        for (final stage in const <String>['deep', 'light', 'rem', 'awake']) {
-          final colour = hues.sleepStage(stage);
-          expect(
-            (colour.r - colour.g).abs() + (colour.g - colour.b).abs(),
-            greaterThan(0.02),
-            reason: '$stage would be indistinguishable from “unrecognised”',
-          );
-        }
-      });
+      test(
+        'the unrecognised grey has NO CHROMA — it is not a fifth stage hue',
+        () {
+          // Legacy's four are all chromatic. "Unrecognised" must read as the
+          // absence of a stage identity, not as one more of them.
+          final grey = hues.unstaged;
+          expect(grey.r, closeTo(grey.g, 0.001));
+          expect(grey.g, closeTo(grey.b, 0.001));
+          // And every real stage hue IS chromatic, so the distinction holds.
+          for (final stage in const <String>['deep', 'light', 'rem', 'awake']) {
+            final colour = hues.sleepStage(stage);
+            expect(
+              (colour.r - colour.g).abs() + (colour.g - colour.b).abs(),
+              greaterThan(0.02),
+              reason: '$stage would be indistinguishable from “unrecognised”',
+            );
+          }
+        },
+      );
 
-      test('the LABEL agrees with the colour — grey band, “Unrecognised” key', () {
-        // The two halves live in different files; a fix applied to one of them
-        // leaves a grey band the legend calls Light, or a key called
-        // Unrecognised beside a blue band.
-        for (final code in const <String>['0x7f', '', 'nap']) {
-          expect(sleepStageLabel(code), 'Unrecognised', reason: code);
-          expect(InstrumentHues.isRecognised(code), isFalse, reason: code);
-        }
-        for (final code in const <String>['deep', 'light', 'core', 'rem', 'awake']) {
-          expect(sleepStageLabel(code), isNot('Unrecognised'), reason: code);
-          expect(InstrumentHues.isRecognised(code), isTrue, reason: code);
-        }
-      });
+      test(
+        'the LABEL agrees with the colour — grey band, “Unrecognised” key',
+        () {
+          // The two halves live in different files; a fix applied to one of them
+          // leaves a grey band the legend calls Light, or a key called
+          // Unrecognised beside a blue band.
+          for (final code in const <String>['0x7f', '', 'nap']) {
+            expect(sleepStageLabel(code), 'Unrecognised', reason: code);
+            expect(InstrumentHues.isRecognised(code), isFalse, reason: code);
+          }
+          for (final code in const <String>[
+            'deep',
+            'light',
+            'core',
+            'rem',
+            'awake',
+          ]) {
+            expect(sleepStageLabel(code), isNot('Unrecognised'), reason: code);
+            expect(InstrumentHues.isRecognised(code), isTrue, reason: code);
+          }
+        },
+      );
 
       test('the legend key appears ONLY when the chart drew one', () {
         // The governing rule: an empty field renders nothing. A legend that
         // always carried the fifth key would name a stage no bar painted.
         expect(legendStages(const <String>['deep', 'light']), kSleepStages);
         expect(legendStages(const <String>[]), kSleepStages);
-        expect(
-          legendStages(const <String>['deep', '0x7f']),
-          <String>[...kSleepStages, kUnrecognisedStage],
-        );
+        expect(legendStages(const <String>['deep', '0x7f']), <String>[
+          ...kSleepStages,
+          kUnrecognisedStage,
+        ]);
         // And the key it adds resolves to the same grey the band was drawn in.
         expect(hues.sleepStage(kUnrecognisedStage), hues.unstaged);
       });
 
       test('the alias resolves to the same mapping', () {
-        for (final stage in const <String>['deep', 'light', 'core', 'rem', 'awake']) {
+        for (final stage in const <String>[
+          'deep',
+          'light',
+          'core',
+          'rem',
+          'awake',
+        ]) {
           expect(sleepStageColor(hues, stage), hues.sleepStage(stage));
         }
       });
@@ -221,23 +260,29 @@ void main() {
     expect(kSleepStages, const <String>['deep', 'light', 'rem', 'awake']);
   });
 
-  test('MUTATION — the label table does not answer one word for everything', () {
-    final labels = <String>{
-      for (final stage in kSleepStages) sleepStageLabel(stage),
-    };
-    expect(labels.length, kSleepStages.length);
-    expect(sleepStageLabel('0x7f'), 'Unrecognised');
-  });
+  test(
+    'MUTATION — the label table does not answer one word for everything',
+    () {
+      final labels = <String>{
+        for (final stage in kSleepStages) sleepStageLabel(stage),
+      };
+      expect(labels.length, kSleepStages.length);
+      expect(sleepStageLabel('0x7f'), 'Unrecognised');
+    },
+  );
 
-  test('ONE STAGE, ONE WORD — every vocabulary the app meets answers “Light”', () {
-    // The defect: legacy said `Core` in the breakdown and the hypnogram lanes,
-    // `light` in the naps legend and `CORE` on the seven-night chip — three
-    // words, two of them on one screen. Every surface asks this function now.
-    for (final spelling in const <String>['light', 'core']) {
-      expect(sleepStageLabel(spelling), 'Light', reason: spelling);
-    }
-    expect(sleepStageLabel('light'), isNot('Core'));
-  });
+  test(
+    'ONE STAGE, ONE WORD — every vocabulary the app meets answers “Light”',
+    () {
+      // The defect: legacy said `Core` in the breakdown and the hypnogram lanes,
+      // `light` in the naps legend and `CORE` on the seven-night chip — three
+      // words, two of them on one screen. Every surface asks this function now.
+      for (final spelling in const <String>['light', 'core']) {
+        expect(sleepStageLabel(spelling), 'Light', reason: spelling);
+      }
+      expect(sleepStageLabel('light'), isNot('Core'));
+    },
+  );
 
   test('normaliseStage does not turn an unknown code into light sleep', () {
     // Legacy's `_normStage` ended `return 'core'`, so it laundered every
@@ -275,7 +320,13 @@ void main() {
       return 'unknown';
     }
 
-    for (final stage in const <String>['deep', 'light', 'core', 'rem', 'awake']) {
+    for (final stage in const <String>[
+      'deep',
+      'light',
+      'core',
+      'rem',
+      'awake',
+    ]) {
       expect(fieldOf(dark, stage), fieldOf(light, stage), reason: stage);
       expect(fieldOf(light, stage), isNot('unknown'), reason: stage);
     }

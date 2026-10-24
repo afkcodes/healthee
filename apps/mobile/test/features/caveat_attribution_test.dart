@@ -34,7 +34,7 @@ import 'package:healthee/features/sleep/sleep_screen.dart';
 import 'package:healthee/shared/instrument_module.dart';
 import 'package:healthee/shared/metric_info/metric_info_sheet.dart';
 import 'package:healthee/shared/states/state_scaffold.dart';
-import 'package:healthee/shared/v02/bio_hero.dart';
+import 'package:healthee/shared/v02/age_orb_hero.dart';
 import 'package:healthee/shared/v02/panel.dart';
 
 import '../_sleep_stubs.dart';
@@ -80,11 +80,11 @@ List<Rect> _cards(WidgetTester tester) => <Rect>[
   for (final type in <Finder>[
     find.byType(StateCard),
     find.byType(InstrumentModule),
-    // v02's two carriers. `Panel` and `BioHero` read the same `CaveatScope`
-    // that `InstrumentModule` does, so a Today card is measured the same way a
-    // Sleep card is.
+    // v02's two carriers. `Panel` and `AgeOrbHero` read the same
+    // `CaveatScope` that `InstrumentModule` does, so a Today card is measured
+    // the same way a Sleep card is.
     find.byType(Panel),
-    find.byType(BioHero),
+    find.byType(AgeOrbHero),
   ])
     for (var i = 0; i < tester.widgetList(type).length; i++)
       tester.getRect(type.at(i)),
@@ -204,7 +204,7 @@ void main() {
     // `today_caveat_surface_test.dart` opens it and reads them in full.
     final dot = tester.widget<MetricInfoDot>(
       find.descendant(
-        of: find.byType(BioHero),
+        of: find.byType(AgeOrbHero),
         matching: find.byType(MetricInfoDot),
       ),
     );

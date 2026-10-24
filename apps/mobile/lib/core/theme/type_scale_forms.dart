@@ -1,192 +1,107 @@
 /// **v02's type scale, second half: the forms, rows and prose.**
 ///
-/// The same transcription as `type_scale.dart` — the prototype's CSS, to the
-/// pixel — split out of it at the 400-line gate (Standards §1). The seam is the
-/// one `dimensions.dart` used when it left `tokens.dart`: that file's one reason
-/// to change is a **panel's** typography, and this one's is a **form's**. The
-/// supporting screens are almost entirely list rows, switches, fields and
-/// sentences, and none of those sizes appears on an instrument panel.
+/// Split out of `type_scale.dart` at the 400-line gate (Standards §1). That
+/// file's one reason to change is a **panel's** typography, and this one's is a
+/// **form's**: the supporting screens are almost entirely list rows, switches,
+/// fields and sentences. Each role is an alias of a step on `type_ladder.dart`.
 ///
 /// **Every style here is colourless**, for the reason `type_scale.dart` gives:
 /// the colour arrives at the point of use, so a style cannot carry a hue that
 /// disagrees with the container it is drawn in.
-///
-/// Sizes and tracking are the CSS's:
-///
-/// ```text
-///   h1                30px  600  -1.2   styles.css h1        (welcome)
-///   detail h1         23px  600  -0.8   styles.css .page-header.detail h1
-///   h2                19px  700  -0.6   styles.css h2
-///   h3                15px  400  -0.2   styles.css h3
-///   body / small      14 / 12px         styles.css body, small
-///   list row          13px 700 / 11px   styles.css .list-row strong / small
-///   toggle row        12px 700 / 10px   screens.css .toggle-row strong / p
-///   field             12px 600 · 16px · 10px   screens.css .field
-///   button            13px 700          styles.css .button
-///   text button       12px 700          styles.css .text-button
-///   badge             10px 700          styles.css .badge
-///   stat              11 · 27 · 11px    screens.css .stat-*
-/// ```
 library;
 
 import 'package:flutter/material.dart';
-import 'package:healthee/core/theme/typography.dart';
-
-TextStyle _style(
-  double size,
-  FontWeight weight, {
-  double height = 1.6,
-  double tracking = 0,
-}) => TextStyle(
-  fontFamily: healtheeFontFamily,
-  fontFamilyFallback: healtheeFontFallback,
-  fontSize: size,
-  fontWeight: weight,
-  // Figtree is variable: drive the wght axis, not only the weight slot.
-  fontVariations: <FontVariation>[FontVariation('wght', weight.value.toDouble())],
-  height: height,
-  letterSpacing: tracking,
-  fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-);
+import 'package:healthee/core/theme/type_ladder.dart';
 
 /// The form and list half of v02's scale. Colourless; see the library docstring.
 abstract final class FormType {
-  /// `h1` — the one 30 px title, on Welcome. Not `.page-header h1`, which
-  /// `richer.css` pulls down to 27; Welcome's headline sits in `.coach-intro`
-  /// and keeps the base size.
-  static final TextStyle displayTitle = _style(
-    30,
-    FontWeight.w600,
-    height: 1.2,
-    tracking: -1.2,
-  );
+  /// `h1` — the one display title, on Welcome.
+  static final TextStyle displayTitle = TypeLadder.title1;
 
   /// `.page-header.detail h1` — a sub-screen's name, beside its back button.
-  static final TextStyle detailTitle = _style(
-    23,
-    FontWeight.w600,
-    height: 1.2,
-    tracking: -0.8,
-  );
+  static final TextStyle detailTitle = TypeLadder.title2;
 
   /// `h2` — a centred heading on the device and pairing screens, and the brand.
-  static final TextStyle heading2 = _style(
-    19,
-    FontWeight.w700,
-    height: 1.4,
-    tracking: -0.6,
-  );
+  static final TextStyle heading2 = TypeLadder.title2;
 
   /// `h3` — a card's own heading.
-  static final TextStyle heading3 = _style(
-    15,
-    FontWeight.w400,
-    height: 1.5,
-    tracking: -0.2,
-  );
+  static final TextStyle heading3 = TypeLadder.body;
 
   /// `body` — the default. Rare on these screens; almost everything is smaller.
-  static final TextStyle body = _style(14, FontWeight.w400);
+  static final TextStyle body = TypeLadder.callout;
 
   /// `small`, `.small` — the sentence under a heading.
-  static final TextStyle small = _style(12, FontWeight.w400);
+  static final TextStyle small = TypeLadder.caption;
 
   /// `.list-row strong` — a settings row's name.
-  static final TextStyle rowTitle = _style(13, FontWeight.w700, height: 1.4);
+  static final TextStyle rowTitle = TypeLadder.calloutStrong;
 
   /// `.list-row small` — what the row leads to. Wraps; see `list_row.dart`.
-  static final TextStyle rowSubtitle = _style(11, FontWeight.w400, height: 1.5);
+  static final TextStyle rowSubtitle = TypeLadder.caption;
 
   /// `.toggle-row strong` — a switch's name.
-  static final TextStyle toggleTitle = _style(12, FontWeight.w700, height: 1.4);
+  static final TextStyle toggleTitle = TypeLadder.calloutStrong;
 
   /// `.toggle-row p` — what turning it on does.
-  static final TextStyle toggleBody = _style(10, FontWeight.w400, height: 1.6);
+  static final TextStyle toggleBody = TypeLadder.caption;
 
   /// `.field` — a field's label.
-  static final TextStyle fieldLabel = _style(12, FontWeight.w600, height: 1.4);
+  static final TextStyle fieldLabel = TypeLadder.calloutStrong;
 
-  /// `.field input` — what is typed into it. **16 px is deliberate**: iOS zooms
-  /// the page on focus at anything smaller, and the prototype sets it for that
-  /// reason.
-  static final TextStyle fieldInput = _style(16, FontWeight.w400, height: 1.4);
+  /// `.field input` — what is typed into it. The prototype's 16 px was there to
+  /// stop iOS Safari zooming a focused web field; a Flutter field is not a web
+  /// page and does not zoom, so it is [TypeLadder.body] like other prose.
+  static final TextStyle fieldInput = TypeLadder.body;
 
   /// `.field small` — the note under a field.
-  static final TextStyle fieldHint = _style(10, FontWeight.w400, height: 1.6);
+  static final TextStyle fieldHint = TypeLadder.caption;
 
   /// `.form-note` — the sentence under a whole form.
-  static final TextStyle formNote = _style(10, FontWeight.w400, height: 1.7);
+  static final TextStyle formNote = TypeLadder.caption;
 
   /// `.button` — every filled and outlined button's label.
-  static final TextStyle button = _style(13, FontWeight.w700, height: 1.2);
+  static final TextStyle button = TypeLadder.calloutStrong;
 
   /// `.text-button` — a link with an arrow.
-  static final TextStyle linkButton = _style(12, FontWeight.w700, height: 1.2);
+  static final TextStyle linkButton = TypeLadder.calloutStrong;
 
-  /// `.badge` — a short stamp beside a value.
-  static final TextStyle badge = _style(10, FontWeight.w700, height: 1.3);
+  /// `.badge` — a short mixed-case stamp beside a value. Small, so
+  /// [TypeLadder.caption].
+  static final TextStyle badge = TypeLadder.caption;
 
   /// `.notice strong` — the headline of a banner.
-  static final TextStyle noticeTitle = _style(12, FontWeight.w700, height: 1.4);
+  static final TextStyle noticeTitle = TypeLadder.calloutStrong;
 
   /// `.notice p` — its sentence.
-  static final TextStyle noticeBody = _style(11, FontWeight.w400, height: 1.8);
+  static final TextStyle noticeBody = TypeLadder.caption;
 
-  /// `.stat-label` — the label over a statistic. 11 px here, not the panel's 10.
-  static final TextStyle statLabel = _style(11, FontWeight.w400, height: 1.4);
+  /// `.stat-label` — the label over a statistic.
+  static final TextStyle statLabel = TypeLadder.caption;
 
   /// `.stat-number` — the statistic.
-  static final TextStyle statNumber = _style(
-    27,
-    FontWeight.w600,
-    height: 1.4,
-    tracking: -1,
-  );
+  static final TextStyle statNumber = TypeLadder.title1;
 
   /// `.stat-number > span` — its unit.
-  static final TextStyle statUnit = _style(11, FontWeight.w400, height: 1.4);
+  static final TextStyle statUnit = TypeLadder.caption;
 
   /// `.timeline-item h3` — one step of the pairing journey.
-  static final TextStyle timelineTitle = _style(
-    13,
-    FontWeight.w400,
-    height: 1.5,
-  );
+  static final TextStyle timelineTitle = TypeLadder.callout;
 
   /// `.timeline-item p` — what that step does.
-  static final TextStyle timelineBody = _style(11, FontWeight.w400, height: 1.6);
+  static final TextStyle timelineBody = TypeLadder.caption;
 
   /// `.timeline-item .node` — the number in the circle.
-  static final TextStyle timelineNode = _style(11, FontWeight.w400, height: 1.2);
+  static final TextStyle timelineNode = TypeLadder.caption;
 
   /// `.theme-option` — one of Light · Dark · System.
-  static final TextStyle themeOption = _style(12, FontWeight.w400, height: 1.3);
+  static final TextStyle themeOption = TypeLadder.caption;
 
   /// `.sync-stages > div` — one stage of strap → phone → server.
-  static final TextStyle syncStage = _style(10, FontWeight.w400, height: 1.4);
-
-  /// `.coach-intro h2` — Welcome's and About's headline.
-  static final TextStyle introTitle = _style(
-    26,
-    FontWeight.w700,
-    height: 1.35,
-    tracking: -1,
-  );
-
-  /// `.coach-intro p` — the paragraph under it.
-  static final TextStyle introBody = _style(12, FontWeight.w400, height: 1.9);
+  static final TextStyle syncStage = TypeLadder.caption;
 
   /// `.observation h3` — one row of the data-freshness list.
-  static final TextStyle observationTitle = _style(
-    17,
-    FontWeight.w400,
-    height: 1.5,
-  );
+  static final TextStyle observationTitle = TypeLadder.headline;
 
   /// `.observation p` — how old that reading is.
-  static final TextStyle observationBody = _style(
-    12,
-    FontWeight.w400,
-    height: 1.9,
-  );
+  static final TextStyle observationBody = TypeLadder.caption;
 }

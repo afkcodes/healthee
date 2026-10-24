@@ -96,7 +96,7 @@ void main() {
       // The contract snapshot scores `sleep` WITHOUT sending its minutes, and
       // no surface invents them: legacy printed `0.0h / 8h` there, a claim that
       // the owner slept nothing.
-      expect(find.text('0.0h / 8h'), findsNothing);
+      expect(find.text('0\u00A0min / 8\u00A0h'), findsNothing);
     });
 
     testWidgets('AN UNSCORED FACTOR DRAWS NO BAR, NOT A BAR OF ZERO', (

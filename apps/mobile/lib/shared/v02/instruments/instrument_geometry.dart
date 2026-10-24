@@ -2,12 +2,13 @@
 ///
 /// **This is deliberately not an axis foundation.** The series charts (line,
 /// area, bars, buckets, the linked dual axis) share one scale, one axis and one
-/// scrubber, and a sibling owns it. The four instruments here each draw a rail
-/// with its own rules — a fixed 28-44 ruler, a value ladder, a 30-55 rail with a
-/// reference line, a schematic with no axis at all — so they take the value-to-x
-/// map, a dashed segment and an anchored label, and draw the rest themselves. If
-/// a fifth instrument ever wants a tick strategy, that is the moment this stops
-/// being three functions and starts being someone else's foundation.
+/// scrubber, and a sibling owns it. The two instruments that use this file each
+/// draw a rail with its own rules — the age waterfall's value ladder, and the
+/// VO₂max rail's 30-55 scale with a reference line — so they take the
+/// value-to-x map, a dashed segment and an anchored label, and draw the rest
+/// themselves. If a third instrument ever wants a tick strategy, that is the
+/// moment this stops being three functions and starts being someone else's
+/// foundation.
 library;
 
 import 'package:flutter/material.dart';

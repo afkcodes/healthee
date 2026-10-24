@@ -30,7 +30,7 @@ from tests.insights._stub import MORNING_JSON, VALID_TEXT, StubLLM
 from healthee.api.app import create_app
 from healthee.core.config import get_settings
 from healthee.core.db import tenant_transaction
-from healthee.core.tenancy import SENTINEL_TZ, SENTINEL_USER_ID
+from healthee.core.tenancy import SENTINEL_TZ, SENTINEL_USER_ID, user_today
 from healthee.db import migrate
 from healthee.insights import coaching, grounded, morning, pipeline
 from healthee.jobs import briefing as briefing_mod
@@ -244,23 +244,26 @@ def test_the_chain_sequences_unchanged_and_the_morning_costs_one_call(
 
     ``correlate`` is stubbed to a no-op (its own dependency logic is pinned in
     ``tests/jobs/test_chain_supervision.py``); everything else runs for real. The call
-    budget is the assertion: recs + the merged morning + sleep-tonight = 3, where the same
-    chain spent 4 before #95, and the briefing step now spends none of them.
+    budget is the assertion: the merged morning + sleep-tonight = 2 (the coach steps are
+    stubbed or, with no active job, make no call), where the same chain spent 4 before #95,
+    and the briefing step now spends none of them.
     """
     stub = _stub(monkeypatch, StubLLM(json_text=MORNING_JSON))
     monkeypatch.setattr(chain, "step_correlate", lambda *a, **kw: {"ok": True})  # noqa: ARG005
+    monkeypatch.setattr(chain, "step_coach_weekly", lambda *a, **kw: {"ok": True})  # noqa: ARG005
+    day = user_today(SENTINEL_TZ)
 
-    result = chain.run_chain(SENTINEL_USER_ID, SENTINEL_TZ, client=stub, force=True)
+    result = chain.run_chain(SENTINEL_USER_ID, SENTINEL_TZ, day, client=stub, force=True)
 
     assert [step.name for step in result.steps] == [
         "illness",
         "challenges",
         "correlate",
-        "recs",
+        *chain._coach_names(day),
         "warm",
         "briefing",
     ]
-    assert [step.status for step in result.steps] == ["ok"] * 6
+    assert {step.status for step in result.steps} == {"ok"}
     warm = next(step for step in result.steps if step.name == "warm")
     assert warm.detail is not None
     assert warm.detail["warmed"] == sorted(
@@ -269,7 +272,7 @@ def test_the_chain_sequences_unchanged_and_the_morning_costs_one_call(
     briefing_step = next(step for step in result.steps if step.name == "briefing")
     assert briefing_step.detail is not None
     assert briefing_step.detail["source"] == "warm"
-    assert stub.calls == 3, f"the nightly chain made {stub.calls} calls, not 3"
+    assert stub.calls == 2, f"the nightly chain made {stub.calls} calls, not 2"
 
 
 def test_a_second_warm_for_the_same_day_regenerates_nothing(
@@ -278,8 +281,8 @@ def test_a_second_warm_for_the_same_day_regenerates_nothing(
 ) -> None:
     """The per-day cache still bounds the spend on the merged call as it did on two.
 
-    Asserted on ``warm_lines`` rather than a second ``run_chain``: ``recs`` has no per-day
-    cache and pays again on a forced re-run, which is true before and after #95 and would
+    Asserted on ``warm_lines`` rather than a second ``run_chain``: the coach steps have no per-day
+    cache and may pay again on a forced re-run, which is true before and after #95 and would
     make a chain-level count read as a regression it is not.
     """
     stub = _stub(monkeypatch, StubLLM(json_text=MORNING_JSON))

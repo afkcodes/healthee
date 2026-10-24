@@ -102,22 +102,10 @@ class BiologicalAge {
       biologicalAge: years,
       chronologicalAge: (json['chronological_age'] as num?)?.toDouble(),
       deltaYears: (json['delta_years'] as num?)?.toDouble(),
-      contributions: [
-        for (final entry in (json['contributions'] as List? ?? const []))
-          if (entry is Map<String, Object?>) AgeContribution.fromJson(entry),
-      ],
+      contributions: ageContributionsFrom(json['contributions']),
       disclaimer: json['disclaimer'] as String?,
-      researchNotes: [
-        for (final entry in (json['research_notes'] as List? ?? const []))
-          if (entry is String) entry,
-      ],
-      exclusions: [
-        for (final entry in (json['excluded'] as List? ?? const []))
-          if (entry is Map<String, Object?> &&
-              entry['reason'] is String &&
-              entry['message'] is String)
-            Disclosure.fromJson(entry),
-      ],
+      researchNotes: researchNotesFrom(json['research_notes']),
+      exclusions: ageDisclosuresFrom(json['excluded']),
     );
   }
 
@@ -155,3 +143,28 @@ class BiologicalAge {
   /// does not.
   final List<Disclosure> exclusions;
 }
+
+/// `contributions[]`, parsed. The ONE reader of the list: [BiologicalAge.maybe]
+/// and `BioAgeBlock` both call it, so a valued day and a withheld day cannot
+/// read the same lever two ways.
+List<AgeContribution> ageContributionsFrom(Object? raw) => <AgeContribution>[
+  for (final entry in (raw is List ? raw : const <Object?>[]))
+    if (entry is Map<String, Object?> && entry['term'] is String)
+      AgeContribution.fromJson(entry),
+];
+
+/// `excluded[]` or `caveats[]`, parsed: every entry with a `reason` and a
+/// `message`. An entry missing either is dropped rather than given words.
+List<Disclosure> ageDisclosuresFrom(Object? raw) => <Disclosure>[
+  for (final entry in (raw is List ? raw : const <Object?>[]))
+    if (entry is Map<String, Object?> &&
+        entry['reason'] is String &&
+        entry['message'] is String)
+      Disclosure.fromJson(entry),
+];
+
+/// `research_notes[]`, parsed: the note ids, and nothing that is not a string.
+List<String> researchNotesFrom(Object? raw) => <String>[
+  for (final entry in (raw is List ? raw : const <Object?>[]))
+    if (entry is String) entry,
+];

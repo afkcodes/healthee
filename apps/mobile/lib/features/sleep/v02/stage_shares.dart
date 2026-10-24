@@ -1,34 +1,22 @@
-/// `Every stage, accounted for` — one bar per stage, in the owner's own order.
+/// `Every stage, accounted for` as the approved redesign draws it
+/// (`design/mobile-preview/proposal.js::stageRows`).
 ///
-/// ## What it replaced
+/// One strip of the night's proportions, then one row per stage: its name, the
+/// minutes it ran, its share, and a bar as long as its minutes against the
+/// longest on the panel. A small ink mark on each bar is the owner's own
+/// average for that stage over the fortnight before this night, and the line
+/// under it says the difference in minutes. With fewer than seven earlier
+/// nights staged there is no mark and no line: an average of three nights is
+/// not "your average".
 ///
-/// A `Stage · Duration · Proportion` table under a stacked strip: three columns
-/// of small type saying the same four facts the strip above it had just drawn,
-/// and a header row spending a line on the words `Stage`, `Duration` and
-/// `Proportion` to label numbers that need no labelling. Twelve cells, four
-/// readings.
+/// ## Why the strip came back
 ///
-/// Now each stage is one row — a bar as long as its share, its percentage set
-/// **inside** the fill, then the stage and the time it ran. The bar is the
-/// proportion, so nothing has to be read off a legend and back onto a colour,
-/// and the duration is the biggest thing on the row because it is the number
-/// the reader came for.
+/// It had been cut as a second drawing of the rows' percentages. The rows now
+/// carry minutes against the owner's average, so the strip is the only place
+/// the four shares are seen together, and the owner approved it.
 ///
-/// ## ⛔ Do not put a decorative cap back on the bar
-///
-/// There was a hatched block after each fill — a fixed width on every row, in
-/// the stage's hue, meaning nothing. It was there to stop a short bar ending
-/// dead in the middle of the row. On a surface whose whole premise is that
-/// every mark carries a reading, a mark that carries none is the one thing
-/// that must not be on it, and the first question it drew was "what is that?".
-///
-/// **There is an honest version of it and this is not it.** The tail could
-/// show the gap between this stage's share and a reference range — but that
-/// needs a per-stage proportion reference, and `packages/knowledge` has no
-/// note for one. Writing `Deep should be 13-23%` into a Dart string is exactly
-/// the shape of the refuted `metric_info` claims the corpus exists to stop:
-/// `insights/validator.py` cannot see a Dart string, so nothing would check
-/// it. The note comes first, then the mark.
+/// There is still no per-stage reference range: `packages/knowledge` has no
+/// note for one, so the comparison is only ever with the owner's own nights.
 library;
 
 import 'package:flutter/material.dart';
@@ -36,15 +24,25 @@ import 'package:healthee/core/theme/instrument_hues.dart';
 import 'package:healthee/core/theme/sleep_type_scale.dart';
 import 'package:healthee/core/theme/stage_colors.dart';
 import 'package:healthee/core/theme/tokens.dart';
-import 'package:healthee/shared/charts/chart_primitives.dart';
+import 'package:healthee/shared/format/duration.dart';
 
 /// The four rows, in the order the night is read: awake at the top, deep last.
 const List<String> kShareOrder = <String>['awake', 'rem', 'light', 'deep'];
 
-/// One bar per stage, each carrying its share, its name and its duration.
+/// What the mark means, said under the rows when there is one.
+const String kStageAverageNote =
+    'The small mark on each bar is your average for that stage over the '
+    'nights before this one.';
+
+/// The strip and the four rows.
 class StageShares extends StatelessWidget {
   /// [minutes] is per stage; [total] is what the shares are taken against.
-  const StageShares({required this.minutes, required this.total, super.key});
+  const StageShares({
+    required this.minutes,
+    required this.total,
+    this.averages = const <String, double>{},
+    super.key,
+  });
 
   /// Minutes per stage, in the app's own stage names.
   final Map<String, double> minutes;
@@ -52,133 +50,152 @@ class StageShares extends StatelessWidget {
   /// The denominator. Callers guarantee it is above zero.
   final double total;
 
-  /// The row's bar height.
-  static const double barHeight = 26;
+  /// The owner's average minutes per stage. Empty draws no marks.
+  final Map<String, double> averages;
 
-  /// Its corner.
-  static const double barRadius = 7;
+  /// The strip's height and the bars'.
+  static const double stripHeight = 10;
+  static const double barHeight = 8;
 
-  /// The gap between one row and the next.
-  static const double rowGap = 14;
+  /// Between rows, and inside one.
+  static const double rowGap = 16;
+  static const double innerGap = 6;
 
-  /// The gap between the bar and the words after it.
-  static const double textGap = 10;
-
-  /// The most of the row's width a bar may take at 100%, leaving room for a
-  /// name and a duration on the longest stage.
-  static const double barShare = 0.56;
+  /// Under this many minutes apart, a stage is said to be about its average.
+  static const double same = 5;
 
   @override
   Widget build(BuildContext context) {
+    final longest = <double>[
+      ...minutes.values,
+      ...averages.values,
+    ].fold<double>(1, (a, b) => a > b ? a : b);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        for (final (int i, String stage) in kShareOrder.indexed) ...<Widget>[
-          if (i > 0) const SizedBox(height: rowGap),
-          _ShareRow(
-            stage: stage,
-            minutes: minutes[stage] ?? 0,
-            share: (minutes[stage] ?? 0) / total,
+        _strip(context),
+        for (final stage in kShareOrder) ...<Widget>[
+          const SizedBox(height: rowGap),
+          _row(context, stage, longest),
+        ],
+      ],
+    );
+  }
+
+  Widget _strip(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(stripHeight / 2),
+    child: SizedBox(
+      height: stripHeight,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          for (final stage in kShareOrder.reversed)
+            if ((minutes[stage] ?? 0) > 0)
+              Expanded(
+                flex: (minutes[stage]! * 10).round(),
+                child: ColoredBox(color: sleepStageColor(context.hues, stage)),
+              ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _row(BuildContext context, String stage, double longest) {
+    final colors = context.colors;
+    final hue = sleepStageColor(context.hues, stage);
+    final ran = minutes[stage] ?? 0;
+    final average = averages[stage];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            SizedBox.square(
+              dimension: 8,
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: hue, shape: BoxShape.circle),
+              ),
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Text(
+                sleepStageLabel(stage),
+                style: SleepType.tableCell.copyWith(color: colors.ink2),
+              ),
+            ),
+            Text(
+              durationText(ran),
+              style: SleepType.shareDuration.copyWith(color: colors.ink),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 34,
+              child: Text(
+                '${(100 * ran / total).round()}%',
+                textAlign: TextAlign.end,
+                style: SleepType.tableCell.copyWith(color: colors.ink2),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: innerGap),
+        LayoutBuilder(
+          builder: (context, box) => SizedBox(
+            height: 14,
+            child: Stack(
+              alignment: Alignment.centerLeft,
+              children: <Widget>[
+                Container(
+                  height: barHeight,
+                  decoration: BoxDecoration(
+                    color: colors.surface2,
+                    borderRadius: BorderRadius.circular(barHeight / 2),
+                  ),
+                ),
+                Container(
+                  key: ValueKey<String>('stage-bar-$stage'),
+                  height: barHeight,
+                  width: box.maxWidth * ran / longest,
+                  decoration: BoxDecoration(
+                    color: hue,
+                    borderRadius: BorderRadius.circular(barHeight / 2),
+                  ),
+                ),
+                if (average != null)
+                  Positioned(
+                    left: (box.maxWidth * average / longest - 1).clamp(
+                      0,
+                      box.maxWidth - 2,
+                    ),
+                    top: 0,
+                    bottom: 0,
+                    child: SizedBox(
+                      width: 2,
+                      child: ColoredBox(color: colors.ink),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (average != null) ...<Widget>[
+          const SizedBox(height: innerGap),
+          Text(
+            '${_against(ran, average)} (${durationText(average)})',
+            style: SleepType.tableCell.copyWith(color: colors.ink2),
           ),
         ],
       ],
     );
   }
-}
 
-class _ShareRow extends StatelessWidget {
-  const _ShareRow({
-    required this.stage,
-    required this.minutes,
-    required this.share,
-  });
-
-  final String stage;
-  final double minutes;
-  final double share;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final hue = sleepStageColor(context.hues, stage);
-    final percent = (100 * share).round();
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // The fill is a share of the bar's own allowance, not of the row: a
-        // 62% stage that ran to the row's edge would leave its name nowhere to
-        // sit, and the two long rows are exactly the ones that need it.
-        final allowance = constraints.maxWidth * StageShares.barShare;
-        // **Offset, not clamped.** Clamping to a floor drew 15% and 31% at the
-        // same length — the bar stopped encoding the share for exactly the
-        // stages whose shares are closest and hardest to tell apart. Every bar
-        // starts at [_minFill] so it can hold its own percentage, and the rest
-        // of the allowance is divided by share, so the ORDER and the GAPS
-        // between bars are the reading even though the origin is not zero.
-        final fill = _minFill + share.clamp(0.0, 1.0) * (allowance - _minFill);
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            SizedBox(
-              height: StageShares.barHeight,
-              width: fill,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: hue,
-                  borderRadius: BorderRadius.circular(StageShares.barRadius),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 9),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '$percent%',
-                      maxLines: 1,
-                      // Ink chosen against the fill, not against the card: this
-                      // label sits ON the stage hue, and every stage hue in
-                      // both themes is a light one.
-                      style: SleepType.tableCell.copyWith(
-                        color: colors.onAccent,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: StageShares.textGap),
-            Flexible(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: <Widget>[
-                  Text(
-                    sleepStageLabel(stage),
-                    maxLines: 1,
-                    style: SleepType.tableCell.copyWith(color: colors.ink2),
-                  ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      hoursMinutes(minutes),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: SleepType.shareDuration.copyWith(
-                        color: colors.ink,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    );
+  static String _against(double ran, double average) {
+    final gap = (ran - average).round();
+    if (gap.abs() < same) {
+      return 'About your average';
+    }
+    return '${gap.abs()} min ${gap > 0 ? 'more' : 'less'} than your average';
   }
-
-  /// Enough fill that the percentage inside it is still readable. A stage that
-  /// ran for four minutes still has to print `1%` somewhere.
-  static const double _minFill = 46;
 }

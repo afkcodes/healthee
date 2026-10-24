@@ -123,7 +123,7 @@ class ListRow extends StatelessWidget {
               Icon(
                 SolarIconsOutline.altArrowRight,
                 size: chevronSize,
-                color: colors.ink3,
+                color: colors.ink2,
               ),
             ],
           ],
@@ -280,12 +280,12 @@ class _Item extends StatelessWidget {
                       ? Icon(
                           Icons.check,
                           size: 16,
-                          color: step.active ? family : colors.ink3,
+                          color: step.active ? family : colors.ink2,
                         )
                       : Text(
                           step.ordinal,
                           style: TypeScale.tinyLabel.copyWith(
-                            color: step.active ? family : colors.ink3,
+                            color: step.active ? family : colors.ink2,
                           ),
                         ),
                 ),

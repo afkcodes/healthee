@@ -21,7 +21,8 @@ library;
 /// same header (Standards §1, second use; §3, no cross-feature imports). It is
 /// re-exported rather than copied, so there is still one definition and every
 /// call site that reads it from here is unchanged.
-export 'package:healthee/shared/format/date_labels.dart' show dayTitle, prettyDate;
+export 'package:healthee/shared/format/date_labels.dart'
+    show dayTitle, prettyDate;
 
 /// `shortClock` moved to `shared/format/time_labels.dart` when Insights grew
 /// the same hour axis. Same reason, same re-export: one definition, and two
@@ -144,10 +145,3 @@ bool? favorableDirection(String metric, double? z) {
 /// `today_screen.dart:175`.
 String clockDuration(int minutes) =>
     '${minutes ~/ 60}:${(minutes % 60).toString().padLeft(2, '0')}';
-
-/// `6h 20m` from minutes. Legacy's `_ReadinessBlock` and `_SleepHealthModule`.
-String hoursMinutes(num minutes) =>
-    '${minutes ~/ 60}h ${(minutes % 60).round()}m';
-
-/// `6.3h` from minutes. Legacy's `_SleepDebtModule.h`.
-String decimalHours(num minutes) => '${(minutes / 60).toStringAsFixed(1)}h';

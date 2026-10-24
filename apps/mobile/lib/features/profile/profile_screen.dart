@@ -19,6 +19,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:healthee/core/profile_field.dart';
 import 'package:healthee/data/profile/health_profile.dart';
 import 'package:healthee/data/profile/profile_repository.dart';
 import 'package:healthee/features/profile/widgets/profile_editor.dart';
@@ -29,7 +30,10 @@ import 'package:healthee/shared/v02/settings_page.dart';
 /// The owner's own details, and their latest weigh-in.
 class ProfileScreen extends ConsumerWidget {
   /// The profile screen.
-  const ProfileScreen({super.key});
+  const ProfileScreen({this.focus, super.key});
+
+  /// The field a link asked to open on, or null for the plain profile.
+  final ProfileField? focus;
 
   /// The prototype's own h1.
   static const String title = 'Your profile';
@@ -52,6 +56,7 @@ class ProfileScreen extends ConsumerWidget {
             key: ObjectKey(repository),
             repository: repository,
             profile: profile,
+            focus: focus,
           ),
         ),
       ),

@@ -169,7 +169,7 @@ class HSwitch extends StatelessWidget {
           shape: hSquircle(
             radius,
             side: BorderSide(
-              color: value ? colors.accent : colors.ink3,
+              color: value ? colors.accent : colors.ink2,
               width: hairline,
             ),
           ),

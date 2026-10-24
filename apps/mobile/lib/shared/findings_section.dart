@@ -158,25 +158,7 @@ class _FindingRow extends StatelessWidget {
                 ],
               ),
             ),
-            MetricInfoDot(
-              // No explainer key: a correlation found in one person's history is
-              // not a metric the corpus has an entry for. The detail IS the
-              // content, which is the case `MetricInfoDot` draws itself for.
-              null,
-              detail: MetricDetail(
-                title: headline,
-                notes: finding.researchNoteIds,
-                // **The arithmetic lives here, not on the face.** It was an
-                // inline `The statistic behind this ⌄` on every row — five
-                // findings meant five collapsed disclosures stacked down the
-                // card, each one a control the reader had to decide about
-                // before they could read the next headline. The ⓘ is where
-                // every other surface in this app keeps its method, and this
-                // dot was already open beside the row carrying the sources.
-                method: findingStatistics(finding).split('\n\n'),
-              ),
-              fallbackTitle: headline,
-            ),
+            FindingInfoDot(finding),
           ],
         ),
         const SizedBox(height: Insets.xs),
@@ -185,6 +167,40 @@ class _FindingRow extends StatelessWidget {
           style: text.bodySmall?.copyWith(color: colors.ink2),
         ),
       ],
+    );
+  }
+}
+
+/// The ⓘ beside a finding: its sources and its arithmetic, and nothing on the
+/// face of the card.
+///
+/// Shared by every surface that draws a finding, so the citations and the
+/// statistic are reached the same way wherever the finding appears.
+class FindingInfoDot extends StatelessWidget {
+  /// The dot for [finding].
+  const FindingInfoDot(this.finding, {super.key});
+
+  /// The finding it explains.
+  final Finding finding;
+
+  @override
+  Widget build(BuildContext context) {
+    final headline = findingHeadline(finding);
+    return MetricInfoDot(
+      // No explainer key: a correlation found in one person's history is not a
+      // metric the corpus has an entry for. The detail IS the content, which is
+      // the case `MetricInfoDot` draws itself for.
+      null,
+      detail: MetricDetail(
+        title: headline,
+        notes: finding.researchNoteIds,
+        // **The arithmetic lives here, not on the face.** It was an inline `The
+        // statistic behind this ⌄` on every row — five findings meant five
+        // collapsed disclosures stacked down the card. The ⓘ is where every
+        // other surface in this app keeps its method.
+        method: findingStatistics(finding).split('\n\n'),
+      ),
+      fallbackTitle: headline,
     );
   }
 }

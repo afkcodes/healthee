@@ -3,6 +3,12 @@
 /// Both are the same picture at two densities — a value per slot, standing on a
 /// baseline — and the density is a number ([barFraction]), not a second painter.
 ///
+/// ## A goal decides weight when there is one
+///
+/// With a target, a bar below it is drawn at 32% and a bar at or above it at
+/// full weight (with the dark-theme glow: goal-met bars are the only bars that
+/// glow). Without one, emphasis picks the bar read, and nothing glows.
+///
 /// ## Weight carries emphasis; hue never does
 ///
 /// The prototype gives the current bar its own class and a different fill
@@ -95,6 +101,9 @@ class ColumnPainter extends CustomPainter {
   /// The height of a measured zero. See the library docstring.
   static const double _floorMark = 2;
 
+  /// The weight of a bar below its goal.
+  static const double belowGoalAlpha = 0.32;
+
   @override
   void paint(Canvas canvas, Size size) {
     final box = metrics.box(size);
@@ -144,8 +153,15 @@ class ColumnPainter extends CustomPainter {
       topLeft: radius,
       topRight: radius,
     );
-    final read = index == emphasis;
-    if (read && ink.isDark) {
+    // With a target, the goal decides: a bar below it is dimmed to 32% and a
+    // bar at or above it is full domain colour with the glow. Without one, the
+    // bar being read is full and the rest are quiet, and nothing glows.
+    final goal = target?.value;
+    final met = goal != null && value >= goal;
+    final alpha = goal != null
+        ? (met ? 1.0 : belowGoalAlpha)
+        : (index == emphasis ? 1.0 : 0.42);
+    if (met && ink.isDark) {
       // The glow is dark-only for the reason `chart_ink.dart` gives: on a light
       // ground the identical paint reads as a smudge under the bar.
       canvas.drawRRect(
@@ -155,7 +171,7 @@ class ColumnPainter extends CustomPainter {
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
       );
     }
-    canvas.drawRRect(rect, ink.bar(read ? 1 : 0.42));
+    canvas.drawRRect(rect, ink.bar(alpha));
   }
 
   void _paintCaptions(Canvas canvas, ChartBox box, double slot) {

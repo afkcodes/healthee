@@ -8,7 +8,7 @@
 /// .source .icon { width: 13px; height: 13px; }
 /// ```
 ///
-/// Both are `--subtle`, which is [HealtheeColors.ink3], and **neither takes a
+/// Both are `--subtle`, which is [HealtheeColors.ink2], and **neither takes a
 /// colour** — there is nothing here for a caller to tint. `.source` owns its own
 /// `margin-top` for the reason `panel_parts.dart` owns `.panel-note`'s: the gap
 /// between a card's figures and its provenance is part of the card's rhythm, and
@@ -41,7 +41,7 @@ class TinyLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: TypeScale.tinyLabel.copyWith(color: context.colors.ink3),
+    style: TypeScale.tinyLabel.copyWith(color: context.colors.ink2),
     maxLines: 1,
     overflow: TextOverflow.ellipsis,
   );
@@ -77,13 +77,13 @@ class SourceNote extends StatelessWidget {
           Icon(
             SolarIconsOutline.shieldCheck,
             size: iconSize,
-            color: colors.ink3,
+            color: colors.ink2,
           ),
           const SizedBox(width: gap),
           Flexible(
             child: Text(
               text,
-              style: TypeScale.formNote.copyWith(color: colors.ink3),
+              style: TypeScale.formNote.copyWith(color: colors.ink2),
             ),
           ),
         ],

@@ -84,7 +84,9 @@ void main() {
       // 12 minutes against a 120-minute axis over a 114 px plot: every segment
       // is tiny but present. If the axis had collapsed to the data, they would
       // fill the chart.
-      final stackedHeight = segments.map((r) => r.height).reduce((a, b) => a + b);
+      final stackedHeight = segments
+          .map((r) => r.height)
+          .reduce((a, b) => a + b);
       expect(stackedHeight, lessThan(130 * 0.2));
       expect(stackedHeight, greaterThan(0));
     });
@@ -104,7 +106,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(tester.getSize(find.byType(HDebtBars)), const Size(hostWidth, 150));
+      expect(
+        tester.getSize(find.byType(HDebtBars)),
+        const Size(hostWidth, 150),
+      );
       final rects = rectsOf(paintedBy(tester, find.byType(HDebtBars)));
       // Two solid bars plus ONE ghost — the met night has no shortfall.
       expect(rects.length, 3);
@@ -113,7 +118,9 @@ void main() {
       }
     });
 
-    testWidgets('MET AND SHORT ARE LEGACY’S GREEN AND RED-ORANGE', (tester) async {
+    testWidgets('MET IS GREEN, SHORT IS THE CARD’S OWN HUE, NEVER RED', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         chartHost(
           const HDebtBars(
@@ -129,17 +136,10 @@ void main() {
 
       const colors = HealtheeColors.light();
       final drawn = coloursOf(paintedBy(tester, find.byType(HDebtBars)));
-      expect(drawn, contains(colors.fav.toARGB32()), reason: 'a met night is legacy’s green');
-      expect(
-        drawn,
-        contains(colors.alert.toARGB32()),
-        reason: 'a short night is legacy’s cHeart, not the amber',
-      );
-      expect(
-        drawn,
-        isNot(contains(colors.unf.toARGB32())),
-        reason: 'the amber is not in this chart at all — legacy uses two colours',
-      );
+      expect(drawn, contains(colors.fav.toARGB32()), reason: 'a met night');
+      // The approved redesign: a short night is a reading, not an alarm.
+      expect(drawn, isNot(contains(colors.alert.toARGB32())), reason: 'red');
+      expect(drawn, isNot(contains(colors.unf.toARGB32())), reason: 'amber');
     });
 
     testWidgets('every night met means no ghost anywhere', (tester) async {
@@ -164,14 +164,21 @@ void main() {
     ) async {
       for (final theme in <ThemeData>[AppTheme.light, AppTheme.dark]) {
         await tester.pumpWidget(
-          chartHost(HStackedSleep(week(), progress: 1, height: 130), theme: theme),
+          chartHost(
+            HStackedSleep(week(), progress: 1, height: 130),
+            theme: theme,
+          ),
         );
         await tester.pumpAndSettle();
         expect(
           tester.getSize(find.byType(HStackedSleep)),
           const Size(hostWidth, 130),
         );
-        expect(rectsOf(paintedBy(tester, find.byType(HStackedSleep))).length, 28);
+        expect(
+          rectsOf(paintedBy(tester, find.byType(HStackedSleep))).length,
+          28,
+        );
       }
     });
-  });}
+  });
+}

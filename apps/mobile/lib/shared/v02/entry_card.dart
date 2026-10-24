@@ -8,15 +8,12 @@
 ///                      border:1px solid
 ///                        color-mix(in oklch,var(--family) 25%,var(--line)); }
 /// .relationship-card .icon  { color:var(--family); margin-bottom:12px; }
+/// /* The brief overrides it: surface ground, NO border, padding 20, radius 20,
+///    icon in ink2. The family border and glyph tint are gone. */
 /// .relationship-card h3     { font-size:15px; }
 /// .relationship-card p      { font-size:11px; margin-top:8px; }
 /// .relationship-card .text-button { color:var(--family); }
 /// ```
-///
-/// `color-mix(in oklch, var(--family) 25%, var(--line))` interpolates in OKLab
-/// and `Color.lerp` in sRGB; on a 1 px edge between two colours this close the
-/// two are indistinguishable, so the border is `Color.lerp(line, family, 0.25)`
-/// — the same argument `bio_hero.dart` records for its own hairline.
 ///
 /// A card with no [onOpen] draws **no action line at all** rather than a dead
 /// one. An entry point that leads nowhere is worse than an absent entry point:
@@ -46,8 +43,8 @@ class EntryCard extends StatelessWidget {
     super.key,
   });
 
-  /// `padding: 18px`.
-  static const double padding = 18;
+  /// The brief's card padding.
+  static const double padding = Insets.card;
 
   /// `border-radius: 20px`.
   static const double radius = 20;
@@ -63,9 +60,6 @@ class EntryCard extends StatelessWidget {
 
   /// `p { margin-top: 8px }`.
   static const double bodyGap = 8;
-
-  /// The share of the family in the border — `color-mix … 25%`.
-  static const double edgeMix = 0.25;
 
   /// What is on the other side of the tap.
   final String title;
@@ -104,7 +98,6 @@ class EntryCard extends StatelessWidget {
 
   Widget _body(BuildContext context) {
     final colors = context.colors;
-    final family = context.family;
     final label = actionLabel;
     final open = onOpen;
     final card = Container(
@@ -113,16 +106,9 @@ class EntryCard extends StatelessWidget {
         // **The app's surface, not the family's.** These two carried a
         // full-bleed `familySoft` ground — the largest blocks of colour on
         // Today, on its two least important cards, sitting under a screen of
-        // neutral ones. The family still marks them, on the glyph and in the
-        // border; it just does not flood them.
+        // neutral ones. It carries no border either.
         color: colors.surface,
-        shape: hSquircle(
-          radius,
-          side: BorderSide(
-            color: Color.lerp(colors.line, family, edgeMix)!,
-            width: hairline,
-          ),
-        ),
+        shape: hSquircle(radius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,13 +119,13 @@ class EntryCard extends StatelessWidget {
           // the same mark `PanelHead` draws, for the same reason.
           Row(
             children: <Widget>[
-              Icon(icon, size: iconSize, color: family),
+              Icon(icon, size: iconSize, color: colors.ink2),
               const Spacer(),
               if (open != null)
                 Icon(
                   SolarIconsOutline.altArrowRight,
                   size: chevronSize,
-                  color: colors.ink3,
+                  color: colors.ink2,
                 ),
             ],
           ),

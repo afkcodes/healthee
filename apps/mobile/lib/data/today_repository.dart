@@ -52,7 +52,6 @@ import 'package:healthee/core/provider_logger.dart';
 import 'package:healthee/data/api/api_client.dart';
 import 'package:healthee/data/api/cache_session.dart';
 import 'package:healthee/data/api/credentials.dart';
-import 'package:healthee/data/honesty/last_known.dart';
 import 'package:healthee/data/models/today_snapshot.dart';
 import 'package:healthee/data/models/today_view.dart';
 import 'package:healthee/data/store/local_store.dart';
@@ -151,53 +150,6 @@ class TodayRepository {
     return TodayView(snapshot: snapshot, fetchedAt: at, fromCache: false);
   }
 
-  /// The last day this phone holds a biological age for, and that day.
-  ///
-  /// Walks the 60-day tier backwards and stops at the first payload that
-  /// actually carried the number. Today's own row is skipped by the same test as
-  /// every other — it is the refused one, so its value is null.
-  ///
-  /// **Reads only, computes nothing.** No interpolation, no carrying a value
-  /// forward from a neighbouring metric, no averaging two old days: the answer
-  /// is a row the server once sent, or null. Null is a real answer and the hero
-  /// draws its empty state for it (`today_hero_withheld.dart`).
-  Future<LastKnown<double>?> lastKnownBiologicalAge() =>
-      _lastKnown((block) => (block['biological_age'] as num?)?.toDouble(), 'biological_age');
-
-  Future<LastKnown<double>?> _lastKnown(
-    double? Function(Map<String, Object?> block) pick,
-    String key,
-  ) async {
-    final session = await CacheSession.capture(credentials);
-    final rows = await _store.readRecent(kTodayPayload, scope: session.scope);
-    await session.ensureCurrent();
-    for (final row in rows) {
-      // Named, not swallowed: an unreadable row is the cache being wrong, and
-      // silently treating it as "no value" would hide that. It must also not
-      // stop the walk — one corrupt day is not "this phone holds no history".
-      Object? decoded;
-      try {
-        decoded = jsonDecode(row.payload);
-      } on FormatException catch (error, stackTrace) {
-        AppLog.failure('today', 'reading cached ${row.day}', error, stackTrace);
-        continue;
-      }
-      if (decoded is! Map<String, Object?>) {
-        AppLog.info('today', 'cached payload for ${row.day} is not an object');
-        continue;
-      }
-      final block = decoded[key];
-      if (block is! Map<String, Object?>) {
-        continue;
-      }
-      final value = pick(block);
-      if (value != null) {
-        return LastKnown<double>(value: value, day: row.day);
-      }
-    }
-    return null;
-  }
-
   /// The cached payload for [day], or the newest one when [day] is null.
   ///
   /// A row we cannot parse is treated as absent and said out loud. It cannot be
@@ -259,13 +211,3 @@ TodayRepository todayRepository(Ref ref) => TodayRepository(
 @riverpod
 Future<TodayView> todaySnapshot(Ref ref) =>
     ref.watch(todayRepositoryProvider).load(day: ref.watch(viewDateProvider));
-
-/// The last biological age this phone holds, and the day it belonged to.
-///
-/// Deliberately **lazy**: only the withheld hero watches it, so a payload that
-/// carried a number never touches the local tier at all. A field on [TodayView]
-/// would scan the cache on every load to answer a question almost every load
-/// does not ask.
-@riverpod
-Future<LastKnown<double>?> lastKnownBiologicalAge(Ref ref) =>
-    ref.watch(todayRepositoryProvider).lastKnownBiologicalAge();

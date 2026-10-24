@@ -41,6 +41,9 @@ class DetailPage extends StatelessWidget {
     required this.children,
     this.actions = const <Widget>[],
     this.eyebrow,
+    this.head,
+    this.gutter = Insets.gutter,
+    this.largeTitle = false,
     super.key,
   });
 
@@ -52,6 +55,17 @@ class DetailPage extends StatelessWidget {
 
   /// The body.
   final List<Widget> children;
+
+  /// Draws the head itself, given the way back (null when there is none), so a
+  /// screen can own its nav row and its title. The back rule, the pop gesture
+  /// and the page's scroll stay this page's. Null draws the usual head.
+  final Widget Function(BuildContext context, VoidCallback? onBack)? head;
+
+  /// The page's side padding.
+  final double gutter;
+
+  /// Sets the title at Title1. See [DetailHead.large].
+  final bool largeTitle;
 
   /// Controls on the screen itself, at the head's trailing edge. Empty by
   /// default, so every existing screen renders exactly as it did.
@@ -82,19 +96,23 @@ class DetailPage extends StatelessWidget {
         body: SafeArea(
           bottom: false,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              Insets.lg,
-              Insets.lg,
-              Insets.lg,
-              Insets.xxl,
+            padding: EdgeInsets.fromLTRB(
+              gutter,
+              Insets.gutter,
+              gutter,
+              Insets.section,
             ),
             children: <Widget>[
-              DetailHead(
-                title: title,
-                eyebrow: eyebrow,
-                onBack: canLeave ? () => leaveDetail(context) : null,
-                actions: actions,
-              ),
+              if (head case final head?)
+                head(context, canLeave ? () => leaveDetail(context) : null)
+              else
+                DetailHead(
+                  title: title,
+                  eyebrow: eyebrow,
+                  onBack: canLeave ? () => leaveDetail(context) : null,
+                  actions: actions,
+                  large: largeTitle,
+                ),
               ...children,
             ],
           ),

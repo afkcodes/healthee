@@ -79,14 +79,17 @@ class IllnessBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                'POSSIBLE EARLY SIGNAL',
-                style: text.labelSmall?.copyWith(
-                  color: colors.alert,
-                  letterSpacing: 0.9,
+              // Expanded, so the 20 px card padding wraps the title rather
+              // than overflowing a narrow screen.
+              Expanded(
+                child: Text(
+                  'POSSIBLE EARLY SIGNAL',
+                  style: text.labelSmall?.copyWith(
+                    color: colors.alert,
+                    letterSpacing: 0.9,
+                  ),
                 ),
               ),
-              const Spacer(),
               if (flag.sustained)
                 Text(
                   'sustained',

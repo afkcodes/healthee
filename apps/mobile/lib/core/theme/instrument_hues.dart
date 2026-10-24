@@ -50,6 +50,8 @@ class InstrumentHues extends ThemeExtension<InstrumentHues> {
     required this.movement, required this.movementSoft,
     required this.oxygen, required this.oxygenSoft,
     required this.stress, required this.stressSoft,
+    required this.strain, required this.strainSoft,
+    required this.recovery, required this.recoverySoft,
     required this.stageDeep, required this.stageLight,
     required this.stageRem, required this.stageAwake,
     required this.unstaged,
@@ -69,6 +71,10 @@ class InstrumentHues extends ThemeExtension<InstrumentHues> {
       oxygenSoft = LightFamilies.oxygenSoft,
       stress = LightFamilies.stress,
       stressSoft = LightFamilies.stressSoft,
+      strain = LightFamilies.strain,
+      strainSoft = LightFamilies.strainSoft,
+      recovery = LightPalette.ink2,
+      recoverySoft = LightPalette.surface2,
       stageDeep = V02StagePrototype.lightDeep,
       stageLight = V02StagePrototype.lightLight,
       stageRem = V02StagePrototype.lightRem,
@@ -89,6 +95,10 @@ class InstrumentHues extends ThemeExtension<InstrumentHues> {
       oxygenSoft = DarkFamilies.oxygenSoft,
       stress = DarkFamilies.stress,
       stressSoft = DarkFamilies.stressSoft,
+      strain = DarkFamilies.strain,
+      strainSoft = DarkFamilies.strainSoft,
+      recovery = DarkPalette.ink2,
+      recoverySoft = DarkPalette.surface2,
       stageDeep = V02StagePrototype.darkDeep,
       stageLight = V02StagePrototype.darkLight,
       stageRem = V02StagePrototype.darkRem,
@@ -130,6 +140,19 @@ class InstrumentHues extends ThemeExtension<InstrumentHues> {
 
   /// The fill behind [stress] content.
   final Color stressSoft;
+
+  /// Cardio load and workouts: its own family, split from [heart].
+  final Color strain;
+
+  /// The fill behind [strain] content.
+  final Color strainSoft;
+
+  /// Recovery has no hue: its mark is the text-secondary ink, and its state
+  /// comes from the zone (67 to 100 better, 34 to 66 watch, 0 to 33 worse).
+  final Color recovery;
+
+  /// The well behind [recovery] content.
+  final Color recoverySoft;
 
   /// Deep sleep — `--stage-deep`, the prototype's violet.
   final Color stageDeep;
@@ -186,6 +209,8 @@ class InstrumentHues extends ThemeExtension<InstrumentHues> {
     Color? movement, Color? movementSoft,
     Color? oxygen, Color? oxygenSoft,
     Color? stress, Color? stressSoft,
+    Color? strain, Color? strainSoft,
+    Color? recovery, Color? recoverySoft,
     Color? stageDeep, Color? stageLight,
     Color? stageRem, Color? stageAwake,
     Color? unstaged,
@@ -203,6 +228,10 @@ class InstrumentHues extends ThemeExtension<InstrumentHues> {
       oxygenSoft: oxygenSoft ?? this.oxygenSoft,
       stress: stress ?? this.stress,
       stressSoft: stressSoft ?? this.stressSoft,
+      strain: strain ?? this.strain,
+      strainSoft: strainSoft ?? this.strainSoft,
+      recovery: recovery ?? this.recovery,
+      recoverySoft: recoverySoft ?? this.recoverySoft,
       stageDeep: stageDeep ?? this.stageDeep,
       stageLight: stageLight ?? this.stageLight,
       stageRem: stageRem ?? this.stageRem,
@@ -229,6 +258,10 @@ class InstrumentHues extends ThemeExtension<InstrumentHues> {
       oxygenSoft: Color.lerp(oxygenSoft, other.oxygenSoft, t)!,
       stress: Color.lerp(stress, other.stress, t)!,
       stressSoft: Color.lerp(stressSoft, other.stressSoft, t)!,
+      strain: Color.lerp(strain, other.strain, t)!,
+      strainSoft: Color.lerp(strainSoft, other.strainSoft, t)!,
+      recovery: Color.lerp(recovery, other.recovery, t)!,
+      recoverySoft: Color.lerp(recoverySoft, other.recoverySoft, t)!,
       stageDeep: Color.lerp(stageDeep, other.stageDeep, t)!,
       stageLight: Color.lerp(stageLight, other.stageLight, t)!,
       stageRem: Color.lerp(stageRem, other.stageRem, t)!,
@@ -243,6 +276,7 @@ class InstrumentHues extends ThemeExtension<InstrumentHues> {
   List<Color> get _hues => [
     fitness, fitnessSoft, sleep, sleepSoft, heart, heartSoft,
     movement, movementSoft, oxygen, oxygenSoft, stress, stressSoft,
+    strain, strainSoft, recovery, recoverySoft,
     stageDeep, stageLight, stageRem, stageAwake, unstaged,
   ];
 

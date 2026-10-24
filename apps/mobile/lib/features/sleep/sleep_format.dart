@@ -15,13 +15,6 @@ library;
 
 import 'package:healthee/core/theme/stage_colors.dart';
 
-/// Minutes → `7h 05m`. Legacy's `_hm`, without its null branch.
-String hoursMinutes(num minutes) {
-  final whole = minutes.round();
-  final rest = (whole % 60).toString().padLeft(2, '0');
-  return '${whole ~/ 60}h ${rest}m';
-}
-
 /// An instant → `11:30p`. Legacy's `_clock`.
 String clock(DateTime at) {
   final hour = at.hour % 12 == 0 ? 12 : at.hour % 12;
@@ -63,11 +56,6 @@ String normaliseStage(String? raw) {
   }
   return kUnrecognisedStage;
 }
-
-/// Nap minutes → `35m` or `1h 20m`. Legacy's `_napDur`.
-String napDuration(num minutes) => minutes < 60
-    ? '${minutes.round()}m'
-    : '${minutes ~/ 60}h ${(minutes % 60).round()}m';
 
 /// A nap's clock range → `2:30 pm–3:05 pm`. Legacy's `_napRange`.
 ///
@@ -115,9 +103,11 @@ String nightLabel(DateTime? end, DateTime now) {
   if (end == null) {
     return 'Last night';
   }
-  final daysAgo = DateTime(now.year, now.month, now.day)
-      .difference(DateTime(end.year, end.month, end.day))
-      .inDays;
+  final daysAgo = DateTime(
+    now.year,
+    now.month,
+    now.day,
+  ).difference(DateTime(end.year, end.month, end.day)).inDays;
   if (daysAgo <= 0) {
     return 'Last night';
   }
@@ -133,10 +123,28 @@ bool noSleepLastNight(DateTime? end, DateTime now) =>
     end != null && now.difference(end).inHours >= 24;
 
 const List<String> _months = <String>[
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
-const List<String> _weekdays = <String>['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+const List<String> _weekdays = <String>[
+  'Mo',
+  'Tu',
+  'We',
+  'Th',
+  'Fr',
+  'Sa',
+  'Su',
+];
 
 DateTime? _date(String? iso) => iso == null ? null : DateTime.tryParse(iso);

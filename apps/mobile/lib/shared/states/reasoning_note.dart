@@ -38,6 +38,10 @@ import 'package:healthee/shared/metric_info/metric_info_sheet.dart';
 import 'package:healthee/shared/states/grounded_text.dart';
 import 'package:solar_icons/solar_icons.dart';
 
+/// The question row's splash corner. A row, not a chip: when the question
+/// wraps, a pill radius ([Radii.chip]) would splash it as a stadium.
+const double _splashRadius = 8;
+
 /// A one-line question that opens into its answer.
 class ReasoningNote extends StatefulWidget {
   /// [question] is the prompt in the owner's own words; [answer] is the body.
@@ -63,10 +67,8 @@ class _ReasoningNoteState extends State<ReasoningNote> {
 
   /// What the answer cites. Empty for an answer composed in Dart, which is most
   /// of them — so most disclosures draw no ⓘ at all.
-  MetricDetail get _detail => MetricDetail.grounded(
-    groundingOf(widget.answer),
-    title: widget.question,
-  );
+  MetricDetail get _detail =>
+      MetricDetail.grounded(groundingOf(widget.answer), title: widget.question);
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +79,7 @@ class _ReasoningNoteState extends State<ReasoningNote> {
       children: [
         InkWell(
           onTap: () => setState(() => _open = !_open),
-          borderRadius: BorderRadius.circular(Radii.chip),
+          borderRadius: BorderRadius.circular(_splashRadius),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: Insets.xs),
             child: Row(
@@ -91,7 +93,9 @@ class _ReasoningNoteState extends State<ReasoningNote> {
                 ),
                 const SizedBox(width: Insets.xs),
                 Icon(
-                  _open ? SolarIconsOutline.altArrowUp : SolarIconsOutline.altArrowDown,
+                  _open
+                      ? SolarIconsOutline.altArrowUp
+                      : SolarIconsOutline.altArrowDown,
                   size: 16,
                   color: colors.accent,
                 ),

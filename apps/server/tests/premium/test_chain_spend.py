@@ -15,6 +15,7 @@ SPEND with real ones.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Iterator
 
 import pytest
@@ -22,9 +23,9 @@ from tests.conftest import entitle
 from tests.contracts.seed import seed_all
 from tests.insights._stub import StubLLM
 
-from healthee.core.tenancy import SENTINEL_TZ, SENTINEL_USER_ID
+from healthee.core.tenancy import SENTINEL_TZ, SENTINEL_USER_ID, user_today
 from healthee.insights import coaching, grounded
-from healthee.jobs import briefing, chain, recs
+from healthee.jobs import briefing, chain, coach_weekly
 
 pytestmark = [
     pytest.mark.integration,
@@ -45,6 +46,11 @@ def chain_bed(db: None, monkeypatch: pytest.MonkeyPatch) -> Iterator[StubLLM]:  
     yield client
 
 
+def _llm_steps_due() -> set[str]:
+    """The LLM steps this owner's chain runs today (the weekly review is Sunday-only)."""
+    return {*chain._coach_names(user_today(SENTINEL_TZ)), "warm", "briefing"}
+
+
 def _run(client: StubLLM) -> chain.ChainResult:
     """One forced chain for the seeded owner. ``force`` because ``seed_all`` may have
     left the day's dedup marker behind and the point here is what a RUN costs."""
@@ -59,7 +65,7 @@ def test_a_free_owners_chain_spends_zero_llm_calls(chain_bed: StubLLM) -> None:
 
     assert chain_bed.calls == 0, f"a free owner's chain made {chain_bed.calls} model calls"
     skipped = {s.name for s in result.steps if s.status == "skipped"}
-    assert skipped == set(chain.LLM_STEPS)
+    assert skipped == _llm_steps_due()
 
 
 def test_a_premium_owners_chain_does_spend(chain_bed: StubLLM) -> None:
@@ -70,7 +76,7 @@ def test_a_premium_owners_chain_does_spend(chain_bed: StubLLM) -> None:
 
     assert chain_bed.calls > 0, "a premium owner's chain generated nothing"
     ran = {s.name for s in result.steps if s.status == "ok"}
-    assert set(chain.LLM_STEPS) <= ran
+    assert _llm_steps_due() <= ran
 
 
 def test_the_deterministic_steps_run_for_a_free_owner_against_a_real_db(
@@ -146,8 +152,8 @@ def test_two_owners_with_opposite_entitlement_do_not_leak_into_each_other(
 
     assert after_free == 0, "the FREE owner's chain spent tokens"
     assert chain_bed.calls > 0, "the PREMIUM owner's chain spent nothing"
-    assert {s.name for s in free.steps if s.status == "skipped"} == set(chain.LLM_STEPS)
-    assert set(chain.LLM_STEPS) <= {s.name for s in paid.steps if s.status == "ok"}
+    assert {s.name for s in free.steps if s.status == "skipped"} == _llm_steps_due()
+    assert _llm_steps_due() <= {s.name for s in paid.steps if s.status == "ok"}
 
 
 @pytest.fixture
@@ -160,13 +166,18 @@ def make_owner_b() -> Callable[[], None]:
     return seed
 
 
-def test_recs_generation_is_the_step_that_actually_costs(chain_bed: StubLLM) -> None:
-    """Guards the premise of the skip: `recs` really is an LLM step.
+def test_weekly_coach_generation_is_a_step_that_actually_costs(
+    chain_bed: StubLLM, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Guards the premise of the skip: the weekly coach really is an LLM step.
 
-    If `generate_recs` ever stopped calling a model, gating it would be cost theatre —
+    If `generate_week` ever stopped calling a model, gating it would be cost theatre —
     and this file's central assertion would keep passing while protecting nothing.
     """
+    from tests.jobs._coach_fixtures import answer
+
     entitle(SENTINEL_USER_ID, premium=True)
-    before = chain_bed.calls
-    recs.generate_recs(SENTINEL_USER_ID, SENTINEL_TZ, client=chain_bed)
-    assert chain_bed.calls > before
+    stub = StubLLM(json_text=json.dumps(answer(job={"target": 20})))
+    monkeypatch.setattr(grounded, "get_client", lambda: stub)
+    coach_weekly.generate_week(SENTINEL_USER_ID, SENTINEL_TZ, client=stub)
+    assert stub.calls > 0

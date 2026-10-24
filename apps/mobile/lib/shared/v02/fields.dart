@@ -156,7 +156,7 @@ abstract final class FieldBox {
     return InputDecoration(
       isDense: true,
       hintText: hintText,
-      hintStyle: FormType.fieldInput.copyWith(color: colors.ink3),
+      hintStyle: FormType.fieldInput.copyWith(color: colors.ink2),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: invalid ? colors.alertSoft : colors.surface,
@@ -185,6 +185,8 @@ class HTextField extends StatelessWidget {
     this.onSubmitted,
     this.inputFormatters,
     this.textCapitalization = TextCapitalization.none,
+    this.focusNode,
+    this.autofocus = false,
     super.key,
   });
 
@@ -221,9 +223,18 @@ class HTextField extends StatelessWidget {
   /// Whether the keyboard auto-capitalises.
   final TextCapitalization textCapitalization;
 
+  /// The field's focus, when the caller needs to read or move it.
+  final FocusNode? focusNode;
+
+  /// Whether the field takes focus when it first appears. Off by default: a
+  /// screen that opens with the keyboard up is a choice a caller makes.
+  final bool autofocus;
+
   @override
   Widget build(BuildContext context) => TextField(
     controller: controller,
+    focusNode: focusNode,
+    autofocus: autofocus,
     enabled: enabled,
     obscureText: obscure,
     keyboardType: keyboardType,
@@ -312,12 +323,12 @@ class HSelect<T> extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: FormType.fieldInput.copyWith(
-                color: chosen == null ? colors.ink3 : colors.ink,
+                color: chosen == null ? colors.ink2 : colors.ink,
               ),
             ),
           ),
           const SizedBox(width: 8),
-          Icon(SolarIconsOutline.altArrowDown, color: colors.ink3),
+          Icon(SolarIconsOutline.altArrowDown, color: colors.ink2),
         ],
       ),
     );

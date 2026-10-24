@@ -213,7 +213,7 @@ class _DateCalendarSheetState extends State<_DateCalendarSheet> {
 
   Widget _weekdays(BuildContext context) {
     const days = <String>['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    final style = TypeScale.deviceStrip.copyWith(color: context.colors.ink3);
+    final style = TypeScale.deviceStrip.copyWith(color: context.colors.ink2);
     return Row(
       children: <Widget>[
         for (final day in days)

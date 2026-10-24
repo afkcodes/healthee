@@ -35,11 +35,9 @@
 /// Measured rather than typed, so the two cannot drift apart.
 library;
 
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:healthee/shared/v02/chapter.dart';
+import 'package:healthee/shared/v02/chapter_jump.dart';
 
 /// The three anchors Today's chapter nav jumps to.
 class TodayChapters {
@@ -52,60 +50,9 @@ class TodayChapters {
   /// `Patterns → small changes`.
   final GlobalKey longer = GlobalKey(debugLabel: 'today.chapter.longer');
 
-  /// How far one hop scrolls, as a share of the viewport.
-  static const double hopFraction = 0.9;
-
-  /// How many hops before giving up. Twelve viewports is longer than Today.
-  static const int maxHops = 12;
-
-  /// One hop, and the final centring.
-  static const Duration step = Duration(milliseconds: 180);
-
   /// Scrolls until [key]'s heading is on screen, from [from]'s viewport.
-  Future<void> jumpTo(BuildContext from, GlobalKey key) async {
-    for (var hop = 0; hop < maxHops; hop++) {
-      // The button can be scrolled out of the tree by its own animation, so
-      // every hop after the first re-checks that the context is still live.
-      if (!from.mounted) {
-        return;
-      }
-      final anchor = key.currentContext;
-      if (anchor != null) {
-        await _landing(from, anchor);
-        return;
-      }
-      final position = Scrollable.maybeOf(from)?.position;
-      if (position == null || !position.hasContentDimensions) {
-        return;
-      }
-      final next = math.min(
-        position.pixels + position.viewportDimension * hopFraction,
-        position.maxScrollExtent,
-      );
-      if (next <= position.pixels) {
-        return;
-      }
-      await position.animateTo(next, duration: step, curve: Curves.easeOut);
-    }
-  }
-
-  /// Scrolls so [anchor] sits just **below** the pinned nav rather than under
-  /// it. Falls back to `ensureVisible` when the geometry cannot be read, which
-  /// is the pre-pinning behaviour and still lands the heading on screen.
-  Future<void> _landing(BuildContext from, BuildContext anchor) async {
-    final box = anchor.findRenderObject();
-    final position = Scrollable.maybeOf(from)?.position;
-    final viewport = box is RenderBox ? RenderAbstractViewport.maybeOf(box) : null;
-    if (box is! RenderBox || position == null || viewport == null) {
-      await Scrollable.ensureVisible(anchor, duration: step);
-      return;
-    }
-    final target =
-        (viewport.getOffsetToReveal(box, 0).offset -
-                ChapterNav.extentOf(from))
-            .clamp(position.minScrollExtent, position.maxScrollExtent);
-    await position.animateTo(target, duration: step, curve: Curves.easeOut);
-  }
+  Future<void> jumpTo(BuildContext from, GlobalKey key) =>
+      jumpToChapter(from, key);
 }
 
 /// `.chapter-nav`, wired to [chapters].

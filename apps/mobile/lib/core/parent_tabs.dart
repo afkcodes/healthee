@@ -5,7 +5,7 @@
 ///   workouts:'activity',workout:'activity',route:'activity',record:'activity',
 ///   fitness:'activity',body:'activity',metric:'insights',metrics:'insights',
 ///   insight:'insights',challenge:'actions',program:'actions',
-///   outcomes:'actions','action-history':'actions',journal:'actions' };
+///   coach-ledger:'actions','action-history':'actions',journal:'actions' };
 /// H.back = () => routeHistory.length
 ///   ? history.back()
 ///   : H.navigate(parents[H.route.split('/')[0]] || 'today');
@@ -59,7 +59,7 @@ const Map<String, String> kParentTabs = <String, String>{
   'body': Routes.activity,
   'challenge': Routes.actions,
   'program': Routes.actions,
-  'outcomes': Routes.actions,
+  'coach-ledger': Routes.actions,
   'recommendations': Routes.actions,
   'journal': Routes.actions,
 };

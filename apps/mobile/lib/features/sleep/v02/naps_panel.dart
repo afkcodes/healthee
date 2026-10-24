@@ -54,9 +54,11 @@ import 'package:flutter/material.dart';
 import 'package:healthee/core/theme/dimensions.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/tone.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/data/models/sleep_page.dart';
 import 'package:healthee/features/sleep/sleep_format.dart';
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/v02/buttons.dart';
 import 'package:healthee/shared/v02/panel.dart';
 import 'package:healthee/shared/v02/panel_head.dart';
@@ -80,7 +82,7 @@ const String kNoNapsNote = 'No nap record included for this day.';
 /// The distinction matters to the reader: "we were not told" and "there was
 /// nothing to tell" are different states, and only one of them is about them.
 const String kNapsUnstagedNote =
-    'The strap recorded no stage breakdown for these naps — only when they '
+    'The strap recorded no stage breakdown for these naps, only when they '
     'started, when they ended and how long they ran.';
 
 /// `Naps & your day`.
@@ -150,7 +152,7 @@ class NapsPanel extends StatelessWidget {
             const PanelNote(kNoNapsNote)
           else ...<Widget>[
             PanelValue(
-              hoursMinutes(totalMin),
+              durationText(totalMin),
               unit: naps.length == 1 ? 'in 1 nap' : 'in ${naps.length} naps',
             ),
             const SizedBox(height: tableTop),
@@ -187,7 +189,7 @@ class NapsPanel extends StatelessWidget {
 
   /// How long it ran, or [kNoReading].
   static String length(SleepNap nap) => switch (nap.tibMin) {
-    final double minutes => napDuration(minutes),
+    final double minutes => durationText(minutes),
     null => kNoReading,
   };
 }
@@ -199,11 +201,7 @@ class _NapHead extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final style = TypeScale.tinyLabel.copyWith(
-      color: colors.ink3,
-      letterSpacing: 0.9,
-      fontWeight: FontWeight.w700,
-    );
+    final style = TypeLadder.label.copyWith(color: colors.ink2);
     return Padding(
       padding: const EdgeInsets.only(bottom: NapsPanel.cellPad),
       child: Row(
@@ -235,7 +233,9 @@ class _NapRow extends StatelessWidget {
     final cell = TypeScale.panelContext.copyWith(color: colors.ink2);
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: colors.line, width: hairline)),
+        border: Border(
+          top: BorderSide(color: colors.line, width: hairline),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: NapsPanel.cellPad),
@@ -266,10 +266,7 @@ class _NapRow extends StatelessWidget {
                 maxLines: 1,
                 // The one figure a reader scans this table FOR, so it is the
                 // one in full ink.
-                style: TypeScale.panelContext.copyWith(
-                  color: colors.ink,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TypeLadder.calloutStrong.copyWith(color: colors.ink),
               ),
             ),
           ],

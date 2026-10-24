@@ -1,10 +1,10 @@
 /// `.panel` — the v02 container everything else sits in.
 ///
-/// ```css
-/// .panel { padding: 18px; background: var(--surface); color: var(--ink);
-///          border: 1px solid var(--line); border-radius: 22px;
-///          margin-top: 12px; overflow: clip; }
-/// ```
+/// **The owner's brief replaced the prototype's frame.** The prototype drew
+/// `padding: 18px; border: 1px solid var(--line); border-radius: 22px`. A card
+/// is now the surface colour on the page background with NO border and NO
+/// shadow, radius 20 ([Radii.card]) and padding 20 ([Insets.card]); twin
+/// (compact) panels take 16. Cards sit 12 apart ([Insets.cardGap]).
 ///
 /// The margin is the caller's, because a widget that reserves space above itself
 /// cannot be the first thing in a column without a hole over it.
@@ -60,7 +60,7 @@ class Panel extends StatelessWidget {
   ///
   /// **For a panel whose body folds away.** The gap is emitted here, outside
   /// the child, so a body that collapses to nothing still leaves 12px of it
-  /// sitting above the card's own 18px of bottom padding — 30px of empty card
+  /// sitting above the card's own 20px of bottom padding — 30px of empty card
   /// under the title, which is what a shut fold looked like. A folding panel
   /// passes `0` and puts the gap inside its own fold, where it collapses with
   /// the body instead of surviving it.
@@ -68,25 +68,24 @@ class Panel extends StatelessWidget {
 
   /// Overrides the card's own inset. Null takes [padding].
   ///
-  /// **For a panel whose body folds away.** 18 all round is sized for a card
+  /// **For a panel whose body folds away.** 20 all round is sized for a card
   /// with a reading in it; a shut fold has only its head, and 36px of vertical
   /// inset around one 28px row is most of the card. A folding panel tightens
   /// the vertical inset while it is shut and takes the full one back when it
   /// opens.
   final EdgeInsets? padded;
 
-  /// `padding: 18px`. `Container` adds the 1px border on top of this, which is
-  /// what `box-sizing: border-box` does in the prototype.
-  static const double padding = 18;
+  /// The brief's card padding, [Insets.card].
+  static const double padding = Insets.card;
 
-  /// `.twin-panels .panel { padding: 14px }`.
-  static const double compactPadding = 14;
+  /// Twin panels share half a 390 px screen, so they take 16, not 20.
+  static const double compactPadding = Insets.lg;
 
   /// `.twin-panels .panel-head { margin-bottom: 8px }`.
   static const double compactHeadGap = 8;
 
-  /// `border-radius: 22px`.
-  static const double radius = 22;
+  /// The brief's card radius, [Radii.card].
+  static const double radius = Radii.card;
 
   /// `.panel-head { margin-bottom: 12px }` — owned here so a head cannot be
   /// placed without its gap.
@@ -126,14 +125,10 @@ class Panel extends StatelessWidget {
     // come from one field. See [PanelOpens].
     final Widget panel = Container(
       clipBehavior: Clip.antiAlias,
-      padding:
-          padded ?? EdgeInsets.all(compact ? compactPadding : padding),
+      padding: padded ?? EdgeInsets.all(compact ? compactPadding : padding),
       decoration: ShapeDecoration(
         color: colors.surface,
-        shape: hSquircle(
-          radius,
-          side: BorderSide(color: colors.line, width: hairline),
-        ),
+        shape: hSquircle(radius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

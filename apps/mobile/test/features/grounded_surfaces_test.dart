@@ -112,6 +112,10 @@ Future<void> _openTheSources(WidgetTester tester, Type surface) async {
   );
   // The first inside the named surface. For `ActionsSection` that is the block
   // head's, which grounds the daily line; the rows' own come after it.
+  // Scrolled to first: the page grew with the key numbers, and a dot left
+  // under the pinned chapter bar takes no tap.
+  await tester.ensureVisible(dots.first);
+  await tester.pumpAndSettle();
   await tester.tap(dots.first);
   await tester.pumpAndSettle();
 }

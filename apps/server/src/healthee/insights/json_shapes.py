@@ -161,6 +161,33 @@ def _morning_segments(payload: dict) -> list[Segment]:
     ]
 
 
+# The weekly/daily COACH answer (jobs/coach_task.py). Its coach-voice prose (`review`,
+# `pattern`, `today`) and the job's directive lines are NOT grounded sentence-by-sentence:
+# the spec keeps note ids out of the text the owner reads ("Note ids go only in the
+# rationale field"), and the review mostly quotes the owner's own numbers. They still face
+# banned tone, certainty, fabricated-id and the hard guardrails. The `rationale` is the one
+# interpretive field and is grounded and grade-calibrated like any other; `coach_checks`
+# additionally requires an inline citation and PROVES the grade. If that loosens, this
+# exemption must be revisited.
+_COACH_VOICE_FIELDS = ("review", "pattern", "today")
+_COACH_JOB_FIELDS = ("action", "slot", "floor", "counts_when")
+
+
+def _coach_segments(payload: dict) -> list[Segment]:
+    """The coach answer's user-facing strings, each with its grounding rule."""
+    segments = [
+        Segment(value, require_grounding=False)
+        for name in _COACH_VOICE_FIELDS
+        if isinstance(value := payload.get(name), str)
+    ]
+    job = payload.get("job")
+    if isinstance(job, dict):
+        segments += _item_segments([job], (), _COACH_JOB_FIELDS)
+    if isinstance(rationale := payload.get("rationale"), str):
+        segments.append(Segment(rationale))
+    return segments
+
+
 # The JSON shapes this codebase knows how to read, keyed by a top-level key. A shape that
 # is NOT here fails closed (module docstring).
 JSON_SHAPES: dict[str, Callable[[dict], list[Segment]]] = {
@@ -168,6 +195,7 @@ JSON_SHAPES: dict[str, Callable[[dict], list[Segment]]] = {
     "challenges": _challenge_segments,
     "program": _program_segments,
     "briefing": _morning_segments,
+    "today": _coach_segments,
 }
 
 

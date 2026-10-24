@@ -44,7 +44,8 @@ import '_today_host.dart';
 /// `findsNothing` would pass for a link that is present and merely off screen.
 void _tall(WidgetTester tester) {
   tester.view
-    ..physicalSize = const Size(420, 6000)
+    // Taller since the three key numbers went full width (+~460 px).
+    ..physicalSize = const Size(420, 7000)
     ..devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 }

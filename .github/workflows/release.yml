@@ -1,4 +1,11 @@
-# Tag-driven release: `git tag v0.2.0 && git push --tags` publishes the APK.
+# Two ways to publish the APK, both through every gate below:
+#
+#   1. Push a tag:  `git tag v0.2.0 && git push --tags`
+#   2. From a phone: Actions > Release > Run workflow, on `main`. The tag is
+#      derived from pubspec's `version:` and created at the built commit.
+#
+# A manual run refuses any branch but `main`, and refuses a version whose tag
+# already exists: it can only ever create a release, never overwrite one.
 #
 # ## Why a release is gated, not just built
 #
@@ -26,6 +33,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write # creating the release and uploading the APK
@@ -45,23 +53,40 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag="${GITHUB_REF_NAME#v}"
           raw="$(grep -m1 '^version:' apps/mobile/pubspec.yaml | awk '{print $2}')"
           name="${raw%%+*}"
           code="${raw##*+}"
 
-          # A tag that disagrees with the version inside the APK is how somebody
-          # ends up unable to say what they are running.
-          if [ "$tag" != "$name" ]; then
-            echo "::error::tag v$tag does not match pubspec version $name (from '$raw')"
-            exit 1
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            # A manual run publishes what is on main and nothing else: a release
+            # built from a feature branch would reach phones nobody reviewed it for.
+            if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+              echo "::error::manual releases run on main only (this run is on $GITHUB_REF)"
+              exit 1
+            fi
+            tag="v$name"
+            # A manual run must never overwrite a release; bump pubspec instead.
+            if [ -n "$(git ls-remote --tags origin "refs/tags/$tag")" ]; then
+              echo "::error::tag $tag already exists; bump the version in apps/mobile/pubspec.yaml first"
+              exit 1
+            fi
+          else
+            tag="$GITHUB_REF_NAME"
+            # A tag that disagrees with the version inside the APK is how somebody
+            # ends up unable to say what they are running.
+            if [ "$tag" != "v$name" ]; then
+              echo "::error::tag $tag does not match pubspec version $name (from '$raw')"
+              exit 1
+            fi
           fi
           if [ "$code" = "$raw" ]; then
             echo "::error::pubspec version '$raw' has no +buildNumber; that number IS the Android versionCode"
             exit 1
           fi
 
-          previous="$(gh release list --limit 1 --json tagName --jq '.[0].tagName // ""')"
+          # Pre-releases (the rolling `preview`) are not what the updater serves,
+          # so they are not what the build number is compared against.
+          previous="$(gh release list --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName // ""')"
           if [ -n "$previous" ]; then
             prev_code="$(gh release view "$previous" --json body --jq '.body' \
               | sed -n 's/^<!-- versionCode: \([0-9]*\) -->$/\1/p' | head -1)"
@@ -71,6 +96,7 @@ jobs:
             fi
           fi
 
+          echo "tag=$tag"    >> "$GITHUB_OUTPUT"
           echo "name=$name"  >> "$GITHUB_OUTPUT"
           echo "code=$code"  >> "$GITHUB_OUTPUT"
           echo "previous=$previous" >> "$GITHUB_OUTPUT"
@@ -110,6 +136,7 @@ jobs:
       - name: Build the signed APK
         working-directory: apps/mobile
         env:
+          TAG: ${{ steps.version.outputs.tag }}
           HEALTHEE_KEYSTORE_PATH: ${{ runner.temp }}/healthee-release.jks
           HEALTHEE_KEYSTORE_PASSWORD: ${{ secrets.HEALTHEE_KEYSTORE_PASSWORD }}
           HEALTHEE_KEY_ALIAS: ${{ secrets.HEALTHEE_KEY_ALIAS }}
@@ -126,13 +153,15 @@ jobs:
           # and the same binary serves everybody.
           flutter build apk --release -PrequireReleaseSigning
           mv build/app/outputs/flutter-apk/app-release.apk \
-             "build/app/outputs/flutter-apk/healthee-${GITHUB_REF_NAME}.apk"
+             "build/app/outputs/flutter-apk/healthee-${TAG}.apk"
 
       - name: Prove the APK is not debug-signed
         working-directory: apps/mobile
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          apk="build/app/outputs/flutter-apk/healthee-${GITHUB_REF_NAME}.apk"
+          apk="build/app/outputs/flutter-apk/healthee-${TAG}.apk"
 
           # ⛔ `apksigner`, NOT `unzip META-INF/*.RSA | keytool`. This step was
           # written that way first and it was a gate that protected nothing:
@@ -179,7 +208,7 @@ jobs:
             echo "## What changed"
             echo
             if [ -n "$PREVIOUS" ]; then
-              git log --no-merges --pretty='- %s' "$PREVIOUS..${GITHUB_REF_NAME}"
+              git log --no-merges --pretty='- %s' "$PREVIOUS..HEAD"
             else
               git log --no-merges --pretty='- %s' -20
             fi
@@ -194,9 +223,13 @@ jobs:
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          gh release create "$GITHUB_REF_NAME" \
-            --title "$GITHUB_REF_NAME" \
+          # --target makes a manual run create the tag at the commit that was
+          # built; on a tag push the tag already points there, so it is a no-op.
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
             --notes-file "$RUNNER_TEMP/notes.md" \
-            "apps/mobile/build/app/outputs/flutter-apk/healthee-${GITHUB_REF_NAME}.apk"
+            "apps/mobile/build/app/outputs/flutter-apk/healthee-${TAG}.apk"

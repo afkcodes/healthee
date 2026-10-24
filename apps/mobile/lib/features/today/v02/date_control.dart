@@ -262,7 +262,7 @@ class DateControl extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               '⌄',
-              style: DateType.dateCaret.copyWith(color: colors.ink3),
+              style: DateType.dateCaret.copyWith(color: colors.ink2),
             ),
           ],
         ),

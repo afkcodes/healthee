@@ -152,7 +152,7 @@ class ChallengeCard extends StatelessWidget {
                       const Spacer(),
                       Text(
                         windowLabel(challenge),
-                        style: TypeScale.tinyLabel.copyWith(color: colors.ink3),
+                        style: TypeScale.tinyLabel.copyWith(color: colors.ink2),
                       ),
                       if (challengeSources(challenge)
                           case final MetricDetail detail
@@ -196,14 +196,14 @@ class ChallengeCard extends StatelessWidget {
                                   '${challenge.comparator} '
                                   '${_trim(challenge.target)}',
                           style: TypeScale.tinyLabel.copyWith(
-                            color: colors.ink3,
+                            color: colors.ink2,
                           ),
                         ),
                       ),
                       Icon(
                         SolarIconsOutline.arrowRight,
                         size: arrowSize,
-                        color: colors.ink3,
+                        color: colors.ink2,
                       ),
                     ],
                   ),

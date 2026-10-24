@@ -214,14 +214,14 @@ def test_a_free_owners_chain_still_produces_the_flag(
     _seed_and_produce(TODAY, ill_nights=2)
     with tenant_transaction(seed.OWNER) as cur:  # start from no flag, so the row is the chain's
         cur.execute("DELETE FROM illness_flag WHERE user_id = %s", (seed.OWNER,))
-    for name in ("challenges", "correlate", "recs", "warm", "briefing"):
+    for name in ("challenges", "correlate", "coach_today", "warm", "briefing"):
         monkeypatch.setattr(chain, f"step_{name}", lambda *a, **k: {})  # noqa: ARG005
 
     result = chain.run_chain(seed.OWNER, seed.TZ, TODAY)
 
     statuses = {step.name: step.status for step in result.steps}
     assert statuses["illness"] == "ok"
-    assert statuses["recs"] == "skipped"  # the owner really is unentitled
+    assert statuses["coach_today"] == "skipped"  # the owner really is unentitled
     with tenant_transaction(seed.OWNER) as cur:
         assert seed.stored_flag(cur, seed.OWNER, TODAY) is not None
         assert active_illness_severity(cur, seed.OWNER, seed.TZ, TODAY) == "high"

@@ -218,7 +218,7 @@ class ChangeStat extends StatelessWidget {
     // window all get the ordinary ink, which is visibly not a verdict.
     final Color? verdict = switch (verdictFor(metric, delta)) {
       TrendVerdict.favourable => colors.fav,
-      TrendVerdict.unfavourable => colors.unf,
+      TrendVerdict.unfavourable => colors.alert,
       TrendVerdict.none => null,
     };
     final sign = delta > 0 ? '+' : (delta < 0 ? '−' : '');

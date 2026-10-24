@@ -149,7 +149,10 @@ class SummaryTile extends StatelessWidget {
     final tone = this.tone;
     final tile = tone == null
         ? _body(context)
-        : ToneScope(tone: tone, child: Builder(builder: _body));
+        : ToneScope(
+            tone: tone,
+            child: Builder(builder: _body),
+          );
     return onOpen == null
         ? tile
         : HTap(onTap: onOpen, semanticLabel: '$title · $value', child: tile);
@@ -236,7 +239,7 @@ class SummaryTile extends StatelessWidget {
 /// The ground is `color-mix(in oklch, var(--family) 22%, var(--family-soft))`,
 /// drawn as `Color.lerp(familySoft, family, 0.22)`: sRGB against OKLab, on a
 /// 4 px strip between two colours of the same family, is not a difference the
-/// eye has anywhere to see. `bio_hero.dart` records the same trade.
+/// eye has anywhere to see. `entry_card.dart` records the same trade.
 class TileMeter extends StatelessWidget {
   /// Builds a meter filled to [fraction] of its width.
   const TileMeter({required this.fraction, super.key});
@@ -303,12 +306,9 @@ class MicroTrack extends StatelessWidget {
                   color: i < filled
                       ? family
                       : family.withValues(
-                          alpha:
-                              family.a * SummaryTile.trackFaintOpacity,
+                          alpha: family.a * SummaryTile.trackFaintOpacity,
                         ),
-                  borderRadius: BorderRadius.circular(
-                    SummaryTile.trackRadius,
-                  ),
+                  borderRadius: BorderRadius.circular(SummaryTile.trackRadius),
                 ),
               ),
             ),

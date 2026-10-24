@@ -26,7 +26,6 @@ import 'package:healthee/core/theme/dimensions.dart';
 import 'package:healthee/core/theme/shapes.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/type_scale.dart';
-import 'package:healthee/core/theme/type_scale_bio.dart';
 import 'package:healthee/data/honesty/disclosure.dart';
 
 /// A refused reading, in v02's geometry: the metric's name, a hole, the reason.
@@ -42,9 +41,6 @@ class WithheldPanel extends StatelessWidget {
 
   /// `.withheld-value { gap: 14px }`.
   static const double gap = 14;
-
-  /// `.withheld-value > span { font-size: 44px }`.
-  static const double holeSize = 44;
 
   /// The dash length of the broken edge, and the gap between dashes.
   static const double dash = 4;
@@ -66,10 +62,7 @@ class WithheldPanel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         if (label case final String name) ...<Widget>[
-          Text(
-            name,
-            style: TypeScale.panelTitle.copyWith(color: colors.ink2),
-          ),
+          Text(name, style: TypeScale.panelTitle.copyWith(color: colors.ink2)),
           const SizedBox(height: labelGap),
         ],
         CustomPaint(
@@ -85,10 +78,9 @@ class WithheldPanel extends StatelessWidget {
               children: <Widget>[
                 Text(
                   '—',
-                  style: BioType.bioAge.copyWith(
-                    color: colors.ink3,
-                    fontSize: holeSize,
-                  ),
+                  // `.withheld-value > span`: the prototype's 44 px is the
+                  // ladder's metric step, the size the refused number had.
+                  style: TypeScale.panelValue.copyWith(color: colors.ink2),
                 ),
                 const SizedBox(width: gap),
                 Expanded(

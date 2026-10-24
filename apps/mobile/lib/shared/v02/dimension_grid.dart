@@ -175,7 +175,7 @@ class _Verdict extends StatelessWidget {
     return Icon(
       met ? Icons.check : Icons.close,
       size: DimensionGrid.markGlyph,
-      color: met ? colors.fav : colors.unf,
+      color: met ? colors.fav : colors.alert,
     );
   }
 }

@@ -69,7 +69,7 @@ class V02FullButton extends StatelessWidget {
           backgroundColor: colors.accent,
           foregroundColor: colors.onAccent,
           disabledBackgroundColor: colors.surface2,
-          disabledForegroundColor: colors.ink3,
+          disabledForegroundColor: colors.ink2,
           elevation: 0,
           shadowColor: Colors.transparent,
           padding: padding,

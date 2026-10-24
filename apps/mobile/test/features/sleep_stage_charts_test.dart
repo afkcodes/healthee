@@ -11,7 +11,6 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:healthee/core/theme/dimensions.dart';
 import 'package:healthee/core/theme/instrument_hues.dart';
 import 'package:healthee/data/models/sleep_night.dart';
 import 'package:healthee/features/sleep/sleep_windows.dart';
@@ -26,11 +25,10 @@ import 'package:healthee/shared/v02/panel.dart';
 
 import '../_sleep_stubs.dart';
 import '../shared/_chart_probe.dart';
-import '../shared/_decoration.dart';
 import '_sleep_host.dart';
 
-/// A 390 px panel, less 18 px of `Panel` padding and one hairline either side.
-const double _panelInnerWidth = 390 - 2 * Panel.padding - 2 * hairline;
+/// A 390 px panel, less `Panel.padding` either side (the card has no border).
+const double _panelInnerWidth = 390 - 2 * Panel.padding;
 
 const InstrumentHues _hues = InstrumentHues.light();
 
@@ -63,17 +61,16 @@ void main() {
       // The fixture stages all four, so all four are drawn. A stage that
       // rounded away would have vanished from the picture without vanishing
       // from the readings beside it.
-      final boxes = tester
-          .widgetList<DecoratedBox>(
-            find.descendant(
-              of: find.byType(StageShares),
-              matching: find.byType(DecoratedBox),
-            ),
-          )
-          .toList();
-      expect(boxes, hasLength(4));
       final drawn = <int>{
-        for (final box in boxes) (groundOf(box.decoration)!).toARGB32(),
+        for (final stage in kShareOrder)
+          ((tester
+                          .widget<Container>(
+                            find.byKey(ValueKey<String>('stage-bar-$stage')),
+                          )
+                          .decoration!
+                      as BoxDecoration)
+                  .color!)
+              .toARGB32(),
       };
       for (final stage in const <String>['deep', 'light', 'rem', 'awake']) {
         expect(
@@ -207,14 +204,7 @@ void main() {
       // so the stage with none of the night must not be as long as one with
       // most of it.
       double barWidth(String stage) => tester
-          .getSize(
-            find
-                .descendant(
-                  of: find.byType(StageShares),
-                  matching: find.byType(DecoratedBox),
-                )
-                .at(kShareOrder.indexOf(stage)),
-          )
+          .getSize(find.byKey(ValueKey<String>('stage-bar-$stage')))
           .width;
       expect(barWidth('rem'), lessThan(barWidth('awake')));
       expect(barWidth('awake'), lessThan(barWidth('light')));
@@ -239,5 +229,61 @@ void main() {
       expect(find.byType(StageShares), findsNothing);
       expect(find.text(kNoStagesNote), findsOneWidget);
     });
+  });
+
+  testWidgets('each stage is read against the owner\'s own average', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      sleepPanelHost(
+        const StageShares(
+          minutes: <String, double>{
+            'deep': 60,
+            'light': 200,
+            'rem': 90,
+            'awake': 20,
+          },
+          total: 370,
+          averages: <String, double>{
+            'deep': 80,
+            'light': 198,
+            'rem': 70,
+            'awake': 20,
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('20 min less than your average (1\u00A0h 20\u00A0min)'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('20 min more than your average (1\u00A0h 10\u00A0min)'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('About your average (3\u00A0h 18\u00A0min)'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('without averages there is no mark and no comparison', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      sleepPanelHost(
+        StageTablePanel(
+          night: windows.latest,
+          recent: windows.recent,
+          reveals: RevealRegistry(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    // The snapshot stages only six nights before the latest.
+    expect(find.textContaining('your average'), findsNothing);
+    expect(find.text(kStageAverageNote), findsNothing);
   });
 }

@@ -38,6 +38,7 @@ import 'package:healthee/data/models/sleep_consistency.dart';
 import 'package:healthee/data/models/sleep_page.dart';
 import 'package:healthee/data/sleep_repository.dart';
 import 'package:healthee/data/sync/sync_controller.dart';
+import 'package:healthee/features/sleep/sleep_chapters.dart';
 import 'package:healthee/features/sleep/sleep_sections.dart';
 import 'package:healthee/shared/reveal_once.dart';
 import 'package:healthee/shared/skeletons/sleep_skeleton.dart';
@@ -123,7 +124,11 @@ class _SleepScreenState extends ConsumerState<SleepScreen> {
     // `Routes.history` with no `metric` IS the directory — one route, two
     // screens, as `router.dart` records.
     onOpenAllMetrics: () => unawaited(context.push(Routes.history)),
+    chapters: _chapters,
   );
+
+  /// One set of anchors for the screen's life, so a jump finds its heading.
+  final SleepChapters _chapters = SleepChapters();
 
   /// Pull-to-refresh runs a real sync and re-reads all three payloads.
   Future<void> _refresh() async {
@@ -169,9 +174,9 @@ class SleepList extends StatelessWidget {
 
   /// The same gutter Today and Activity use.
   static const EdgeInsets padding = EdgeInsets.fromLTRB(
-    Insets.lg,
-    Insets.lg,
-    Insets.lg,
+    Insets.gutter,
+    Insets.gutter,
+    Insets.gutter,
     120,
   );
 

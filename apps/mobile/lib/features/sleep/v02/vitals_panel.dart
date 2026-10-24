@@ -19,8 +19,11 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/tone.dart';
+import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/data/models/sleep_night.dart';
+import 'package:healthee/features/sleep/v02/vital_bars.dart';
 import 'package:healthee/shared/reveal_once.dart';
 import 'package:healthee/shared/v02/panel.dart';
 import 'package:healthee/shared/v02/panel_head.dart';
@@ -29,6 +32,11 @@ import 'package:healthee/shared/v02/vitals_table.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 /// `Your body overnight` — the five overnight measurements.
+/// What the bars are, said once above them.
+const String kVitalBarsLead =
+    'The shaded part of each bar is the middle half of your own last 14 '
+    'nights. The mark is last night.';
+
 class OvernightPanel extends StatelessWidget {
   /// [night] is the session; [recent] is the fortnight, newest first.
   const OvernightPanel({
@@ -115,11 +123,22 @@ class OvernightPanel extends StatelessWidget {
   ];
 
   /// Oldest first, with a night the strap did not measure kept as a gap.
-  List<double?> _series(double? Function(SleepNight night) read) =>
-      <double?>[for (final night in recent.reversed) read(night)];
+  List<double?> _series(double? Function(SleepNight night) read) => <double?>[
+    for (final night in recent.reversed) read(night),
+  ];
 
   /// The server's own reason for each measurement it did not send.
   static List<String> refusals(List<Vital> rows) => VitalsTable.refusals(rows);
+
+  /// A vital's value on one night, by its metric id.
+  static double? readVital(SleepNight night, String metric) => switch (metric) {
+    'rhr' => night.restingHr.valueOrNull,
+    'hrv_sleep_avg' => night.hrvSleepAvg.valueOrNull,
+    'spo2_avg' => night.spo2Avg.valueOrNull,
+    'respiratory_rate' => night.respiratoryRate.valueOrNull,
+    'skin_temp_c' => night.skinTempC.valueOrNull,
+    _ => null,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -138,10 +157,16 @@ class OvernightPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          VitalsTable(
+          Text(
+            kVitalBarsLead,
+            style: TypeScale.panelContext.copyWith(color: context.colors.ink2),
+          ),
+          const SizedBox(height: 12),
+          VitalBars(
             vitals: rows,
-            reveals: reveals,
-            revealPrefix: revealPrefix,
+            nights: recent,
+            day: night.date,
+            read: readVital,
             onOpenMetric: onOpenMetric,
           ),
           if (VitalsTable.refusals(rows) case final List<String> lines

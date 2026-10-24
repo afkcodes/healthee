@@ -4,6 +4,10 @@
 /// other four containers the prototype uses, transcribed from `styles.css` with
 /// `richer.css`'s overrides applied on top:
 ///
+/// **The owner's brief dropped every card and notice border** (no border, no
+/// shadow, radius 20, padding 20); the CSS below is the prototype's, kept for
+/// the other properties.
+///
 /// ```css
 /// .card         { background:var(--surface); border:1px solid var(--line);
 ///                 border-radius:20px; padding:20px }
@@ -21,7 +25,6 @@
 ///                            letter-spacing:-4px; margin-block:20px 8px }
 ///
 /// /* richer.css */
-/// .card, .metric-card, .challenge-card { border-radius: 22px }
 /// .focus-card[data-tone] { background:var(--family-soft) }
 /// .focus-card[data-tone] .focus-title, .icon, .text-button { color:var(--family) }
 /// ```
@@ -57,10 +60,10 @@ class SurfaceCard extends StatelessWidget {
   });
 
   /// `padding: var(--space-xl)`.
-  static const double padding = 20;
+  static const double padding = Insets.card;
 
-  /// `richer.css`: `.card { border-radius: 22px }`.
-  static const double radius = 22;
+  /// The brief's card radius, [Radii.card].
+  static const double radius = Radii.card;
 
   /// What is inside.
   final Widget child;
@@ -79,10 +82,7 @@ class SurfaceCard extends StatelessWidget {
       padding: flush ? EdgeInsets.zero : const EdgeInsets.all(padding),
       decoration: ShapeDecoration(
         color: colors.surface,
-        shape: hSquircle(
-          radius,
-          side: BorderSide(color: colors.line, width: hairline),
-        ),
+        shape: hSquircle(radius),
       ),
       child: child,
     );
@@ -150,7 +150,7 @@ class Notice extends StatelessWidget {
   static const double gap = 10;
 
   /// `.notice > .icon { width: 18px; margin-top: 2px }`.
-  static const double iconSize = 18;
+  static const double iconSize = 16;
 
   /// `.notice p { margin-top: 4px }`.
   static const double bodyGap = 4;
@@ -168,10 +168,7 @@ class Notice extends StatelessWidget {
       padding: const EdgeInsets.all(padding),
       decoration: ShapeDecoration(
         color: colors.surface2,
-        shape: hSquircle(
-          radius,
-          side: BorderSide(color: colors.line, width: hairline),
-        ),
+        shape: hSquircle(radius),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +178,7 @@ class Notice extends StatelessWidget {
             child: Icon(
               SolarIconsOutline.infoCircle,
               size: iconSize,
-              color: colors.ink,
+              color: colors.ink2,
             ),
           ),
           const SizedBox(width: gap),
@@ -290,11 +287,10 @@ class FocusCard extends StatelessWidget {
 
   Widget _body(BuildContext context) {
     final colors = context.colors;
-    final family = context.family;
     return Container(
       padding: padding,
       decoration: ShapeDecoration(
-        color: context.familySoft,
+        color: colors.surface,
         shape: hSquircle(radius),
       ),
       child: Column(
@@ -308,7 +304,9 @@ class FocusCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       label,
-                      style: TypeScale.focusEyebrow.copyWith(color: family),
+                      style: TypeScale.focusEyebrow.copyWith(
+                        color: colors.ink2,
+                      ),
                     ),
                   )
                 else
@@ -316,7 +314,7 @@ class FocusCard extends StatelessWidget {
                 if (action case final Widget control) control,
                 if (icon case final IconData glyph) ...<Widget>[
                   if (action != null) const SizedBox(width: actionGap),
-                  Icon(glyph, size: iconSize, color: family),
+                  Icon(glyph, size: iconSize, color: colors.ink2),
                 ],
               ],
             ),

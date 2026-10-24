@@ -50,7 +50,7 @@ void main() {
       expect(find.text('—'), findsWidgets);
       expect(find.textContaining('Time asleep: $_notDerived'), findsOneWidget);
       // The zero a nullable double would have produced.
-      expect(find.text('0h 00m'), findsNothing);
+      expect(find.text('0\u00A0min'), findsNothing);
       expect(find.text('0'), findsNothing);
     });
 
@@ -71,15 +71,15 @@ void main() {
     });
 
     test(
-      'an unmeasured time in bed drops its key rather than writing a dash',
+      'an unmeasured time in bed drops its figure rather than writing a dash',
       () {
         // A legend entry for a value nobody has is not a smaller truth, it is
         // noise — and the refusal is still stated, in the note under the block.
         final page = sleepPageWithout(<String>['tib_min']);
         final night = page.nights.first;
         expect(
-          SleepReading.keys(night).map((entry) => entry.label),
-          isNot(contains(contains('in bed'))),
+          SleepReading.stats(night).map((stat) => stat.$1),
+          isNot(contains('Time in bed')),
         );
         expect(SleepReading.refusals(night), contains(contains('Time in bed')));
       },
@@ -253,7 +253,7 @@ void main() {
         expect(find.textContaining(SleepGap.noSession.message), findsOneWidget);
         // And nothing anywhere on the block is a zero standing in for it.
         expect(find.text('0'), findsNothing);
-        expect(find.text('0h 00m'), findsNothing);
+        expect(find.text('0\u00A0min'), findsNothing);
       },
     );
   });

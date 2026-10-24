@@ -158,6 +158,22 @@ def abandon(cur: Cur, user_id: UUID, tz: str, challenge_id: int, today: date | N
     return {"ok": True, "challenge": store.fetch(cur, user_id, challenge_id)}
 
 
+def set_slot(cur: Cur, user_id: UUID, challenge_id: int, slot: str) -> dict:
+    """Change the owner's own words for WHEN they will do a challenge. Nothing else moves.
+
+    Allowed on a suggested or an active challenge; a finished one is a record. No
+    evaluation runs and no outcome is touched: the slot is a label, not a rule.
+    """
+    challenge = store.fetch(cur, user_id, challenge_id)
+    if challenge is None:
+        return _refused("not_found", "no such challenge")
+    if not store.set_slot_text(cur, user_id, challenge_id, slot):
+        return _refused(
+            "not_active", f"challenge is {challenge['status']}, not suggested or active"
+        )
+    return {"ok": True, "challenge": store.fetch(cur, user_id, challenge_id)}
+
+
 def apply_adaptation(
     cur: Cur, user_id: UUID, tz: str, challenge_id: int, today: date | None = None
 ) -> dict:

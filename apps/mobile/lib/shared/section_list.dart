@@ -44,6 +44,10 @@ class SectionList {
   void addPinned(Widget child, SectionExtent extent) =>
       _sections.add(PageSection(child, gap: 0, pinnedExtent: extent));
 
+  /// Appends a section drawn edge to edge. See [PageSection.bleed].
+  void addBleed(Widget child) =>
+      _sections.add(PageSection(child, gap: 0, bleed: true));
+
   /// Legacy's `SizedBox(height: amount)` between two sections.
   ///
   /// A no-op on an empty list: a spacer before anything has been added is a gap
@@ -57,7 +61,12 @@ class SectionList {
     // pinned section would otherwise quietly un-pin it, and the screen would
     // still render — just without the one behaviour the section was added for.
     _sections.add(
-      PageSection(last.child, gap: amount, pinnedExtent: last.pinnedExtent),
+      PageSection(
+        last.child,
+        gap: amount,
+        pinnedExtent: last.pinnedExtent,
+        bleed: last.bleed,
+      ),
     );
   }
 

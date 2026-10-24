@@ -47,7 +47,7 @@ class FoundationScreen extends StatelessWidget {
           const SizedBox(height: Insets.xs),
           Text(
             'Specimens, not readings. This screen is deleted when Today lands.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colors.ink3),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colors.ink2),
           ),
           const SizedBox(height: Insets.xl),
 

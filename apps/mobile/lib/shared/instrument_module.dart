@@ -170,7 +170,7 @@ class InstrumentModule extends StatelessWidget {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: colors.surface,
-          shape: StateCard.shapeOf(colors.line),
+          shape: StateCard.shapeOf(),
         ),
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: minHeight),
@@ -208,31 +208,23 @@ class InstrumentModule extends StatelessWidget {
   }
 }
 
-/// Legacy's `HEyebrow` — uppercase, wide-tracked, quiet.
+/// Legacy's `HEyebrow` — uppercase, tracked, quiet.
 ///
-/// 9 px at 0.12 em of tracking, weight 400, in [HealtheeColors.ink3]. All of
-/// those are legacy’s; the face is Inter rather than Space Mono, which is the
-/// one typographic difference the port is allowed (`instrument_type.dart`).
+/// The ladder's label step (`HType.label`), in [HealtheeColors.ink2]. Legacy's
+/// 9 px at 0.12 em and weight 400 snapped to that step with the type ladder.
 ///
 /// The caps are **visual only**: the [Semantics] label carries the text as
 /// written, because several screen readers spell an all-caps run out letter by
 /// letter and "S-L-E-E-P" is not what this says.
 class ModuleLabel extends StatelessWidget {
   /// Renders [text] as a module eyebrow.
-  const ModuleLabel(this.text, {this.color, this.size = 9, this.tracking = 0.12, super.key});
+  const ModuleLabel(this.text, {this.color, super.key});
 
   /// The label, in any case — this widget uppercases it.
   final String text;
 
-  /// Overrides [HealtheeColors.ink3].
+  /// Overrides [HealtheeColors.ink2].
   final Color? color;
-
-  /// Point size. 9 is legacy's `HEyebrow` default; its greeting date passes 10.
-  final double size;
-
-  /// Letter spacing in ems, as legacy passed it. 0.12 is the default; the
-  /// greeting date passes 0.16 (`today_screen.dart:450`).
-  final double tracking;
 
   @override
   Widget build(BuildContext context) {
@@ -244,7 +236,7 @@ class ModuleLabel extends StatelessWidget {
           text.toUpperCase(),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: HType.label(color ?? colors.ink3, size: size, tracking: tracking),
+          style: HType.label(color ?? colors.ink2),
         ),
       ),
     );
@@ -254,7 +246,13 @@ class ModuleLabel extends StatelessWidget {
 /// Legacy's `HModuleValue` — a figure with a small unit on its baseline.
 class ModuleValue extends StatelessWidget {
   /// [value] is already formatted; this widget does not round.
-  const ModuleValue({required this.value, this.unit, this.color, this.size = 27, super.key});
+  const ModuleValue({
+    required this.value,
+    this.unit,
+    this.color,
+    this.size = 27,
+    super.key,
+  });
 
   /// The formatted number.
   final String value;
@@ -265,10 +263,12 @@ class ModuleValue extends StatelessWidget {
   /// Overrides [HealtheeColors.ink] on the figure.
   final Color? color;
 
-  /// The figure's size. 27 is legacy's grid module.
+  /// The figure's requested size, snapped to the ladder by `HType.number`.
+  /// 27 is legacy's grid module.
   final double size;
 
-  /// Legacy's unit: 10 px, weight 400, in ink3, 3 px after the figure.
+  /// Legacy's unit: a small weight-400 figure in ink3, 3 px after the figure.
+  /// Its 10 px request snaps to the ladder's caption.
   static const double _unitSize = 10;
   static const double _unitGap = 3;
 
@@ -292,7 +292,11 @@ class ModuleValue extends StatelessWidget {
           const SizedBox(width: _unitGap),
           Text(
             symbol,
-            style: HType.number(colors.ink3, size: _unitSize, weight: FontWeight.w400),
+            style: HType.number(
+              colors.ink2,
+              size: _unitSize,
+              weight: FontWeight.w400,
+            ),
           ),
         ],
       ],
@@ -302,7 +306,7 @@ class ModuleValue extends StatelessWidget {
 
 /// Legacy's `HFoot` — the one context line under a module's chart.
 ///
-/// 9 px at 0.04 em, in ink3, with 8 px of air above it. Pushed to the bottom of
+/// The ladder's label step, in ink3, with 8 px of air above it. Pushed to the bottom of
 /// the module by a [Spacer] in the caller, exactly as legacy's `marginTop: auto`
 /// did, so every card in a row aligns its foot.
 class ModuleFoot extends StatelessWidget {
@@ -332,7 +336,7 @@ class ModuleFoot extends StatelessWidget {
             // wording, which is the one category of change the port allows.
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: HType.label(colors.ink3, tracking: 0.04),
+            style: HType.label(colors.ink2),
           ),
         ),
       ),

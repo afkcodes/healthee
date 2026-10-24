@@ -33,12 +33,8 @@ import 'package:healthee/data/honesty/reading.dart';
 import 'package:healthee/data/honesty/sleep_gap.dart';
 import 'package:healthee/data/models/sleep_night.dart';
 import 'package:healthee/features/sleep/sleep_format.dart';
-import 'package:healthee/shared/charts/v02/chart_curve.dart';
-import 'package:healthee/shared/charts/v02/v02_line_chart.dart';
 import 'package:healthee/shared/reveal_once.dart';
-import 'package:healthee/shared/v02/panel.dart';
-import 'package:healthee/shared/v02/panel_head.dart';
-import 'package:healthee/shared/v02/panel_parts.dart';
+import 'package:healthee/shared/v02/trend_card.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 /// One of the three fortnight panels.
@@ -53,6 +49,8 @@ class SleepTrend {
     required this.read,
     this.digits = 0,
     this.infoKey,
+    this.higherIsBetter = true,
+    this.ceiling,
   });
 
   /// The prototype's panel title.
@@ -75,6 +73,12 @@ class SleepTrend {
 
   /// Which ⓘ entry belongs to it.
   final String? infoKey;
+
+  /// Which way is better. All three are higher today.
+  final bool higherIsBetter;
+
+  /// A scale the reading cannot pass, 100 for a percentage.
+  final double? ceiling;
 }
 
 /// The three, in the prototype's order.
@@ -87,6 +91,7 @@ const List<SleepTrend> kSleepTrends = <SleepTrend>[
     read: _efficiency,
     digits: 1,
     infoKey: 'sleep_health',
+    ceiling: 100,
   ),
   SleepTrend(
     title: 'Sleep regularity',
@@ -110,28 +115,27 @@ Reading<double> _efficiency(SleepNight night) => night.efficiencyPct;
 Reading<double> _sri(SleepNight night) => night.sri;
 Reading<double> _hrv(SleepNight night) => night.hrvSleepAvg;
 
-/// One `H.historyPanel` — the latest reading and the fortnight behind it.
+/// One trend card over the fortnight, read against the fortnight before
+/// (`trend_card.dart` draws it; this picks the nights).
 class SleepTrendPanel extends StatelessWidget {
-  /// [recent] is newest first, the order `/api/sleep` sends.
+  /// [recent] and [earlier] are newest first, the order `/api/sleep` sends.
   const SleepTrendPanel({
     required this.trend,
     required this.recent,
     required this.reveals,
+    this.earlier = const <SleepNight>[],
     this.onDetails,
     super.key,
   });
 
-  /// The plot's height, before its readout line.
-  static const double chartHeight = 150;
-
-  /// The gap between the figure and the chart.
-  static const double chartGap = 8;
-
-  /// Which trend this panel draws.
+  /// Which trend this card draws.
   final SleepTrend trend;
 
   /// The fortnight, newest first.
   final List<SleepNight> recent;
+
+  /// The fortnight before it, newest first.
+  final List<SleepNight> earlier;
 
   /// Where "already revealed" is remembered.
   final RevealRegistry reveals;
@@ -140,75 +144,54 @@ class SleepTrendPanel extends StatelessWidget {
   final void Function(String metric)? onDetails;
 
   /// Oldest first, with an unmeasured night kept as a gap.
-  List<double?> get series =>
-      <double?>[for (final night in recent.reversed) trend.read(night).valueOrNull];
+  List<double?> get series => <double?>[
+    for (final night in recent.reversed) trend.read(night).valueOrNull,
+  ];
 
   /// One short date per night, oldest first.
-  List<String> get dates =>
-      <String>[for (final night in recent.reversed) shortDate(night.date)];
+  List<String> get dates => <String>[
+    for (final night in recent.reversed) shortDate(night.date),
+  ];
 
   /// How many of those nights carry a reading.
   int get measured => series.where((value) => value != null).length;
 
   /// The line under the chart: how much data is behind it.
-  String get note {
-    if (measured == 0) {
-      return 'No night in the last fortnight carries this reading.';
-    }
-    final through = dates.isEmpty ? '' : ' through ${dates.last}';
-    return '$measured ${measured == 1 ? 'night' : 'nights'} '
-        'measured$through.';
-  }
+  String get note => measured == 0
+      ? 'No night in the last fortnight carries this reading.'
+      : '$measured ${measured == 1 ? 'night' : 'nights'} measured'
+            '${dates.isEmpty ? '' : ' through ${dates.last}'}.';
 
   @override
   Widget build(BuildContext context) {
     final latest = recent.isEmpty
         ? Withheld<double>(SleepGap.noSession.disclosure)
         : trend.read(recent.first);
-    final value = latest.valueOrNull;
-    return Panel(
+    return TrendCard(
+      title: trend.title,
       tone: trend.tone,
-      label: trend.title,
-      head: PanelHead(
-        title: trend.title,
-        icon: SolarIconsOutline.chart_2,
-        infoKey: trend.infoKey,
-        actionLabel: onDetails == null ? null : 'Details',
-        onAction: onDetails == null ? null : () => onDetails!(trend.metric),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          PanelValue(
-            value == null ? '—' : value.toStringAsFixed(trend.digits),
-            unit: trend.unit,
-            context_: dates.isEmpty ? null : dates.last,
-          ),
-          const SizedBox(height: chartGap),
-          RevealOnce(
-            id: 'sleep.trend.${trend.metric}',
-            registry: reveals,
-            builder: (context, t) => V02LineChart(
-              series,
-              progress: t,
-              height: chartHeight,
-              unit: trend.unit,
-              digits: trend.digits,
-              // Nightly readings. See the library docstring.
-              curve: SeriesCurve.straight,
-              captions: dates.isEmpty
-                  ? const <String>[]
-                  : <String>[dates.first, dates.last],
-              sampleLabels: dates,
-              semanticLabel: '${trend.title} over the recent nights',
-            ),
-          ),
-          PanelNote(note),
-          if (latest case Withheld<double>(:final disclosure))
-            PanelNote('Latest reading: ${disclosure.message}'),
-        ],
-      ),
+      icon: SolarIconsOutline.chart_2,
+      unit: trend.unit,
+      values: series,
+      earlier: <double>[
+        for (final night in earlier)
+          if (trend.read(night).valueOrNull case final double value) value,
+      ],
+      digits: trend.digits,
+      higherIsBetter: trend.higherIsBetter,
+      ceiling: trend.ceiling,
+      captions: dates.isEmpty
+          ? const <String>[]
+          : <String>[dates.first, dates.last],
+      infoKey: trend.infoKey,
+      revealId: 'sleep.trend.${trend.metric}',
+      reveals: reveals,
+      onDetails: onDetails == null ? null : () => onDetails!(trend.metric),
+      notes: <String>[
+        note,
+        if (latest case Withheld<double>(:final disclosure))
+          'Latest reading: ${disclosure.message}',
+      ],
     );
   }
 }

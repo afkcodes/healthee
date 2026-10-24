@@ -1,0 +1,26 @@
+{
+  "cached": false,
+  "evidence_grade": 3,
+  "generated_at": "2026-10-18T09:30:00Z",
+  "job": {
+    "action": "Walk briskly for 20 minutes",
+    "challenge_id": 12,
+    "counts_when": "when the strap logs 20 minutes",
+    "days_required": 4,
+    "floor": "10 minutes counts as half",
+    "metric": "mvpa_min",
+    "slot": "after 10 pm",
+    "target": 20.0,
+    "unit": "min"
+  },
+  "pattern": "You say yes on Mondays and miss by Thursday.",
+  "rationale": "Regular brisk walking supports fitness [note].",
+  "research_note_ids": [
+    "note"
+  ],
+  "review": "Straight talk. Brisk minutes fell to 66.",
+  "today_line": "Today: 20 minutes.",
+  "week": "2026-W43",
+  "week_from": "2026-10-19",
+  "week_to": "2026-10-25"
+}

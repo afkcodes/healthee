@@ -49,13 +49,17 @@ import 'package:healthee/core/theme/tone.dart';
 import 'package:healthee/data/honesty/reading.dart';
 import 'package:healthee/data/models/sleep_night.dart';
 import 'package:healthee/data/models/sleep_page.dart';
-import 'package:healthee/features/sleep/sleep_format.dart';
+import 'package:healthee/features/sleep/v02/check_bar.dart';
 import 'package:healthee/features/sleep/v02/sleep_cutoffs.dart';
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/format/iso_clock.dart';
 import 'package:healthee/shared/metric_info/metric_detail.dart';
+import 'package:healthee/shared/usual_range.dart';
+import 'package:healthee/shared/v02/key_number_card.dart';
 import 'package:healthee/shared/v02/panel.dart';
 import 'package:healthee/shared/v02/panel_head.dart';
 import 'package:healthee/shared/v02/panel_parts.dart';
+import 'package:healthee/shared/v02/range_bar.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 /// The prototype's closing note, verbatim. Says the one thing that matters.
@@ -73,6 +77,7 @@ class SleepCheck {
     required this.target,
     required this.passed,
     required this.detail,
+    this.bar,
   });
 
   /// `Duration` · `Efficiency` · `Regularity · SRI` · `Timing`.
@@ -89,6 +94,9 @@ class SleepCheck {
 
   /// How far outside, in words.
   final String detail;
+
+  /// The reading on its reference track, or null when there is no reading.
+  final CheckBar? bar;
 }
 
 /// `Your four sleep checks`.
@@ -121,10 +129,21 @@ class SleepChecksPanel extends StatelessWidget {
         name: 'Duration',
         reading: night.tstMin.valueOrNull == null
             ? null
-            : hoursMinutes(night.tstMin.valueOrNull!),
+            : durationText(night.tstMin.valueOrNull!),
         target: bands.durationLabel,
         passed: night.pointDuration,
         detail: bands.durationDetail(night.tstMin.valueOrNull),
+        bar: checkBar(
+          night.tstMin.valueOrNull,
+          240,
+          600,
+          bands.durationLowMin,
+          bands.durationHighMin,
+          (hoursText(4), hoursText(10)),
+          '${hoursText(bands.durationLowMin / 60)} to ${hoursText(bands.durationHighMin / 60)}',
+          'Under',
+          'Over',
+        ),
       ),
       SleepCheck(
         name: 'Efficiency',
@@ -134,6 +153,17 @@ class SleepChecksPanel extends StatelessWidget {
         target: bands.efficiencyLabel,
         passed: night.pointEfficiency,
         detail: bands.efficiencyDetail(night.efficiencyPct.valueOrNull),
+        bar: checkBar(
+          night.efficiencyPct.valueOrNull,
+          70,
+          100,
+          bands.efficiencyMinPct,
+          100,
+          ('70%', '100%'),
+          '${plainNumber(bands.efficiencyMinPct)}% or more',
+          'Under',
+          'Within',
+        ),
       ),
       SleepCheck(
         name: 'Regularity · SRI',
@@ -143,6 +173,17 @@ class SleepChecksPanel extends StatelessWidget {
         target: bands.sriLabel,
         passed: night.pointRegularity,
         detail: bands.sriDetail(night.sri.valueOrNull),
+        bar: checkBar(
+          night.sri.valueOrNull,
+          40,
+          100,
+          bands.sriMin,
+          100,
+          ('40', '100'),
+          '${plainNumber(bands.sriMin)} or more',
+          'Under',
+          'Within',
+        ),
       ),
       SleepCheck(
         name: 'Timing',
@@ -150,6 +191,19 @@ class SleepChecksPanel extends StatelessWidget {
         target: bands.timingLabel,
         passed: night.pointTiming,
         detail: bands.timingDetail(night.midpointLocal.valueOrNull),
+        bar: checkBar(
+          sinceMidnight(
+            SleepBands.midpointHour(night.midpointLocal.valueOrNull),
+          ),
+          0,
+          8,
+          bands.timingLowHour,
+          bands.timingHighHour,
+          ('00:00', '08:00'),
+          '${clockOfHours(bands.timingLowHour)} to ${clockOfHours(bands.timingHighHour)}',
+          'Early',
+          'Late',
+        ),
       ),
     ];
   }
@@ -166,7 +220,7 @@ class SleepChecksPanel extends StatelessWidget {
         infoKey: 'sleep_health',
         detail: MetricDetail(
           references: <String>[
-            for (final check in rows) '${check.name} — ${check.target}',
+            for (final check in rows) '${check.name}: ${check.target}',
           ],
           notes: notes,
           method: const <String>[kFourChecksNote],
@@ -177,7 +231,11 @@ class SleepChecksPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           for (var i = 0; i < rows.length; i++)
-            _CheckRow(check: rows[i], first: i == 0, last: i == rows.length - 1),
+            _CheckRow(
+              check: rows[i],
+              first: i == 0,
+              last: i == rows.length - 1,
+            ),
           const PanelNote(kFourChecksNote),
         ],
       ),
@@ -202,8 +260,8 @@ class _CheckRow extends StatelessWidget {
   static const double endPad = 4;
 
   /// `.check-result { width:26px; height:26px; border-radius:9px }`.
-  static const double mark = 26;
-  static const double markRadius = 9;
+  /// Between the reference line and the bar.
+  static const double barGap = 10;
 
   /// `.sleep-check { gap:12px }`.
   static const double gap = 12;
@@ -211,6 +269,11 @@ class _CheckRow extends StatelessWidget {
   /// `.check-target { margin-top:4px }` · `.check-detail { margin-top:8px }`.
   static const double targetGap = 4;
   static const double detailGap = 8;
+
+  /// The bar's own word, so the chip never contradicts the mark; a server
+  /// fail the bar cannot show (a band edge rounded away) says `Missed`.
+  static String _word(bool passed, String side) =>
+      !passed && side == 'Within' ? 'Missed' : side;
 
   @override
   Widget build(BuildContext context) {
@@ -221,51 +284,74 @@ class _CheckRow extends StatelessWidget {
         top: first ? endPad : pad,
         bottom: last ? endPad : pad,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          _Mark(passed: result),
-          const SizedBox(width: gap),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        check.name,
-                        style: SleepType.checkName.copyWith(color: colors.ink),
-                      ),
-                    ),
-                    const SizedBox(width: gap),
-                    Text(
-                      check.reading ?? '—',
-                      style: SleepType.checkValue.copyWith(
-                        color: check.reading == null
-                            ? colors.ink3
-                            : colors.ink,
-                      ),
-                    ),
-                  ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  check.name,
+                  style: SleepType.checkName.copyWith(color: colors.ink),
                 ),
-                const SizedBox(height: targetGap),
-                Text(
-                  check.target,
-                  style: SleepType.checkTarget.copyWith(color: colors.ink2),
+              ),
+              const SizedBox(width: gap),
+              Text(
+                check.reading ?? '—',
+                style: SleepType.checkValue.copyWith(
+                  color: check.reading == null ? colors.ink2 : colors.ink,
                 ),
-                const SizedBox(height: detailGap),
-                Text(
-                  check.detail,
-                  style: SleepType.checkDetail.copyWith(
-                    // `.sleep-check.short .check-detail { color:var(--caution) }`
-                    color: result == false ? colors.unf : colors.ink2,
+              ),
+            ],
+          ),
+          const SizedBox(height: targetGap),
+          Text(
+            check.target,
+            style: SleepType.checkTarget.copyWith(color: colors.ink2),
+          ),
+          if (check.bar case final CheckBar bar) ...<Widget>[
+            const SizedBox(height: barGap),
+            RangeBar(
+              value: bar.value,
+              min: bar.min,
+              max: bar.max,
+              band: UsualRange(low: bar.low, high: bar.high, days: 0),
+              startLabel: bar.ends.$1,
+              endLabel: bar.ends.$2,
+              usualLabel: bar.bandLabel,
+              semanticLabel:
+                  '${check.name} ${check.reading}. '
+                  'Against ${check.target}.',
+            ),
+          ],
+          const SizedBox(height: detailGap),
+          // A row, not a `Wrap`: the sentence wraps BESIDE the chip, so all
+          // four checks keep one shape whatever their sentence's length. A
+          // `Wrap` dropped the longer sentences under the chip and left the
+          // shorter ones beside it. `IntrinsicWidth` sizes the chip to its one
+          // word, since a row hands a non-flex child an unbounded width.
+          Row(
+            children: <Widget>[
+              if (result != null && check.bar != null) ...<Widget>[
+                IntrinsicWidth(
+                  child: VerdictChip(
+                    Verdict(
+                      _word(result, check.bar!.wordFor()),
+                      result ? VerdictTone.neutral : VerdictTone.worse,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
               ],
-            ),
+              Expanded(
+                child: Text(
+                  check.detail,
+                  style: SleepType.checkDetail.copyWith(color: colors.ink2),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -280,40 +366,5 @@ class _CheckRow extends StatelessWidget {
             ),
             child: row,
           );
-  }
-}
-
-/// The tick, the dash that is a shortfall, and the dash that is a silence.
-class _Mark extends StatelessWidget {
-  const _Mark({required this.passed});
-
-  final bool? passed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final (Color ground, Color ink) = switch (passed) {
-      true => (colors.favSoft, colors.fav),
-      false => (colors.unfSoft, colors.unf),
-      // No reading, so no verdict. It reads as neither a pass nor a failure —
-      // which is the whole claim.
-      null => (colors.surface2, colors.ink3),
-    };
-    return Container(
-      width: _CheckRow.mark,
-      height: _CheckRow.mark,
-      decoration: BoxDecoration(
-        color: ground,
-        borderRadius: BorderRadius.circular(_CheckRow.markRadius),
-      ),
-      child: passed == true
-          ? Icon(Icons.check, size: 15, color: ink)
-          : Center(
-              child: Text(
-                '−',
-                style: SleepType.checkMark.copyWith(color: ink),
-              ),
-            ),
-    );
   }
 }

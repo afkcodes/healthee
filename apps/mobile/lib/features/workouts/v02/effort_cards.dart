@@ -44,6 +44,7 @@ import 'package:healthee/data/honesty/reading.dart';
 import 'package:healthee/data/workouts/workout_readings.dart';
 import 'package:healthee/shared/charts/v02/chart_curve.dart';
 import 'package:healthee/shared/charts/v02/v02_line_chart.dart';
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/format/time_labels.dart';
 import 'package:healthee/shared/metric_info/metric_detail.dart';
 import 'package:healthee/shared/metric_info/metric_info_sheet.dart';
@@ -174,7 +175,7 @@ class EffortCard extends StatelessWidget {
       parts.add(
         'The average is ${share.round()}% of your HRmax'
         '${intensity == null ? '' : ', which the server calls '
-              '${intensity.toLowerCase()}'}.',
+                  '${intensity.toLowerCase()}'}.',
       );
     }
     return parts.join(' ');
@@ -253,7 +254,7 @@ class ZonesCard extends StatelessWidget {
                 'Zone ${i + 1}',
                 _share(minutes[i]),
                 tone: Tone.heart,
-                reading: '${minutes[i]}m',
+                reading: durationText(minutes[i]),
               ),
           ]),
           const SizedBox(height: barsGap),

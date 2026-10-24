@@ -100,12 +100,7 @@ class HNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final (Color ground, Color mark, Color prose, Color? edge) = switch (kind) {
-      NoticeKind.plain => (
-        colors.surface2,
-        colors.ink,
-        colors.ink2,
-        colors.line,
-      ),
+      NoticeKind.plain => (colors.surface2, colors.ink, colors.ink2, null),
       // `color: inherit` on the body — one colour for the whole banner.
       NoticeKind.error => (colors.alertSoft, colors.alert, colors.alert, null),
       NoticeKind.warm => (colors.unfSoft, colors.unf, colors.unf, null),

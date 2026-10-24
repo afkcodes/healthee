@@ -94,7 +94,7 @@ class _Line extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: text.bodySmall?.copyWith(color: colors.ink3),
+              style: text.bodySmall?.copyWith(color: colors.ink2),
             ),
           ),
           const SizedBox(width: Insets.md),

@@ -23,7 +23,7 @@ import 'package:healthee/features/today/v02/longer_panels.dart';
 import 'package:healthee/features/today/v02/night_panels.dart';
 import 'package:healthee/features/today/v02/today_chapters.dart';
 import 'package:healthee/features/today/v02/today_header.dart';
-import 'package:healthee/features/today/v02/today_hero.dart';
+import 'package:healthee/features/today/v02/today_key_numbers.dart';
 import 'package:healthee/features/today/widgets/actions_section.dart';
 import 'package:healthee/features/today/widgets/data_health_section.dart';
 import 'package:healthee/features/today/widgets/insights_section.dart';
@@ -84,12 +84,10 @@ void main() {
         _indexOf<TodayHeader>(list),
         // `H.scenarioNotice()`'s live equivalent — see `today_sections.dart`.
         _indexOf<DataHealthSection>(list),
-        // `H.bioHero()` — the halo, the figure, the ruler, the two terms.
+        // `H.bioHero()` — the sphere, the figure, the line of what moved it.
         _indexOf<ReadingView<BiologicalAge>>(list),
         // `summaryTiles()` — recovery · sleep · movement.
-        _indexOf<TodaySummaryTiles>(list),
-        // `H.bridge('fitness', …)`.
-        _nthOf<ContextBridge>(list, 0),
+        _indexOf<TodayKeyNumbers>(list),
         // `<nav class="chapter-nav">`.
         _indexOf<TodayChapterNav>(list),
         // `H.chapter('overnight','Last night → today', …)`.
@@ -103,7 +101,7 @@ void main() {
         // `H.panel('Sleep health, beyond duration', …)`.
         _indexOf<ReadingView<SleepHealth>>(list),
         // `H.bridge('sleep', …)`.
-        _nthOf<ContextBridge>(list, 1),
+        _nthOf<ContextBridge>(list, 0),
         // The second `.twin-panels` — blood oxygen beside need & debt.
         _nthOf<TwinPanels>(list, 1),
         // `H.chapter('daytime','Movement → recovery', …)`.
@@ -113,7 +111,7 @@ void main() {
         // `H.panel('Steps & energy', …)`.
         _indexOf<StepsEnergyPanel>(list),
         // `H.bridge('movement', …)`.
-        _nthOf<ContextBridge>(list, 2),
+        _nthOf<ContextBridge>(list, 1),
         // `H.panel('Effort in context', …)`.
         _indexOf<ReadingView<CardioLoad>>(list),
         // The third `.twin-panels` — active minutes beside strength. The
@@ -182,11 +180,12 @@ void main() {
   });
 
   group('the gaps are v02’s two rungs, not legacy’s four', () {
-    test('a panel gap is 12 and a block gap is 24, and they are different', () {
-      // `richer.css`: `.panel { margin-top: 12px }`, `.section { margin-top:
-      // 24px }`. Two rungs, and the grouping is carried by them being unequal.
+    test('a panel gap is 12 and a block gap is 32, and they are different', () {
+      // The brief's tokens: cards 12 apart (`Insets.cardGap`), sections 32
+      // apart (`Insets.section`). Two rungs, and the grouping is carried by
+      // them being unequal.
       expect(PageSpacing.panel, 12);
-      expect(PageSpacing.block, 24);
+      expect(PageSpacing.block, 32);
       expect(PageSpacing.panel, lessThan(PageSpacing.block));
     });
 

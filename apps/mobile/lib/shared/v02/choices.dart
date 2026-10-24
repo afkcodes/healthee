@@ -183,7 +183,6 @@ class PromptButton extends StatelessWidget {
       child: Material(
         color: colors.surface,
         shape: RoundedRectangleBorder(
-          side: BorderSide(color: colors.line, width: hairline),
           borderRadius: BorderRadius.circular(radius),
         ),
         clipBehavior: Clip.antiAlias,

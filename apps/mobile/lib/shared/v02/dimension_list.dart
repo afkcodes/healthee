@@ -116,7 +116,7 @@ class _Row extends StatelessWidget {
                     // 11, not the grid's 9: this line is the comparison the
                     // card exists to make, and it was set at caption size.
                     style: TypeScale.dimensionLabel.copyWith(
-                      color: colors.ink3,
+                      color: colors.ink2,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -138,7 +138,7 @@ class _Row extends StatelessWidget {
               // a third telling of one fact.
               color: switch (verdict) {
                 true => colors.fav,
-                false => colors.unf,
+                false => colors.alert,
                 null => colors.ink,
               },
             ),

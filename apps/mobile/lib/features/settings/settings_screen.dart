@@ -52,6 +52,7 @@ import 'package:healthee/core/router.dart';
 import 'package:healthee/core/theme/appearance_variant.dart';
 import 'package:healthee/core/theme/theme_controller.dart';
 import 'package:healthee/core/theme/tokens.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/core/theme/type_scale_forms.dart';
 import 'package:healthee/data/background/background_scheduler.dart';
 import 'package:healthee/data/device/device_repository.dart';
@@ -261,11 +262,9 @@ class _ProfileCard extends StatelessWidget {
     final heading = named ? name : 'Your profile';
 
     final facts = <String>[
-      if (_age(profile?.dobDate, DateTime.now()) case final int years)
-        '$years',
+      if (_age(profile?.dobDate, DateTime.now()) case final int years) '$years',
       if (profile?.heightCm case final double cm) '${cm.round()} cm',
-      if (profile?.weightKg case final double kg)
-        '${kg.toStringAsFixed(1)} kg',
+      if (profile?.weightKg case final double kg) '${kg.toStringAsFixed(1)} kg',
     ];
     final line = facts.isEmpty
         ? 'Your measurements and self-reports'
@@ -293,15 +292,9 @@ class _ProfileCard extends StatelessWidget {
                 child: named
                     ? Text(
                         heading.characters.first.toUpperCase(),
-                        style: FormType.heading3.copyWith(
-                          color: colors.accent,
-                          fontSize: 19,
-                        ),
+                        style: TypeLadder.title2.copyWith(color: colors.accent),
                       )
-                    : Icon(
-                        SolarIconsOutline.userCircle,
-                        color: colors.accent,
-                      ),
+                    : Icon(SolarIconsOutline.userCircle, color: colors.accent),
               ),
               const SizedBox(width: gap),
               Expanded(
@@ -331,7 +324,7 @@ class _ProfileCard extends StatelessWidget {
               Icon(
                 SolarIconsOutline.altArrowRight,
                 size: chevronSize,
-                color: colors.ink3,
+                color: colors.ink2,
               ),
             ],
           ),

@@ -50,14 +50,14 @@ class DataFooter extends StatelessWidget {
           Icon(
             SolarIconsOutline.shieldCheck,
             size: iconSize,
-            color: colors.ink3,
+            color: colors.ink2,
           ),
           const SizedBox(width: iconGap),
           Flexible(
             child: Text(
               line,
               textAlign: TextAlign.center,
-              style: TypeScale.footer.copyWith(color: colors.ink3),
+              style: TypeScale.footer.copyWith(color: colors.ink2),
             ),
           ),
         ],

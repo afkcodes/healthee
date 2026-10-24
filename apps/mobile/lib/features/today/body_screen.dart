@@ -1,42 +1,44 @@
-/// `Biological age` — the prototype's `#body`, opened from Today's hero.
-///
-/// `design/mobile-preview/screens-fitness.js::H.screens.body`, read top to
-/// bottom:
+/// `Biological age`: the estimate, how it sits against your age, and what moves
+/// it. Opened from Today's hero.
 ///
 /// ```text
-///   header                        Biological age
-///   the hero                      the halo, the figure, the ruler, two terms
-///   context bridge                two included contributors, and Explore fitness
-///   From your age to this estimate the ladder, and the arithmetic in words
-///   Fitness contribution          the years, the rail, the model's reference
-///   Sleep contribution            the years, and the two hours behind them
-///   Excluded, not counted as zero the lever nobody can price
-///   How much confidence …         the model's limits, and its research
-///   footer
+///   nav                  back, and the info sheet
+///   Biological age       the title
+///   Estimate, not a clinical age · Updated today
+///   the sphere           the figure and the verdict inside it
+///   the ruler            the estimate against your actual age
+///   What moves it        a dropdown over the lever card
+///   How this is calculated   a row that opens the ladder and the arithmetic
+///   the footnote
 /// ```
 ///
-/// ## The hero is Today's hero, not a copy of it
+/// ## Each fact is said once
 ///
-/// `TodayBioHero` is the same widget the tab draws, given the same payload. A
-/// detail screen that re-composed the figure it exists to explain would be free
-/// to format it differently from the card that opened it — and this screen's
-/// whole claim is that the calculation reconciles.
+/// The delta is the sphere's verdict and the ruler's lit span, and nowhere in
+/// text twice. The levers' years are in the dropdown (as one summary line when
+/// it is shut, as rows when it is open). The caveats, the ladder and the
+/// citations are behind the two sheets, where a reader who wants them finds them
+/// and nobody else has to scroll past them.
 ///
-/// ## An estimate that was refused still has a screen
+/// ## An estimate that was paused still has a screen
 ///
-/// `excluded` rides on a `Withheld` reading (`reading.dart` argues why), so a
-/// refused estimate still draws the refusal, the exclusion panel and the
-/// caveats. What it does not draw is a ladder, two term panels and an equation
-/// — those need numbers, and there are none.
+/// The sphere is the same ball, dimmed and still, with no number in it and no
+/// older number standing in for one. [AgePausedNotice] says why in the server's
+/// own words, there is no ruler (it needs a number), and the dropdown starts
+/// open so the lever that is missing is the first thing read. A lever that is
+/// permanently left out of the estimate is a row of the card either way.
 library;
 
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:healthee/core/router.dart';
-import 'package:healthee/core/theme/tone.dart';
+import 'package:healthee/core/theme/dimensions.dart';
+import 'package:healthee/core/theme/tokens.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/data/history/dated_history.dart';
 import 'package:healthee/data/history/history_metric.dart';
 import 'package:healthee/data/honesty/disclosure.dart';
@@ -44,35 +46,42 @@ import 'package:healthee/data/honesty/reading.dart';
 import 'package:healthee/data/models/biological_age.dart';
 import 'package:healthee/data/models/today_snapshot.dart';
 import 'package:healthee/data/today_repository.dart';
-import 'package:healthee/features/today/v02/body_limits_panels.dart';
-import 'package:healthee/features/today/v02/body_panels.dart';
+import 'package:healthee/features/today/v02/age_calculation_sheet.dart';
+import 'package:healthee/features/today/v02/age_lever_sheets.dart';
+import 'package:healthee/features/today/v02/age_paused.dart';
+import 'package:healthee/features/today/v02/age_screen_parts.dart';
 import 'package:healthee/features/today/v02/today_hero.dart';
-import 'package:healthee/features/today/v02/today_hero_withheld.dart';
+import 'package:healthee/features/today/v02/what_moves_it.dart';
 import 'package:healthee/shared/history_link.dart';
+import 'package:healthee/shared/metric_info/metric_detail.dart';
+import 'package:healthee/shared/metric_info/metric_info_sheet.dart';
 import 'package:healthee/shared/reveal_once.dart';
 import 'package:healthee/shared/states/current_account_value.dart';
 import 'package:healthee/shared/states/state_scaffold.dart';
-import 'package:healthee/shared/v02/context_bridge.dart';
+import 'package:healthee/shared/v02/age_orb_hero.dart';
 import 'package:healthee/shared/v02/data_footer.dart';
 import 'package:healthee/shared/v02/dated_history.dart';
 import 'package:healthee/shared/v02/detail_page.dart';
+import 'package:healthee/shared/v02/instruments/age_ruler.dart';
+import 'package:healthee/shared/v02/instruments/age_sphere.dart';
 import 'package:healthee/shared/v02/view_day.dart';
 
-/// The prototype's own title for this screen.
+/// The screen's title.
 const String kBodyTitle = 'Biological age';
 
-/// `screens.body`'s past-day heading, with the app's own reason under it.
+/// The past-day heading, with the app's own reason under it.
 const String kBodyPastTitle = 'Estimated biological age';
 
-/// `H.bridge('fitness', …)` — what the estimate includes, and what it leaves out.
-const String kContributorsBridge =
-    'This number has two included contributors. The calculation is visible, and '
-    'unpriced factors stay outside it.';
+/// The sphere's canvas on this screen, logical px; less on a narrower phone.
+const double kBodySphereCanvas = 330;
 
 /// The biological-age detail screen.
 class BodyScreen extends ConsumerStatefulWidget {
-  /// Builds the screen.
-  const BodyScreen({super.key});
+  /// Builds the screen. [now] pins the clock for the "Updated" line.
+  const BodyScreen({this.now, super.key});
+
+  /// The clock; null reads the wall.
+  final DateTime? now;
 
   @override
   ConsumerState<BodyScreen> createState() => _BodyScreenState();
@@ -87,11 +96,7 @@ class _BodyScreenState extends ConsumerState<BodyScreen> {
     final ViewDay day = watchViewDay(ref);
     // One age-model result exists and it is dated today. `/api/today` takes no
     // day, so an older date gets the refusal rather than this morning's figure
-    // under it — see `shared/v02/past_day.dart`.
-    //
-    // `screens.body`'s own words for what sits under that refusal: *"historical
-    // fitness and sleep inputs remain visible below"*. They are the model's
-    // measured inputs, dated; the estimate they feed is not.
+    // under it, with the model's measured inputs, dated, below it.
     if (day.isPast) {
       return _Frame(
         date: day.day,
@@ -99,8 +104,6 @@ class _BodyScreenState extends ConsumerState<BodyScreen> {
         children: pastDayDetail(
           refusalTitle: kBodyPastTitle,
           history: ref.watch(datedHistoryProvider),
-          // `panels(['vo2','sleep','regularity'])`, less the one this server
-          // keeps no dated series for.
           metrics: const <HistoryMetric>[
             HistoryMetric.fitness,
             HistoryMetric.sleepRegularity,
@@ -128,7 +131,11 @@ class _BodyScreenState extends ConsumerState<BodyScreen> {
           ),
         ],
       ),
-      data: (value) => BodyDetail(snapshot: value.snapshot, reveals: _reveals),
+      data: (value) => BodyDetail(
+        snapshot: value.snapshot,
+        reveals: _reveals,
+        now: widget.now,
+      ),
     );
   }
 }
@@ -139,20 +146,18 @@ class BodyDetail extends StatelessWidget {
   const BodyDetail({
     required this.snapshot,
     required this.reveals,
+    this.now,
     super.key,
   });
-
-  /// `.panel { margin-top: 12px }`.
-  static const double panelGap = 12;
-
-  /// `.section { margin-top: 24px }`.
-  static const double blockGap = 24;
 
   /// The payload every figure on this screen comes off.
   final TodaySnapshot snapshot;
 
   /// Where "already revealed" is remembered.
   final RevealRegistry reveals;
+
+  /// The clock; null reads the wall.
+  final DateTime? now;
 
   /// The levers this estimate permanently does not price, refused or not.
   ///
@@ -167,84 +172,160 @@ class BodyDetail extends StatelessWidget {
     Caveated<BiologicalAge>(:final value) => value.exclusions,
   };
 
-  /// What tilts the estimate — the caveats, with the exclusions taken back out.
+  /// What tilts the estimate: the caveats, with the exclusions taken back out.
   ///
   /// They arrive merged and they are two different claims: one says which way
-  /// the number leans, the other says a lever is not in it at all. The panel
-  /// above already draws the second, and drawing it twice would read as two
-  /// exclusions.
+  /// the number leans, the other says a lever is not in it at all. The lever
+  /// card draws the second, and drawing it twice would read as two exclusions.
+  /// A paused day has no caveats on the reading, but the server still sent the
+  /// ones that say which way the surviving terms lean; they come from the block.
   List<Disclosure> get caveats => <Disclosure>[
-    for (final caveat in snapshot.biologicalAge.caveatsOrEmpty)
+    for (final caveat in switch (snapshot.biologicalAge) {
+      Withheld<BiologicalAge>() => snapshot.bioAgeBlock.caveats,
+      final reading => reading.caveatsOrEmpty,
+    })
       if (!exclusions.contains(caveat)) caveat,
   ];
 
   @override
   Widget build(BuildContext context) {
-    final age = snapshot.biologicalAge.valueOrNull;
-    return _Frame(
-      date: snapshot.date,
+    final BiologicalAge? age = snapshot.biologicalAge.valueOrNull;
+    final block = snapshot.bioAgeBlock;
+    final paused = snapshot.biologicalAge is Withheld<BiologicalAge>;
+    final chronological = age?.chronologicalAge;
+    final notes = age?.researchNotes ?? block.researchNotes;
+    final colors = context.colors;
+    return DetailPage(
+      title: kBodyTitle,
+      gutter: Insets.gutter,
+      head: (context, onBack) => AgeNavRow(
+        onBack: onBack,
+        onInfo: () => showMetricInfo(
+          context,
+          'biological_age',
+          detail: MetricDetail(
+            source: age?.disclaimer ?? block.disclaimer,
+            disclosures: caveats,
+            notes: notes,
+          ),
+        ),
+      ),
       children: <Widget>[
-        switch (snapshot.biologicalAge) {
-          Withheld<BiologicalAge>(:final disclosure, :final exclusions) =>
-            TodayBioHeroWithheld(withheld: disclosure, exclusions: exclusions),
-          _ when age != null => TodayBioHero(age: age, reveals: reveals),
-          _ => const SizedBox.shrink(),
-        },
-        ContextBridge.text(kContributorsBridge),
-        if (age != null) ..._calculation(context, age),
-        if (exclusions.isNotEmpty) ...<Widget>[
-          const SizedBox(height: panelGap),
-          ExcludedTermsPanel(
-            exclusions: exclusions,
-            onOpenSleep: () => unawaited(context.push(Routes.sleep)),
+        const SizedBox(height: Insets.sm),
+        Text(kBodyTitle, style: TypeLadder.title1.copyWith(color: colors.ink)),
+        const SizedBox(height: Insets.xs),
+        Text(
+          ageUpdatedLine(snapshot.asOf?.derivedAt, now ?? DateTime.now()),
+          style: TypeLadder.callout.copyWith(color: colors.ink2),
+        ),
+        const SizedBox(height: Insets.md),
+        _Sphere(age: age, reveals: reveals),
+        if (age == null) ...<Widget>[
+          const SizedBox(height: Insets.md),
+          AgePausedNotice(
+            block: block,
+            vo2maxWithheld: snapshot.vo2maxWithheld,
           ),
         ],
-        const SizedBox(height: panelGap),
-        AgeConfidencePanel(
-          caveats: caveats,
-          researchNotes: age?.researchNotes ?? const <String>[],
+        if (age != null && chronological != null) ...<Widget>[
+          const SizedBox(height: Insets.lg),
+          RevealOnce(
+            id: 'body.age-ruler',
+            registry: reveals,
+            builder: (context, t) => AgeRuler(
+              estimate: age.biologicalAge,
+              actual: chronological,
+              progress: t,
+            ),
+          ),
+        ],
+        const SizedBox(height: Insets.section),
+        WhatMovesIt(
+          block: block,
+          reveals: reveals,
+          openByDefault: paused,
+          // The notice above says why in the server's words; the rows say
+          // only that the term is not counted.
+          reasonsShownAbove: age == null,
+          onOpenLever: (term) => openAgeLever(
+            context,
+            term,
+            block: block,
+            caveats: caveats,
+            vo2max: snapshot.vo2max.valueOrNull,
+            openSleep: () => unawaited(context.push(Routes.sleep)),
+            openFitness: () => unawaited(context.push(Routes.fitness)),
+          ),
         ),
-        const SizedBox(height: blockGap),
+        const SizedBox(height: Insets.cardGap),
+        AgeCalculationCard(
+          onTap: () => openAgeCalculation(
+            context,
+            age: age,
+            caveats: caveats,
+            researchNotes: notes,
+          ),
+        ),
+        const SizedBox(height: Insets.cardGap),
+        Text(
+          kAgeFootnote,
+          style: TypeLadder.caption.copyWith(color: colors.ink2),
+        ),
+        const SizedBox(height: Insets.section),
         const DataFooter(),
       ],
     );
   }
+}
 
-  /// The ladder and the two term panels — everything that needs numbers.
-  List<Widget> _calculation(BuildContext context, BiologicalAge age) {
-    final chronological = age.chronologicalAge;
-    return <Widget>[
-      if (chronological != null) ...<Widget>[
-        const SizedBox(height: panelGap),
-        AgeLadderPanel(
-          age: age,
-          chronologicalAge: chronological,
-          reveals: reveals,
-        ),
-      ],
-      for (final term in age.contributions) ...<Widget>[
-        const SizedBox(height: panelGap),
-        if (ageTermTone(term.term) == Tone.sleep)
-          SleepTermPanel(
-            term: term,
-            onOpenSleep: () => unawaited(context.push(Routes.sleep)),
-          )
-        else
-          FitnessTermPanel(
-            term: term,
-            vo2max: snapshot.vo2max.valueOrNull,
+/// The sphere, with the figure and the verdict in it, or nothing in it when
+/// the estimate is paused.
+class _Sphere extends StatelessWidget {
+  const _Sphere({required this.age, required this.reveals});
+
+  final BiologicalAge? age;
+  final RevealRegistry reveals;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final estimate = age;
+    return LayoutBuilder(
+      builder: (context, box) {
+        final canvas = math.min(kBodySphereCanvas, box.maxWidth);
+        final figure = ageOrbCentre(
+          context,
+          colors,
+          canvas: canvas,
+          value: estimate == null
+              ? ''
+              : TodayBioHero.figureOf(estimate.biologicalAge),
+          verdict: estimate == null ? null : TodayBioHero.verdictOf(estimate),
+          paused: estimate == null,
+        );
+        return Center(
+          child: AgeSphere(
+            canvas: canvas,
+            withheld: estimate == null,
+            clearHalfWidth: figure.halfWidth,
+            centre: figure.centre,
+            revealId: 'body.sphere',
             reveals: reveals,
-            onOpenFitness: () => unawaited(context.push(Routes.fitness)),
           ),
-      ],
-    ];
+        );
+      },
+    );
   }
 }
 
-/// The page every state of this screen is drawn in, so the head and the gutter
-/// cannot differ between them.
+/// The page the loading, error and past-day states are drawn in, so the head
+/// and the gutter cannot differ between them.
 class _Frame extends StatelessWidget {
-  const _Frame({required this.children, this.date, this.status = kLatestSample});
+  const _Frame({
+    required this.children,
+    this.date,
+    this.status = kLatestSample,
+  });
 
   final List<Widget> children;
   final String? date;

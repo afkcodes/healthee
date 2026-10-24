@@ -672,6 +672,8 @@ that live in the platform keystore, fetched from Zepp when you pair
 ### 7. Cutting a release
 
 Releases are **tag-driven**. `git tag v1.2.3 && git push --tags` runs
+(from a phone: Actions > Release > Run workflow on `main`; it tags the
+pubspec version itself and refuses one that already exists)
 [`.github/workflows/release.yml`](.github/workflows/release.yml), which gates,
 builds a signed APK and publishes it. The app checks for new ones itself — see
 [the update check](apps/mobile/lib/data/updates/) — reading the public releases API

@@ -41,6 +41,7 @@ import 'package:healthee/shared/charts/v02/chart_curve.dart';
 import 'package:healthee/shared/charts/v02/chart_frame.dart';
 import 'package:healthee/shared/charts/v02/chart_ink.dart';
 import 'package:healthee/shared/charts/v02/chart_ticks.dart';
+import 'package:healthee/shared/usual_range.dart';
 
 /// Draws the body and the trace of [values] inside [box].
 ///
@@ -58,6 +59,7 @@ void paintSeriesInto(
   required double strokeWidth,
   required bool fill,
   required bool lastPointDot,
+  Color? dotColor,
 }) {
   final runs = seriesRuns(values);
   if (runs.isEmpty) {
@@ -118,7 +120,13 @@ void paintSeriesInto(
     canvas.drawPath(path, stroke);
   }
   if (lastPointDot && paths.last.isNotEmpty) {
-    paintLastPointDot(canvas, paths.last.last, ink: ink, progress: progress);
+    paintLastPointDot(
+      canvas,
+      paths.last.last,
+      ink: ink,
+      progress: progress,
+      color: dotColor,
+    );
   }
   canvas.restore();
 }
@@ -141,6 +149,9 @@ class SeriesPainter extends CustomPainter {
     required this.touch,
     required this.bubbleText,
     required this.lastPointDot,
+    this.usual,
+    this.bandColor,
+    this.dotColor,
   });
 
   /// The series, oldest first. A `null` is a hole and breaks the line.
@@ -185,6 +196,15 @@ class SeriesPainter extends CustomPainter {
   /// Whether to ring the newest sample.
   final bool lastPointDot;
 
+  /// The owner's usual range, drawn flat behind the trace, or null.
+  final UsualRange? usual;
+
+  /// The `band` token the [usual] range is drawn in. Null draws no band.
+  final Color? bandColor;
+
+  /// The newest dot's colour — a state colour. Null keeps the domain colour.
+  final Color? dotColor;
+
   @override
   void paint(Canvas canvas, Size size) {
     final box = metrics.box(size);
@@ -209,6 +229,7 @@ class SeriesPainter extends CustomPainter {
         progress: progress,
       );
     }
+    _paintBand(canvas, box);
     paintSeriesInto(
       canvas,
       box,
@@ -220,9 +241,31 @@ class SeriesPainter extends CustomPainter {
       strokeWidth: strokeWidth,
       fill: fill,
       lastPointDot: lastPointDot,
+      dotColor: dotColor,
     );
     paintEdgeCaptions(canvas, box, captions, ink: ink, progress: progress);
     _paintCursor(canvas, box);
+  }
+
+  void _paintBand(Canvas canvas, ChartBox box) {
+    final range = usual;
+    final colour = bandColor;
+    if (range == null || colour == null) {
+      return;
+    }
+    final top = ticks
+        .y(range.high, box.plot)
+        .clamp(box.plot.top, box.plot.bottom);
+    final bottom = ticks
+        .y(range.low, box.plot)
+        .clamp(box.plot.top, box.plot.bottom);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTRB(box.plot.left, top, box.plot.right, bottom),
+        const Radius.circular(3),
+      ),
+      Paint()..color = colour,
+    );
   }
 
   void _paintCursor(Canvas canvas, ChartBox box) {
@@ -263,5 +306,8 @@ class SeriesPainter extends CustomPainter {
       old.ink.family != ink.family ||
       old.ticks.low != ticks.low ||
       old.ticks.high != ticks.high ||
-      old.references != references;
+      old.references != references ||
+      old.usual != usual ||
+      old.bandColor != bandColor ||
+      old.dotColor != dotColor;
 }

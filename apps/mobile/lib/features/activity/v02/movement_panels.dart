@@ -42,9 +42,11 @@ import 'package:healthee/shared/charts/v02/v02_bar_chart.dart';
 import 'package:healthee/shared/format/number_labels.dart';
 import 'package:healthee/shared/metric_info/metric_detail.dart';
 import 'package:healthee/shared/reveal_once.dart';
+import 'package:healthee/shared/usual_range.dart';
 import 'package:healthee/shared/v02/panel.dart';
 import 'package:healthee/shared/v02/panel_head.dart';
 import 'package:healthee/shared/v02/panel_parts.dart';
+import 'package:healthee/shared/v02/steps_bar.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 /// Which step number this is, and that the kcal beside it are modelled.
@@ -52,8 +54,8 @@ import 'package:solar_icons/solar_icons.dart';
 /// KEPT ON THE CARD, both halves. The first names the instrument behind the
 /// figure; the second says a modelled number is standing next to measured ones.
 const String kMovementInstrumentNote =
-    'The strap’s own since-midnight counter, not a sum of per-minute samples — '
-    'that stream freezes on this firmware. Energy is modelled.';
+    'The strap’s own since-midnight counter, not a sum of per-minute samples, '
+    'because that stream freezes on this firmware. Energy is modelled.';
 
 /// The `×2` is arithmetic invisible in the figure above it, and "recorded
 /// separately" is a definition of the strength number rather than a lesson.
@@ -66,7 +68,7 @@ const String kIntensityNote =
 /// paints nothing, so that an absent series reads as an absence rather than a
 /// shorter card — and it is the panel's job to say what the absence is.
 const String kNoStepWeekNote =
-    'No earlier days to chart yet — the week fills in as this phone collects '
+    'No earlier days to chart yet. The week fills in as this phone collects '
     'them.';
 
 /// `Today’s movement` — the day's steps, the week behind them, what it cost.
@@ -124,6 +126,12 @@ class MovementPanel extends StatelessWidget {
             unit: 'steps',
             context_: steps == null ? _refusal(day.steps) : _measured(day),
           ),
+          // The redesign's grammar: today's count on the owner's own usual,
+          // the same bar Today's movement card draws (`steps_bar.dart`).
+          if (steps != null) ...<Widget>[
+            stepsBar(steps, _band(), live: snapshot?.asOf?.isToday ?? true),
+            const SizedBox(height: statsGap),
+          ],
           RevealOnce(
             id: 'activity.step-week',
             registry: reveals,
@@ -145,13 +153,24 @@ class MovementPanel extends StatelessWidget {
           // the case that remains, which is a phone that has not collected a
           // week yet.
           if (trend.isEmpty) const PanelNote(kNoStepWeekNote),
-          if (_energy() case final List<Stat> stats when stats.isNotEmpty)
-            ...<Widget>[const SizedBox(height: statsGap), StatRow(stats)],
+          if (_energy() case final List<Stat> stats
+              when stats.isNotEmpty) ...<Widget>[
+            const SizedBox(height: statsGap),
+            StatRow(stats),
+          ],
           const PanelNote(kMovementInstrumentNote),
         ],
       ),
     );
   }
+
+  /// The middle half of the days before this one, from the server's series.
+  UsualRange? _band() => switch (snapshot) {
+    final TodaySnapshot payload => usualRangeOf(
+      windowBefore(payload.sparkline('steps_total'), payload.date),
+    ),
+    null => null,
+  };
 
   /// The last [trendDays] days of steps the server sent — never padded.
   List<TrendPoint> _trend() {
@@ -249,9 +268,9 @@ class IntensityPanel extends StatelessWidget {
         // this app made up.
         detail: MetricDetail(
           references: <String>[
-            'Active minutes — ${mvpa.weekTarget} min/week',
+            'Active minutes: ${mvpa.weekTarget} min/week',
             if (week != null)
-              'Strength — ${week.targetLowMin}–${week.targetHighMin} min/week',
+              'Strength: ${week.targetLowMin}–${week.targetHighMin} min/week',
           ],
           notes: <String>[
             ...mvpa.researchNotes,
@@ -272,7 +291,9 @@ class IntensityPanel extends StatelessWidget {
             builder: (context, t) => V02BarChart(
               <double?>[for (final day in mvpa.daily) day.mvpaMin.toDouble()],
               progress: t,
-              labels: <String>[for (final day in mvpa.daily) weekdayInitial(day.date)],
+              labels: <String>[
+                for (final day in mvpa.daily) weekdayInitial(day.date),
+              ],
               semanticLabel: 'Moderate-equivalent minutes over the recent days',
             ),
           ),

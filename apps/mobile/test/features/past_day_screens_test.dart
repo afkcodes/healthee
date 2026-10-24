@@ -30,13 +30,13 @@ import 'package:healthee/data/history/dated_history.dart';
 import 'package:healthee/data/models/trend_point.dart';
 import 'package:healthee/data/models/vo2max.dart';
 import 'package:healthee/data/store/local_store.dart';
-import 'package:healthee/features/actions/actions_screen.dart';
-import 'package:healthee/features/actions/v02/suggestion_list.dart';
-import 'package:healthee/features/actions/v02/working_on.dart';
 import 'package:healthee/features/activity/activity_extras.dart';
 import 'package:healthee/features/activity/activity_sections.dart';
 import 'package:healthee/features/activity/fitness_screen.dart';
 import 'package:healthee/features/activity/v02/movement_panels.dart';
+import 'package:healthee/features/coach/coach_home_screen.dart';
+import 'package:healthee/features/coach/v02/home_job_section.dart';
+import 'package:healthee/features/coach/v02/home_review_card.dart';
 import 'package:healthee/features/insights/insights_sections.dart';
 import 'package:healthee/features/insights/widgets/trends_section.dart';
 import 'package:healthee/features/sleep/sleep_history_screen.dart';
@@ -213,33 +213,29 @@ void main() {
     });
   });
 
-  group('Actions', () {
-    test('YESTERDAY GETS NO SUGGESTION AND NO CURRENT COMMITMENTS', () {
-      final past = actionsSections(
+  group('Coach', () {
+    test('YESTERDAY GETS NO REVIEW AND NO CURRENT JOB', () {
+      final past = coachHomeSections(
         screenData(day: DeviceDay.empty(_past), server: todayView()),
-        const ActionsLinks(),
       );
       expect(_has<PastDayNotice>(past), isTrue);
       expect(
-        _has<SuggestionList>(past),
+        _has<WeeklyReviewCard>(past),
         isFalse,
-        reason: "today's suggestion is not what that day was told",
+        reason: "this week's review is not what that day was told",
       );
       expect(
-        _has<WorkingOn>(past),
+        _has<CoachJobSection>(past),
         isFalse,
-        reason: 'a challenge’s progress is as of now',
+        reason: 'a job and its dots are as of now',
       );
     });
 
     test('and the current day still draws them', () {
-      final today = actionsSections(
-        screenData(server: todayView()),
-        const ActionsLinks(),
-      );
+      final today = coachHomeSections(screenData(server: todayView()));
       expect(_has<PastDayNotice>(today), isFalse);
-      expect(_has<SuggestionList>(today), isTrue);
-      expect(_has<WorkingOn>(today), isTrue);
+      expect(_has<WeeklyReviewCard>(today), isTrue);
+      expect(_has<CoachJobSection>(today), isTrue);
     });
   });
 

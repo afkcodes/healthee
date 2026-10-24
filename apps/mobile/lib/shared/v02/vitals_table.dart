@@ -202,7 +202,7 @@ class VitalRow extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Icon(vital.icon, size: 15, color: context.family),
+                Icon(vital.icon, size: 16, color: colors.ink2),
                 const SizedBox(width: VitalsTable.columnGap),
                 Flexible(
                   child: Text(
@@ -243,11 +243,11 @@ class VitalRow extends StatelessWidget {
                         ? '—'
                         : value.toStringAsFixed(vital.digits),
                     style: SleepType.vitalValue.copyWith(
-                      color: value == null ? colors.ink3 : colors.ink,
+                      color: value == null ? colors.ink2 : colors.ink,
                     ),
                   ),
                   TextSpan(
-                    text: ' ${vital.unit}',
+                    text: '\u00A0${vital.unit}',
                     style: SleepType.vitalUnit.copyWith(color: colors.ink2),
                   ),
                 ],

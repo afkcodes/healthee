@@ -18,9 +18,12 @@
 ///     an owner retyping their height to find out whether it saved.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthee/core/logging.dart';
+import 'package:healthee/core/profile_field.dart';
 import 'package:healthee/data/profile/health_profile.dart';
 import 'package:healthee/data/profile/profile_repository.dart';
 import 'package:healthee/data/today_repository.dart';
@@ -40,8 +43,15 @@ class ProfileEditor extends ConsumerStatefulWidget {
   const ProfileEditor({
     required this.repository,
     required this.profile,
+    this.focus,
     super.key,
   });
+
+  /// The field a link asked to open on (`/profile?focus=weight`), or null.
+  ///
+  /// Weight and height take the keyboard; the date of birth opens its picker;
+  /// sex and activity level are scrolled into view. Nothing is prefilled by it.
+  final ProfileField? focus;
 
   /// The write path.
   final ProfileRepository repository;
@@ -73,9 +83,31 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
   late int? _srpa = widget.profile.srpa;
   bool _srpaTouched = false;
   late String? _birthday = widget.profile.dobDate;
-  bool _weighing = false;
+  late bool _weighing = widget.focus == ProfileField.weight;
   bool _saving = false;
   String? _notice;
+
+  /// Where the sex and activity fields sit, so a link can scroll to them.
+  final GlobalKey _sexKey = GlobalKey();
+  final GlobalKey _activityKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    final key = switch (widget.focus) {
+      ProfileField.sex => _sexKey,
+      ProfileField.activity => _activityKey,
+      _ => null,
+    };
+    if (key != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final target = key.currentContext;
+        if (mounted && target != null) {
+          unawaited(Scrollable.ensureVisible(target));
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -109,6 +141,7 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
                 value: _birthday,
                 legacyStored: profile.legacyBirthdayPresent,
                 enabled: !_saving,
+                autoOpen: widget.focus == ProfileField.dob,
                 onChanged: (value) => setState(() => _birthday = value),
               ),
               Row(
@@ -121,6 +154,7 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
                       child: HTextField(
                         controller: _height,
                         enabled: !_saving,
+                        autofocus: widget.focus == ProfileField.height,
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -130,6 +164,7 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
                   const SizedBox(width: ProfileFields.columnGap),
                   Expanded(
                     child: HField(
+                      key: _sexKey,
                       label: 'Sex for estimates',
                       reserveHint: true,
                       child: HSelect<String>(
@@ -149,6 +184,7 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
                 ],
               ),
               ActivityLevelField(
+                key: _activityKey,
                 value: _srpa,
                 enabled: !_saving,
                 onChanged: (value) => setState(() {
@@ -194,6 +230,7 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
                   child: HTextField(
                     controller: _weight,
                     enabled: !_saving,
+                    autofocus: widget.focus == ProfileField.weight,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -245,6 +282,9 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
       );
       return;
     }
+    // Taken before the await: the owner may leave this screen while the save
+    // is in flight, and the refresh must still happen. `ref` is dead by then.
+    final container = ProviderScope.containerOf(context, listen: false);
     setState(() {
       _saving = true;
       _notice = null;
@@ -259,12 +299,13 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
         updateSrpa: _srpaTouched,
         measuredWeightKg: weight,
       );
+      container
+        ..invalidate(healthProfileProvider)
+        ..invalidate(todaySnapshotProvider);
       if (!mounted) {
         return;
       }
       _weight.clear();
-      ref.invalidate(healthProfileProvider);
-      ref.invalidate(todaySnapshotProvider);
       setState(() {
         _weighing = false;
         _notice = 'Saved. Daily estimates refresh with subsequent analysis.';

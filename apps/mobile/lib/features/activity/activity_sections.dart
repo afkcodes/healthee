@@ -62,7 +62,8 @@ import 'package:healthee/features/activity/v02/fitness_plan_panel.dart';
 import 'package:healthee/features/activity/v02/movement_panels.dart';
 import 'package:healthee/features/activity/v02/training_panels.dart';
 import 'package:healthee/features/activity/v02/zones_panel.dart';
-import 'package:healthee/shared/format/time_labels.dart';
+import 'package:healthee/shared/format/age_lever_format.dart';
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/insight_card.dart';
 import 'package:healthee/shared/instrument_screen.dart';
 import 'package:healthee/shared/page_section.dart';
@@ -89,13 +90,20 @@ const String kActivityRecoveryBridge =
 /// The years come from the payload's own `contributions` entry. There is no
 /// fallback sentence: a bridge that names a contribution the server did not send
 /// would be inventing the one number it exists to carry.
-String ageBridge(double years) =>
-    'The fitness component contributes ${_signed(years)} years to the age '
-    'model. That is a model output, not a change in actual age.';
-
-String _signed(double years) =>
-    years < 0 ? '−${(-years).toStringAsFixed(1)}' : '+${years.toStringAsFixed(1)}';
-
+///
+/// A span, so the sign goes through [signedYearsSpan] and sits against its
+/// digits; [style] must carry a `fontSize`.
+TextSpan ageBridgeSpan(double years, TextStyle style) => TextSpan(
+  children: <InlineSpan>[
+    const TextSpan(text: 'The fitness component contributes '),
+    signedYearsSpan(years, style),
+    const TextSpan(
+      text:
+          ' years to the age model. That is a model output, not a change in '
+          'actual age.',
+    ),
+  ],
+);
 
 /// `history-screens.js::screens.activity` — `panels([…])`, in its order.
 ///
@@ -220,8 +228,8 @@ List<PageSection> activitySections(ScreenData data, ActivityExtras extras) {
     if (fitnessContributionYears(snapshot.biologicalAge.valueOrNull)
         case final double y) {
       sections.add(
-        ContextBridge.link(
-          ageBridge(y),
+        ContextBridge.richLink(
+          (style) => ageBridgeSpan(y, style),
           label: 'See the calculation',
           onOpen: extras.onOpenBody,
         ),
@@ -269,8 +277,10 @@ List<PageSection> activitySections(ScreenData data, ActivityExtras extras) {
         reading: snapshot.cardioLoad,
         label: 'Strain · cardio load',
         caveatCarrier: CaveatCarrier.insideCard,
-        withheldBuilder: (context, disclosure) =>
-            WithheldPanel(disclosure: disclosure, label: 'Strain · cardio load'),
+        withheldBuilder: (context, disclosure) => WithheldPanel(
+          disclosure: disclosure,
+          label: 'Strain · cardio load',
+        ),
         builder: (context, load) => TrainingLoadPanel(
           load: load,
           reveals: reveals,
@@ -308,11 +318,7 @@ List<PageSection> activitySections(ScreenData data, ActivityExtras extras) {
 /// a list this app holds independently of the day being read, and a heading with
 /// only that under it is still a true list. A day with no sessions simply has no
 /// session rows.
-void _sessions(
-  SectionList sections,
-  ScreenData data,
-  ActivityExtras extras,
-) {
+void _sessions(SectionList sections, ScreenData data, ActivityExtras extras) {
   final workouts = data.day.workouts;
   sections.gap(PageSpacing.block);
   sections.add(
@@ -359,7 +365,7 @@ void _sessions(
 /// pins free-living energy to the server's model, so a kcal number here must be
 /// unmistakably the device's.
 String _sessionDetail(DeviceWorkout workout) => <String>[
-  durationLabel(workout.duration.inMinutes),
+  durationText(workout.duration.inMinutes),
   if (workout.avgHr > 0) '${workout.avgHr} bpm avg',
   if (workout.calories > 0) "${workout.calories} kcal by the strap's count",
 ].join(' · ');

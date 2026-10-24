@@ -70,6 +70,11 @@ Color? groundOf(Decoration decoration) => switch (decoration) {
 double radiusOf(Decoration decoration) => switch (decoration) {
   BoxDecoration(borderRadius: final BorderRadius r) => r.topLeft.x,
   ShapeDecoration(shape: final HSquircleBorder s) => s.radius,
+  // Today's merged hero: square at the top, rounded at the bottom in light.
+  ShapeDecoration(
+    shape: RoundedRectangleBorder(borderRadius: final BorderRadius r),
+  ) =>
+    r.bottomLeft.x,
   _ => throw StateError('no corner on \$decoration'),
 };
 

@@ -26,6 +26,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:healthee/core/theme/tokens.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/shared/charts/chart_primitives.dart';
 import 'package:healthee/shared/charts/chart_reference.dart';
 
@@ -281,7 +282,7 @@ class _AreaPainter extends CustomPainter {
         '${unit.isNotEmpty ? ' $unit' : ''}';
     final painter = chartLabel(
       text,
-      TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: bubbleInk),
+      TypeLadder.micro.copyWith(color: bubbleInk),
     );
     final width = painter.width + 12;
     final height = painter.height + 6;

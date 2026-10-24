@@ -13,6 +13,7 @@ library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:healthee/data/models/sleep_consistency.dart';
+import 'package:healthee/features/sleep/v02/bed_wake_week.dart';
 import 'package:healthee/features/sleep/v02/checks_panel.dart';
 import 'package:healthee/features/sleep/v02/naps_panel.dart';
 import 'package:healthee/features/sleep/v02/need_panel.dart';
@@ -68,14 +69,18 @@ void main() {
         indexOfSection<OvernightPanel>(list),
         // `H.panel('Your four sleep checks', …)`.
         indexOfSection<SleepChecksPanel>(list),
+        // `head('p-week', 'This week', …)` — the approved redesign's part.
+        _nthOf<ChapterHeading>(list, 0),
         // `H.panel('Sleep need & debt', …)`.
         indexOfSection<SleepNeedPanel>(list),
         // `H.panel('Your week, stage by stage', …)`.
         indexOfSection<StageWeekPanel>(list),
+        // `timingCard(P.week)` — bed and wake bars for the week.
+        indexOfSection<BedWakeWeekPanel>(list),
         // `H.panel('Sleep timing', …, '', 'clock')`.
         indexOfSection<SleepTimingPanel>(list),
         // `H.chapter('sleep-trends','Beyond a single night','sleep','insights')`.
-        indexOfSection<ChapterHeading>(list),
+        _nthOf<ChapterHeading>(list, 1),
         // `['efficiency','regularity','hrv'].map(H.historyPanel)`.
         _nthOf<SleepTrendPanel>(list, 0),
         _nthOf<SleepTrendPanel>(list, 1),

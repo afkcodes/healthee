@@ -1,0 +1,118 @@
+{
+  "done_rate": {
+    "done": 1,
+    "provable": 3
+  },
+  "from": "2026-09-20",
+  "ideas_given": 41,
+  "pattern": "Your yeses come in bursts.",
+  "to": "2026-10-18",
+  "totals": {
+    "done": 1,
+    "missed": 1,
+    "no_data": 1,
+    "partial": 1,
+    "uncheckable": 1
+  },
+  "weeks": [
+    {
+      "entries": [
+        {
+          "date": "2026-10-14",
+          "measured": {
+            "label": "12 min",
+            "unit": "min",
+            "value": 12.0
+          },
+          "ref_id": 3,
+          "source": "challenge",
+          "title": "20 min brisk walk",
+          "verdict": "partial"
+        }
+      ],
+      "from": "2026-10-12",
+      "ideas_given": 21,
+      "to": "2026-10-18",
+      "yeses": 1
+    },
+    {
+      "entries": [
+        {
+          "date": "2026-10-11",
+          "measured": {
+            "label": null,
+            "unit": null,
+            "value": null
+          },
+          "ref_id": 2,
+          "source": "challenge",
+          "title": "Walk toward 6,000 steps",
+          "verdict": "no_data"
+        },
+        {
+          "date": "2026-10-10",
+          "measured": {
+            "label": null,
+            "unit": null,
+            "value": null
+          },
+          "ref_id": 42,
+          "source": "recommendation",
+          "title": "Earlier bedtime tonight",
+          "verdict": "uncheckable"
+        },
+        {
+          "date": "2026-10-09",
+          "measured": {
+            "label": "1,578 steps",
+            "unit": "steps",
+            "value": 1578.0
+          },
+          "ref_id": 2,
+          "source": "challenge",
+          "title": "Walk toward 6,000 steps",
+          "verdict": "missed"
+        },
+        {
+          "date": "2026-10-08",
+          "measured": {
+            "label": "9h34",
+            "unit": "min",
+            "value": 574.0
+          },
+          "ref_id": 41,
+          "source": "recommendation",
+          "title": "Full sleep window tonight",
+          "verdict": "done"
+        }
+      ],
+      "from": "2026-10-05",
+      "ideas_given": 20,
+      "to": "2026-10-11",
+      "yeses": 4
+    },
+    {
+      "entries": [],
+      "from": "2026-09-28",
+      "ideas_given": 0,
+      "to": "2026-10-04",
+      "yeses": 0
+    },
+    {
+      "entries": [],
+      "from": "2026-09-21",
+      "ideas_given": 0,
+      "to": "2026-09-27",
+      "yeses": 0
+    },
+    {
+      "entries": [],
+      "from": "2026-09-14",
+      "ideas_given": 0,
+      "to": "2026-09-20",
+      "yeses": 0
+    }
+  ],
+  "window": "month",
+  "yeses": 5
+}

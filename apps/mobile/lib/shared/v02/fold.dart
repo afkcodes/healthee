@@ -38,13 +38,29 @@ import 'package:flutter/material.dart';
 /// Opens and closes [child] with the app's own timing.
 class Fold extends StatefulWidget {
   /// [open] drives it; [child] is what is behind the fold.
-  const Fold({required this.open, required this.child, super.key});
+  const Fold({
+    required this.open,
+    required this.child,
+    this.duration = Fold.defaultDuration,
+    this.curve = Fold.defaultCurve,
+    this.fade = false,
+    super.key,
+  });
 
   /// Swift. Short enough that a reader tapping twice never waits on it.
-  static const Duration duration = Duration(milliseconds: 160);
+  static const Duration defaultDuration = Duration(milliseconds: 160);
 
   /// Decelerating, so the motion settles rather than stopping.
-  static const Curve curve = Curves.easeOutCubic;
+  static const Curve defaultCurve = Curves.easeOutCubic;
+
+  /// How long the fold takes. Zero is instant (reduced motion).
+  final Duration duration;
+
+  /// The easing, in both directions.
+  final Curve curve;
+
+  /// Fades the body with the height, so it does not slide out of nowhere.
+  final bool fade;
 
   /// Whether the body is shown.
   final bool open;
@@ -59,20 +75,21 @@ class Fold extends StatefulWidget {
 class _FoldState extends State<Fold> with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: Fold.duration,
+    duration: widget.duration,
     // Seeded at rest, never at zero — see the library docstring.
     value: widget.open ? 1 : 0,
   );
 
   late final Animation<double> _height = CurvedAnimation(
     parent: _controller,
-    curve: Fold.curve,
-    reverseCurve: Fold.curve.flipped,
+    curve: widget.curve,
+    reverseCurve: widget.curve.flipped,
   );
 
   @override
   void didUpdateWidget(Fold old) {
     super.didUpdateWidget(old);
+    _controller.duration = widget.duration;
     if (widget.open != old.open) {
       widget.open ? _controller.forward() : _controller.reverse();
     }
@@ -96,7 +113,9 @@ class _FoldState extends State<Fold> with SingleTickerProviderStateMixin {
         builder: (context, child) => Align(
           alignment: Alignment.topCenter,
           heightFactor: _height.value,
-          child: child,
+          child: widget.fade
+              ? Opacity(opacity: _height.value.clamp(0.0, 1.0), child: child)
+              : child,
         ),
       ),
     );

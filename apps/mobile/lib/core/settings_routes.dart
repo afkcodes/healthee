@@ -83,7 +83,7 @@ List<RouteBase> settingsRoutes() => <RouteBase>[
   GoRoute(
     path: Routes.profile,
     builder: (BuildContext context, GoRouterState state) =>
-        const ProfileScreen(),
+        ProfileScreen(focus: profileFocusOf(state.uri)),
   ),
   GoRoute(
     path: Routes.journal,

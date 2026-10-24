@@ -10,7 +10,7 @@
 /// A screen-level suite can only cover screens somebody wrote a suite for, and
 /// the surfaces here are the ones the sweep just took chips off: Sleep's lever,
 /// its timing action and its analysis, Actions' suggestions and challenges, the
-/// coach, Insights' notable days, Today's rows and every disclosure.
+/// coach, Today's rows and every disclosure.
 ///
 /// The assertion is the same everywhere: **whatever `parseGrounded` finds in the
 /// prose the surface drew, its ⓘ is carrying.** Not a fixed list — the parse
@@ -23,10 +23,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:healthee/data/api/server_snapshot.dart';
 import 'package:healthee/data/insights/generated_insight.dart';
 import 'package:healthee/data/insights/insight_repository.dart';
-import 'package:healthee/data/insights/notable_event.dart';
 import 'package:healthee/data/models/recommendation.dart';
 import 'package:healthee/data/models/sleep_consistency.dart';
 import 'package:healthee/data/models/sleep_insight.dart';
@@ -35,7 +33,6 @@ import 'package:healthee/features/actions/v02/challenge_card.dart';
 import 'package:healthee/features/actions/v02/suggestion_card.dart';
 import 'package:healthee/features/coach/coach_conversation.dart';
 import 'package:healthee/features/coach/widgets/coach_thread.dart';
-import 'package:healthee/features/insights/widgets/notable_events.dart';
 import 'package:healthee/features/sleep/v02/tail_panels.dart';
 import 'package:healthee/features/sleep/v02/timing_panel.dart';
 import 'package:healthee/features/today/widgets/actions_section.dart';
@@ -170,43 +167,6 @@ void main() {
       expect(
         detailIn(tester, find.byType(SleepAnalysisPanel)).grade,
         'Probable',
-      );
-    });
-
-    testWidgets('Insights’ notable days', (tester) async {
-      const meaning = 'Your HRV dipped [recovery_readiness].';
-      await pumpAt(
-        tester,
-        390,
-        ProviderScope(
-          overrides: [
-            notableEventsProvider.overrideWith(
-              (ref) => Stream<ServerSnapshot<List<NotableEvent>>>.value(
-                ServerSnapshot<List<NotableEvent>>(<NotableEvent>[
-                  const NotableEvent(
-                    day: '2026-08-05',
-                    metric: 'hrv_sleep_avg',
-                    label: 'Overnight HRV',
-                    value: 41,
-                    median: 55,
-                    meaning: meaning,
-                    notes: <String>['vo2max'],
-                  ),
-                ], fetchedAt: DateTime(2026, 8, 5)),
-              ),
-            ),
-          ],
-          child: const NotableEvents(),
-        ),
-      );
-      await tester.tap(find.text(NotableEvents.title));
-      await tester.pumpAndSettle();
-
-      expectGrounds(
-        tester,
-        NotableEvents,
-        meaning,
-        alsoCites: const <String>['vo2max'],
       );
     });
 

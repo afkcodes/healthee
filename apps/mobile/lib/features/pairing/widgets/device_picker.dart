@@ -62,7 +62,7 @@ class DevicePicker extends StatelessWidget {
                     : 'Zepp did not name this one',
                 onTap: () => onSelected(device),
                 trailing: device.isActive
-                    ? const HBadge('IN USE', kind: BadgeKind.accent)
+                    ? const HBadge('In use', kind: BadgeKind.accent)
                     : null,
               ),
           ],

@@ -58,8 +58,15 @@ class StateCard extends StatelessWidget {
   /// to `shapes.dart` so there is a single definition of the corner, and so that
   /// definition is the one legacy actually drew against (`smooth_corner` at
   /// smoothness 0.6).
-  static ShapeBorder shapeOf(Color border) =>
-      hSquircle(Radii.card, side: BorderSide(color: border, width: hairline));
+  ///
+  /// **No edge unless [border] is given.** A card has no border; only a genuine
+  /// status card (an alert) passes one.
+  static ShapeBorder shapeOf([Color? border]) => hSquircle(
+    Radii.card,
+    side: border == null
+        ? BorderSide.none
+        : BorderSide(color: border, width: hairline),
+  );
 
   /// ## It claims an enclosing [CaveatScope]
   ///
@@ -76,26 +83,29 @@ class StateCard extends StatelessWidget {
     return DecoratedBox(
       decoration: ShapeDecoration(
         color: fill ?? colors.surface,
-        shape: shapeOf(border ?? colors.line),
+        shape: shapeOf(border),
       ),
-      child: Material(type: MaterialType.transparency, child: Padding(
-        padding: const EdgeInsets.all(Insets.lg),
-        // Shadowed for the subtree, so a card inside a card cannot render the
-        // same disclosure twice.
-        child: CaveatScope(
-          caveats: const <Disclosure>[],
-          child: disclosed.isEmpty
-              ? child
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    child,
-                    CaveatNote(caveats: disclosed, label: scope?.label),
-                  ],
-                ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: Padding(
+          padding: const EdgeInsets.all(Insets.card),
+          // Shadowed for the subtree, so a card inside a card cannot render the
+          // same disclosure twice.
+          child: CaveatScope(
+            caveats: const <Disclosure>[],
+            child: disclosed.isEmpty
+                ? child
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      child,
+                      CaveatNote(caveats: disclosed, label: scope?.label),
+                    ],
+                  ),
+          ),
         ),
-      )),
+      ),
     );
   }
 }
@@ -120,7 +130,10 @@ class LoadingState extends StatelessWidget {
           SizedBox(
             width: 16,
             height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2, color: colors.ink3),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: colors.ink2,
+            ),
           ),
           const SizedBox(width: Insets.md),
           Expanded(
@@ -173,7 +186,10 @@ class ErrorState extends StatelessWidget {
           Text(message, style: text.titleSmall),
           if (detail case final String detailText) ...[
             const SizedBox(height: Insets.sm),
-            Text(detailText, style: text.bodySmall?.copyWith(color: colors.ink3)),
+            Text(
+              detailText,
+              style: text.bodySmall?.copyWith(color: colors.ink2),
+            ),
           ],
           const SizedBox(height: Insets.md),
           Align(
@@ -181,7 +197,10 @@ class ErrorState extends StatelessWidget {
             // Outlined rather than accent-filled: the accent marks the owner's own
             // data line and the primary path through the app, and a failed request
             // should not out-shout the numbers around it.
-            child: OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
+            child: OutlinedButton(
+              onPressed: onRetry,
+              child: const Text('Try again'),
+            ),
           ),
         ],
       ),
@@ -214,7 +233,7 @@ class EmptyState extends StatelessWidget {
         children: [
           Text(message, style: text.titleSmall),
           const SizedBox(height: Insets.sm),
-          Text(hint, style: text.bodySmall?.copyWith(color: colors.ink3)),
+          Text(hint, style: text.bodySmall?.copyWith(color: colors.ink2)),
         ],
       ),
     );

@@ -242,7 +242,7 @@ class SupportNotice extends StatelessWidget {
       children: <Widget>[
         Text(
           kSupportBody,
-          style: FormType.fieldHint.copyWith(color: colors.ink3),
+          style: FormType.fieldHint.copyWith(color: colors.ink2),
         ),
         const SizedBox(height: 12),
         HButton(

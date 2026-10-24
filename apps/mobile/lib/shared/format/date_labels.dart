@@ -25,6 +25,16 @@ String prettyDate(String iso) {
   return '${days[parsed.weekday - 1]} · ${months[parsed.month - 1]} ${parsed.day}';
 }
 
+/// `2026-08-04` → `Tue 4 Aug`. The sentence-case day line of a redesigned head.
+String dayDateLine(String iso) {
+  final parsed = DateTime.tryParse(iso);
+  if (parsed == null) {
+    return iso;
+  }
+  const days = <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  return '${days[parsed.weekday - 1]} ${shortDate(iso)}';
+}
+
 /// `2026-07-18` → `18 Jul`. The prototype's chart captions and table rows.
 ///
 /// `history-data.js`: `Intl.DateTimeFormat('en-GB', {day:'numeric',

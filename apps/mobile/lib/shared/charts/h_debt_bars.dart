@@ -17,18 +17,20 @@
 ///     and a `480` inside the tooltip's shortfall arithmetic, in two places that
 ///     could disagree. The need comes from `sleep_debt.need_min` on the wire, so
 ///     it is passed in once and both uses read it.
-///   * **Colour is judgement here, and is legacy's own pair.** A night that met
-///     the need is `fav`, one that fell short is `alert` — legacy's
-///     `_DebtPainter(… c.green, c.cHeart …)` (`instrument_charts.dart:616`).
-///     A previous revision drew the shortfall in `unf` (amber) on the argument
-///     that red is reserved for illness. Legacy is the specification and legacy
-///     draws it red-orange, so the reservation is what gave way; `palette.dart`
-///     records that `alert` IS `cHeart` and that legacy shares them by decision.
+///   * **Colour follows the owner's approved redesign** (`proposal.css`:
+///     `.p-bar.met`, `.p-bar.current`, `.p-owed`). A night that met the need
+///     is `fav`; one that fell short is drawn in the card's own family, with
+///     what it still needed as a faint ghost of the same hue. No red: a short
+///     night is a reading, not an alarm (`APP_DESIGN.md`, no traffic lights).
+///     The need line is dotted ink.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:healthee/core/theme/tokens.dart';
+import 'package:healthee/core/theme/tone_scope.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/shared/charts/chart_primitives.dart';
+import 'package:healthee/shared/format/duration.dart';
 
 /// Nightly sleep totals against a need line.
 class HDebtBars extends StatefulWidget {
@@ -79,8 +81,8 @@ class _HDebtBarsState extends State<HDebtBars> {
       return;
     }
     const leftPad = 26.0;
-    final index =
-        ((position.dx - leftPad) / ((size.width - leftPad) / count)).floor();
+    final index = ((position.dx - leftPad) / ((size.width - leftPad) / count))
+        .floor();
     setState(() => _selected = (index >= 0 && index < count) ? index : null);
   }
 
@@ -106,14 +108,11 @@ class _HDebtBarsState extends State<HDebtBars> {
                 labels: widget.labels,
                 needMin: widget.needMin,
                 colors: colors,
+                family: context.family,
                 selected: _selected,
                 progress: widget.progress,
-                labelStyle: TextStyle(fontSize: 9, color: colors.ink3),
-                bubbleStyle: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: colors.ink,
-                ),
+                labelStyle: TypeLadder.micro.copyWith(color: colors.ink3),
+                bubbleStyle: TypeLadder.micro.copyWith(color: colors.ink),
               ),
             ),
           );
@@ -129,6 +128,7 @@ class _DebtPainter extends CustomPainter {
     required this.labels,
     required this.needMin,
     required this.colors,
+    required this.family,
     required this.selected,
     required this.progress,
     required this.labelStyle,
@@ -139,6 +139,7 @@ class _DebtPainter extends CustomPainter {
   final List<String> labels;
   final int needMin;
   final HealtheeColors colors;
+  final Color family;
   final int? selected;
   final double progress;
   final TextStyle labelStyle;
@@ -156,7 +157,8 @@ class _DebtPainter extends CustomPainter {
       return;
     }
     final targetHours = needMin / 60.0;
-    final yMax = [targetHours + 1, ...hours].reduce((a, b) => a > b ? a : b) + 0.5;
+    final yMax =
+        [targetHours + 1, ...hours].reduce((a, b) => a > b ? a : b) + 0.5;
     final plotWidth = size.width - _leftPad;
     final plotHeight = size.height - _topPad - _labelHeight;
     double yAt(double h) => _topPad + (1 - h / yMax) * plotHeight;
@@ -200,14 +202,17 @@ class _DebtPainter extends CustomPainter {
       }
       final y = yAt(hour.toDouble());
       canvas.drawLine(Offset(_leftPad, y), Offset(size.width, y), grid);
-      final label = chartLabel('${hour}h', labelStyle);
-      label.paint(canvas, Offset(_leftPad - label.width - 5, y - label.height / 2));
+      final label = chartLabel(hoursText(hour), labelStyle);
+      label.paint(
+        canvas,
+        Offset(_leftPad - label.width - 5, y - label.height / 2),
+      );
     }
   }
 
   void _paintTargetLine(Canvas canvas, Size size, double y) {
     final dash = Paint()
-      ..color = colors.alert.withValues(alpha: 0.5)
+      ..color = colors.ink.withValues(alpha: 0.55)
       ..strokeWidth = 1;
     for (var x = _leftPad; x < size.width; x += 7) {
       canvas.drawLine(Offset(x, y), Offset(x + 4, y), dash);
@@ -225,7 +230,7 @@ class _DebtPainter extends CustomPainter {
     required String? label,
   }) {
     final met = hours >= targetHours;
-    final colour = met ? colors.fav : colors.alert;
+    final colour = met ? colors.fav : family;
     canvas.drawRRect(
       RRect.fromRectAndCorners(
         Rect.fromLTRB(
@@ -252,7 +257,8 @@ class _DebtPainter extends CustomPainter {
           topLeft: const Radius.circular(3),
           topRight: const Radius.circular(3),
         ),
-        Paint()..color = colors.alert.withValues(alpha: HDebtBars.ghostAlpha * progress),
+        Paint()
+          ..color = family.withValues(alpha: HDebtBars.ghostAlpha * progress),
       );
     }
     if (label != null) {
@@ -280,8 +286,8 @@ class _DebtPainter extends CustomPainter {
     drawChartTooltip(
       canvas,
       size,
-      '$label  ${hoursMinutes(slept)}'
-      '${short > 0 ? '  ·  ${hoursMinutes(short)} short' : ''}',
+      '$label  ${durationText(slept)}'
+      '${short > 0 ? '  ·  ${durationText(short)} short' : ''}',
       anchorX: centre,
       background: colors.surface,
       border: colors.line,

@@ -79,7 +79,7 @@ class TimeField extends StatelessWidget {
                 Icon(
                   SolarIconsOutline.clockCircle,
                   size: 18,
-                  color: colors.ink3,
+                  color: colors.ink2,
                 ),
               ],
             ),

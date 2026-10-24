@@ -120,12 +120,12 @@ class CitationRow extends StatelessWidget {
           const SizedBox(height: Insets.xs),
           Text(
             kSingleSubjectFraming,
-            style: text.labelSmall?.copyWith(color: colors.ink3),
+            style: text.labelSmall?.copyWith(color: colors.ink2),
           ),
         ],
         if (source case final String sentence) ...[
           const SizedBox(height: Insets.xs),
-          Text(sentence, style: text.labelSmall?.copyWith(color: colors.ink3)),
+          Text(sentence, style: text.labelSmall?.copyWith(color: colors.ink2)),
         ],
         if (unresolved.isNotEmpty) ...[
           const SizedBox(height: Insets.xs),
@@ -191,7 +191,7 @@ class _NoteStamp extends StatelessWidget {
         ),
         child: Text(
           name ?? id,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.ink3),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.ink2),
         ),
       ),
     );
@@ -218,7 +218,7 @@ class _PersonalStamp extends StatelessWidget {
         ),
         child: Text(
           'your own data · ${metricName(name)}',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.ink3),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.ink2),
         ),
       ),
     );

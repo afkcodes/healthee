@@ -20,7 +20,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/tone.dart';
-import 'package:healthee/core/theme/tone_scope.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/data/honesty/citations.dart';
 import 'package:healthee/data/models/sleep_consistency.dart';
@@ -116,7 +115,7 @@ class SleepAnalysisPanel extends ConsumerStatefulWidget {
   /// When the read failed.
   static const String unreachable =
       'We could not reach your server for the analysis. The measurements above '
-      'come from your own strap and are unaffected — pull down to try again.';
+      'come from your own strap and are unaffected. Pull down to try again.';
 
   /// When the plan does not include it.
   static const String locked =
@@ -125,12 +124,12 @@ class SleepAnalysisPanel extends ConsumerStatefulWidget {
 
   /// When the model had nothing grounded to say.
   static const String refused =
-      'The analysis was declined rather than guessed — there was not enough '
+      'The analysis was declined rather than guessed. There was not enough '
       'grounded evidence to say anything about these nights.';
 
   /// When there is simply no analysis yet.
   static const String empty =
-      'No analysis yet — check back once more nights are recorded.';
+      'No analysis yet. Check back once more nights are recorded.';
 
   @override
   ConsumerState<SleepAnalysisPanel> createState() => _SleepAnalysisPanelState();
@@ -163,8 +162,7 @@ class _SleepAnalysisPanelState extends ConsumerState<SleepAnalysisPanel> {
     // nothing while they are scrolling past it.
     return HTap(
       onTap: () => setState(() => _open = !_open),
-      semanticLabel:
-          '${SleepAnalysisPanel.title}, ${_open ? 'hide' : 'show'}',
+      semanticLabel: '${SleepAnalysisPanel.title}, ${_open ? 'hide' : 'show'}',
       child: panel,
     );
   }
@@ -236,6 +234,6 @@ class _SleepAnalysisPanelState extends ConsumerState<SleepAnalysisPanel> {
     if (!analysis.hasText) {
       return const PanelNote(SleepAnalysisPanel.empty);
     }
-    return GroundedMarkdown(text: analysis.text, accent: context.family);
+    return GroundedMarkdown(text: analysis.text, accent: context.colors.accent);
   }
 }

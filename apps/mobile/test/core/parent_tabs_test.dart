@@ -45,7 +45,7 @@ void main() {
 
     test('the challenge, program and journal screens are filed under Actions', () {
       for (final String location in <String>[
-        Routes.outcomes,
+        Routes.coachLedger,
         Routes.recommendations,
         Routes.journal,
         '${Routes.challenge}/7',

@@ -15,8 +15,10 @@ import 'package:flutter/material.dart';
 import 'package:healthee/core/theme/instrument_hues.dart';
 import 'package:healthee/core/theme/stage_colors.dart';
 import 'package:healthee/core/theme/tokens.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/data/models/sleep_history.dart';
 import 'package:healthee/shared/charts/chart_primitives.dart';
+import 'package:healthee/shared/format/duration.dart';
 
 /// A week of nights, stacked deep → light → REM → awake.
 class HStackedSleep extends StatelessWidget {
@@ -53,8 +55,8 @@ class HStackedSleep extends StatelessWidget {
           colors: colors,
           hues: hues,
           progress: progress,
-          labelStyle: TextStyle(fontSize: 9, color: colors.ink3),
-          lastLabelStyle: TextStyle(fontSize: 9, color: colors.ink2),
+          labelStyle: TypeLadder.micro.copyWith(color: colors.ink3),
+          lastLabelStyle: TypeLadder.micro.copyWith(color: colors.ink2),
         ),
       ),
     );
@@ -108,7 +110,12 @@ class _StackedPainter extends CustomPainter {
           final minutes = _minutesIn(night, stage).toDouble();
           final segment = (minutes / axisMinutes) * chartHeight * progress;
           canvas.drawRect(
-            Rect.fromLTWH(x, chartHeight - stacked - segment, barWidth, segment),
+            Rect.fromLTWH(
+              x,
+              chartHeight - stacked - segment,
+              barWidth,
+              segment,
+            ),
             Paint()..color = sleepStageColor(hues, stage),
           );
           stacked += segment;
@@ -136,7 +143,12 @@ class _StackedPainter extends CustomPainter {
   /// the week still reads as seven nights and the weekday label still has a bar
   /// to sit under, and it is visibly not a measurement. No new colour — the grid
   /// tone is already the app's "structure, not data" ink.
-  void _paintUnmeasured(Canvas canvas, double x, double barWidth, double chartHeight) {
+  void _paintUnmeasured(
+    Canvas canvas,
+    double x,
+    double barWidth,
+    double chartHeight,
+  ) {
     const double stubHeight = 3;
     canvas.drawRect(
       Rect.fromLTWH(x, chartHeight - stubHeight, barWidth, stubHeight),
@@ -165,8 +177,11 @@ class _StackedPainter extends CustomPainter {
       for (var x = _leftPad; x < size.width; x += 6) {
         canvas.drawLine(Offset(x, y), Offset(x + 3, y), grid);
       }
-      final label = chartLabel('${hour}h', labelStyle);
-      label.paint(canvas, Offset(_leftPad - label.width - 6, y - label.height / 2));
+      final label = chartLabel(hoursText(hour), labelStyle);
+      label.paint(
+        canvas,
+        Offset(_leftPad - label.width - 6, y - label.height / 2),
+      );
     }
   }
 
@@ -179,9 +194,7 @@ class _StackedPainter extends CustomPainter {
     // then removed: its mutation SURVIVED, which is the honest way to find out a
     // guard guards nothing (`HOW_WE_VERIFY.md` section 2). The absence is drawn
     // by `_paintUnmeasured`, not by the axis.
-    final tallest = nights
-        .map(_totalOf)
-        .reduce((a, b) => a > b ? a : b);
+    final tallest = nights.map(_totalOf).reduce((a, b) => a > b ? a : b);
     var hours = (tallest / 60).ceil();
     if (hours < 2) {
       hours = 2;

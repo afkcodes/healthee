@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/tone.dart';
 import 'package:healthee/core/theme/tone_scope.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/data/models/activity_today.dart';
 import 'package:healthee/shared/v02/panel.dart';
@@ -87,8 +88,9 @@ class ZonesPanel extends StatelessWidget {
   /// **Not the total.** Scaled against the sum, a day spent almost entirely in
   /// zone one draws four invisible bars — and those four are the ones the
   /// reader is looking for.
-  int get peak =>
-      load.zoneMinutes.isEmpty ? 0 : load.zoneMinutes.reduce((a, b) => a > b ? a : b);
+  int get peak => load.zoneMinutes.isEmpty
+      ? 0
+      : load.zoneMinutes.reduce((a, b) => a > b ? a : b);
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +110,7 @@ class ZonesPanel extends StatelessWidget {
           if (zones.length != kZoneLowerBounds.length || peak <= 0)
             // A shape this card cannot read is not a day with no minutes in it.
             const PanelNote(
-              'No zone breakdown for today — the strap recorded no waking '
+              'No zone breakdown for today. The strap recorded no waking '
               'heart rate to sort into them.',
             )
           else ...<Widget>[
@@ -177,15 +179,12 @@ class _ZoneRow extends StatelessWidget {
                 kZoneNames[index],
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TypeScale.panelContext.copyWith(
-                  color: colors.ink,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TypeLadder.calloutStrong.copyWith(color: colors.ink),
               ),
               Text(
                 band,
                 maxLines: 1,
-                style: TypeScale.panelNote.copyWith(color: colors.ink3),
+                style: TypeScale.panelNote.copyWith(color: colors.ink2),
               ),
             ],
           ),
@@ -227,10 +226,8 @@ class _ZoneRow extends StatelessWidget {
             '$minutes min',
             textAlign: TextAlign.right,
             maxLines: 1,
-            style: TypeScale.panelContext.copyWith(
-              color: minutes > 0 ? colors.ink : colors.ink3,
-              fontWeight: minutes > 0 ? FontWeight.w700 : FontWeight.w400,
-            ),
+            style: (minutes > 0 ? TypeLadder.calloutStrong : TypeLadder.callout)
+                .copyWith(color: minutes > 0 ? colors.ink : colors.ink2),
           ),
         ),
       ],

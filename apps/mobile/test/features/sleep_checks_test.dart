@@ -11,12 +11,12 @@
 ///     face** and reachable from the ⓘ, which is where the owner put them.
 library;
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:healthee/data/models/sleep_page.dart';
 import 'package:healthee/features/sleep/v02/checks_panel.dart';
 import 'package:healthee/features/sleep/v02/sleep_cutoffs.dart';
 import 'package:healthee/shared/metric_info/metric_info_sheet.dart';
+import 'package:healthee/shared/v02/key_number_card.dart';
 
 import '../_sleep_stubs.dart';
 import '_sleep_host.dart';
@@ -148,6 +148,30 @@ void main() {
     });
   });
 
+  group('an unscored check is never drawn as a pass', () {
+    testWidgets('a check the server did not score draws no verdict', (
+      tester,
+    ) async {
+      await loadSleepFont();
+      Future<int> chips(SleepChecksPanel panel) async {
+        await tester.pumpWidget(sleepPanelHost(panel));
+        await tester.pumpAndSettle();
+        return find.byType(VerdictChip).evaluate().length;
+      }
+
+      final scored = await chips(_panel());
+      final night = sleepPageWithout(<String>['point_duration']).nights.first;
+      final unscored = await chips(
+        SleepChecksPanel(
+          night: night,
+          cutoffs: sleepPageFixture().cutoffs,
+          notes: const <String>[],
+        ),
+      );
+      expect(unscored, scored - 1);
+    });
+  });
+
   group('the timing row shows a clock, not a timestamp', () {
     test('MUTATION — the raw ISO instant does not reach the row', () {
       // `midpoint_local` arrives as `2026-07-31T02:45:00+05:30` and a row that
@@ -272,12 +296,8 @@ void main() {
       // reading had been scored — a judgement made out of nothing, which is the
       // defect this whole layer exists to make impossible.
       final ticks = tester
-          .widgetList<Icon>(
-            find.descendant(
-              of: find.byType(SleepChecksPanel),
-              matching: find.byIcon(Icons.check),
-            ),
-          )
+          .widgetList<VerdictChip>(find.byType(VerdictChip))
+          .where((chip) => chip.verdict.tone == VerdictTone.neutral)
           .length;
       expect(ticks, 2);
     });

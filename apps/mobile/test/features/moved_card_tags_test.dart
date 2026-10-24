@@ -89,7 +89,7 @@ void main() {
         MovementPanel.title: Tone.movement,
         IntensityPanel.title: Tone.movement,
         TrainingLoadPanel.title: Tone.load,
-        FitnessSourcePanel.title: Tone.fitness,
+        FitnessSourcePanel.title: Tone.heart,
       };
       for (final entry in cases.entries) {
         expect(
@@ -126,14 +126,21 @@ void main() {
       );
     });
 
-    test('THE FITNESS NUMBERS SHARE LEGACY’S READINESS HUE', () {
-      // `today_screen.dart:1162` and `:1239` — both cReady. Still true, and
-      // still the reason VO₂max and biological age are one family in v02 too.
-      expect(hueFor(_hues, 'vo2max_estimate'), _hues.fitness);
-      expect(hueFor(_hues, 'biological_age'), _hues.fitness);
-      expect(toneForMetric('vo2max_estimate'), Tone.fitness);
-      expect(toneForMetric('biological_age'), Tone.fitness);
-    });
+    test(
+      'HEART AND BODY NUMBERS ARE TWO DOMAINS, and cardio load is strain',
+      () {
+        // The colour system gives each body system its own hue: VO₂max is Heart,
+        // biological age is Body, and cardio load is Strain, split from heart.
+        expect(hueFor(_hues, 'vo2max_estimate'), _hues.heart);
+        expect(hueFor(_hues, 'biological_age'), _hues.fitness);
+        expect(hueFor(_hues, 'cardio_load'), _hues.strain);
+        expect(toneForMetric('vo2max_estimate'), Tone.heart);
+        expect(toneForMetric('biological_age'), Tone.fitness);
+        expect(toneForMetric('cardio_load'), Tone.load);
+        expect(_hues.heart, isNot(_hues.fitness));
+        expect(_hues.strain, isNot(_hues.heart));
+      },
+    );
 
     testWidgets('NOTHING ON THE INTENSITY PANEL TURNS AT THE WHO FLOOR', (
       tester,
@@ -190,18 +197,17 @@ void main() {
 
 /// Which named field of [hues] holds [colour].
 ///
-/// Two of legacy's ten hues share a value in both themes (`cHrv` and `cReady`
-/// are the green), so this returns the FIRST matching name and the comparison
-/// above is between two consistently-resolved names rather than between hexes.
+/// Returns the FIRST matching name, so the comparison above is between two
+/// consistently-resolved names rather than between hexes.
 String _fieldName(InstrumentHues hues, Color colour) => <String, Color>{
   'sleep': hues.sleep,
   'heart': hues.heart,
-  'hrv': hues.fitness,
+  'strain': hues.strain,
+  'body': hues.fitness,
   'steps': hues.movement,
   'calories': hues.movement,
   'respiratory': hues.oxygen,
   'spo2': hues.oxygen,
   'stress': hues.stress,
-  'readiness': hues.fitness,
   'rem': hues.sleep,
 }.entries.firstWhere((entry) => entry.value == colour).key;

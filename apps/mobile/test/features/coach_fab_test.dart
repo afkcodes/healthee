@@ -14,8 +14,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:healthee/core/routes.dart';
+import 'package:healthee/core/tabs.dart';
 import 'package:healthee/data/store/local_store.dart';
 import 'package:healthee/features/coach/widgets/coach_fab.dart';
+import 'package:healthee/features/today/v02/today_header.dart';
 import 'package:healthee/shared/app_tab_bar.dart';
 
 import '_today_host.dart';
@@ -40,7 +43,7 @@ void main() {
       'Sleep',
       'Activity',
       'Insights',
-      'Actions',
+      'Coach',
     ]) {
       // Scoped to the bar: `Today` is also the screen's own h1 since the v02
       // redesign, so an unscoped finder would be asking about the title.
@@ -50,20 +53,28 @@ void main() {
         reason: '$label is a tab',
       );
     }
-    expect(
-      find.text('Coach'),
-      findsNothing,
-      reason:
-          'it is a button on Today and a sheet behind it, not a destination',
-    );
+    // The Coach TAB is the weekly plan (`/actions`); the chat is still a button
+    // on Today and a route behind it, not a tab.
+    expect(kAppTabs.last.route, Routes.actions);
   });
 
-  testWidgets('THE COACH FAB IS ON TODAY AND NOWHERE ELSE', (tester) async {
+  testWidgets('THE COACH BUTTON IS IN TODAY’S HEADER AND NOWHERE ELSE', (
+    tester,
+  ) async {
     await tester.pumpWidget(routedApp(store));
     await tester.pumpAndSettle();
     expect(find.byType(CoachFab), findsOneWidget, reason: 'Today has it');
+    // In the header, not floating over the content.
+    expect(
+      find.descendant(
+        of: find.byType(TodayHeader),
+        matching: find.byType(CoachFab),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(FloatingActionButton), findsNothing);
 
-    for (final tab in <String>['Sleep', 'Activity', 'Insights', 'Actions']) {
+    for (final tab in <String>['Sleep', 'Activity', 'Insights', 'Coach']) {
       await tapTab(tester, tab);
       expect(
         find.byType(CoachFab),

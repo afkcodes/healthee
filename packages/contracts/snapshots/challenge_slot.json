@@ -1,0 +1,37 @@
+{
+  "challenge": {
+    "abandoned_at": null,
+    "action_text": null,
+    "adopted_at": "2026-10-19T00:04:15.239763Z",
+    "baseline_value": 620.0,
+    "cadence": "daily",
+    "category": "activity",
+    "comparator": ">=",
+    "completed_at": null,
+    "counts_when": null,
+    "created_at": "2026-10-19T00:04:13.852576Z",
+    "days_required": null,
+    "difficulty": "standard",
+    "ends_at": "2026-10-25T18:30:00Z",
+    "expected_outcome": "About a tenth above your recent week.",
+    "floor_text": null,
+    "floor_value": null,
+    "gen_date": null,
+    "how_to": "Walk after dinner.",
+    "id": 1,
+    "kind": "standard",
+    "metric": "active_calories",
+    "program_id": null,
+    "research_note_ids": [
+      "steps_mortality"
+    ],
+    "rung_index": null,
+    "slot_text": "After lunch",
+    "status": "active",
+    "target_value": 700.0,
+    "title": "Move a little more",
+    "why": "Your own recent week averages 620 active calories, so this is a small step up.",
+    "window_days": 7
+  },
+  "ok": true
+}

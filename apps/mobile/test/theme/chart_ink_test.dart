@@ -67,10 +67,15 @@ Color _over(Color ink, Color under) => Color.from(
 );
 
 /// Whether two colours are the same hue at different alphas.
-void _sameInk(Color quieter, Color louder, String reason) {
-  expect(quieter.r, closeTo(louder.r, 1 / 255), reason: reason);
-  expect(quieter.g, closeTo(louder.g, 1 / 255), reason: reason);
-  expect(quieter.b, closeTo(louder.b, 1 / 255), reason: reason);
+void _sameInk(
+  Color quieter,
+  Color louder,
+  String reason, {
+  double tol = 1 / 255,
+}) {
+  expect(quieter.r, closeTo(louder.r, tol), reason: reason);
+  expect(quieter.g, closeTo(louder.g, tol), reason: reason);
+  expect(quieter.b, closeTo(louder.b, tol), reason: reason);
 }
 
 void main() {
@@ -80,11 +85,18 @@ void main() {
     final material = entry.value.$2;
 
     group('$theme — the tokens are roles, quieted', () {
-      test('GRID IS `line`, QUIETER — never a colour of its own', () {
-        _sameInk(colors.grid, colors.line, 'grid must be the hairline quieted');
+      test('GRID IS `ink`, QUIETER — never a colour of its own', () {
+        // The colour kit draws the gridline as the ink at 6% (dark: pure white
+        // at 6%, 10/255 off F5F5F7), not as the hairline.
+        _sameInk(
+          colors.grid,
+          colors.ink,
+          'grid must be the ink quieted',
+          tol: 11 / 255,
+        );
         expect(
           colors.grid.a,
-          lessThan(colors.line.a),
+          lessThan(0.10),
           reason: 'a rule inside a plot recedes behind the card edge',
         );
       });
@@ -100,9 +112,14 @@ void main() {
       });
 
       test('THE GRID IS THE QUIETEST INK ON THE CHART', () {
-        final grid = _contrast(_over(colors.grid, colors.surface), colors.surface);
-        final reference =
-            _contrast(_over(colors.reference, colors.surface), colors.surface);
+        final grid = _contrast(
+          _over(colors.grid, colors.surface),
+          colors.surface,
+        );
+        final reference = _contrast(
+          _over(colors.reference, colors.surface),
+          colors.surface,
+        );
         expect(
           grid,
           lessThan(reference),
@@ -110,8 +127,12 @@ void main() {
         );
       });
 
-      test('REFERENCE IS `ink3`, QUIETER — the owner’s "a bit subtle"', () {
-        _sameInk(colors.reference, colors.ink3, 'the reference is ink3 quieted');
+      test('REFERENCE IS `ink2`, QUIETER — the owner’s "a bit subtle"', () {
+        _sameInk(
+          colors.reference,
+          colors.ink2,
+          'the reference is ink2 quieted',
+        );
         expect(colors.reference.a, lessThan(1));
         expect(
           colors.reference.a,
@@ -132,20 +153,22 @@ void main() {
         // reference's own alpha the same text lands near 2:1. A hairline may sit
         // at the edge of perception; a word a reader has to read may not.
         expect(
-          _contrast(colors.ink3, colors.surface),
+          _contrast(colors.ink2, colors.surface),
           greaterThanOrEqualTo(4.5),
-          reason: 'the caption ink is the floor, which is why it stayed put',
+          reason:
+              'caption text is ink2 at the floor (ink3 is axes/disabled '
+              'only and cannot be text)',
         );
         expect(
           _contrast(_over(colors.reference, colors.surface), colors.surface),
-          lessThan(_contrast(colors.ink3, colors.surface)),
+          lessThan(_contrast(colors.ink2, colors.surface)),
           reason: 'the line still recedes behind the words naming it',
         );
       });
     });
 
     group('$theme — what the painters actually draw', () {
-      testWidgets('a reference line is painted in `reference`, not in ink3', (
+      testWidgets('a reference line is painted in `reference`, not in ink2', (
         tester,
       ) async {
         await tester.pumpWidget(
@@ -168,8 +191,8 @@ void main() {
         expect(painted, contains(colors.reference.toARGB32()));
         expect(
           painted,
-          isNot(contains(colors.ink3.toARGB32())),
-          reason: 'opaque ink3 is what the owner asked us to quieten',
+          isNot(contains(colors.ink2.toARGB32())),
+          reason: 'opaque ink2 is what the owner asked us to quieten',
         );
       });
 
@@ -177,11 +200,16 @@ void main() {
         tester,
       ) async {
         await tester.pumpWidget(
-          chartHost(HStackedSleep(week(), progress: 1, height: 130), theme: material),
+          chartHost(
+            HStackedSleep(week(), progress: 1, height: 130),
+            theme: material,
+          ),
         );
         await tester.pumpAndSettle();
 
-        final painted = coloursOf(paintedBy(tester, find.byType(HStackedSleep)));
+        final painted = coloursOf(
+          paintedBy(tester, find.byType(HStackedSleep)),
+        );
         expect(painted, contains(colors.grid.toARGB32()));
         // The two values this file exists to keep out of the app.
         expect(
@@ -210,7 +238,9 @@ void main() {
     // those three was wrong by the same factor and none of them looked wrong in
     // a diff. One token, or the next chart makes the same mistake.
     final offenders = <String>[
-      for (final file in Directory('lib/shared/charts').listSync().whereType<File>())
+      for (final file in Directory(
+        'lib/shared/charts',
+      ).listSync().whereType<File>())
         if (RegExp(r'colors\.line2?\.withValues\(').hasMatch(
           // Comments are where the defect is DESCRIBED, at three of these
           // sites. Stripping them is what keeps this a scan for code.
@@ -221,7 +251,8 @@ void main() {
     expect(
       offenders,
       isEmpty,
-      reason: 'these derive a rule from the hairline instead of naming '
+      reason:
+          'these derive a rule from the hairline instead of naming '
           '`colors.grid`: $offenders',
     );
   });

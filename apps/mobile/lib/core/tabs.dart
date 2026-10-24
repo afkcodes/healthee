@@ -30,15 +30,16 @@
 ///     is a promise of a destination and there is no wording available inside a
 ///     10 pt label to qualify one that does not exist, so a dimmed control in the
 ///     primary navigation was worse than four tabs. The answer to that was never
-///     a dimmed tab; it was a screen. `features/actions/actions_screen.dart` is
-///     it, and the tab comes back with it — which is exactly the one entry and one
+///     a dimmed tab; it was a screen. `features/coach/coach_home_screen.dart` is
+///     it (it was Actions, and is Coach now; the route is still `/actions`),
+///     and the tab comes back with it — which is exactly the one entry and one
 ///     branch this docstring said it would be.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:healthee/core/router.dart';
-import 'package:healthee/features/actions/actions_screen.dart';
 import 'package:healthee/features/activity/activity_screen.dart';
+import 'package:healthee/features/coach/coach_home_screen.dart';
 import 'package:healthee/features/insights/insights_screen.dart';
 import 'package:healthee/features/sleep/sleep_screen.dart';
 import 'package:healthee/features/today/today_screen.dart';
@@ -109,11 +110,11 @@ const List<AppTab> kAppTabs = <AppTab>[
     screen: InsightsScreen.new,
   ),
   AppTab(
-    label: 'Actions',
+    label: 'Coach',
     icon: SolarIconsOutline.checklist,
     activeIcon: SolarIconsBold.checklist,
     route: Routes.actions,
-    screen: ActionsScreen.new,
+    screen: CoachHomeScreen.new,
   ),
 ];
 

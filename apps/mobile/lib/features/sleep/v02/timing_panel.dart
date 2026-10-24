@@ -37,7 +37,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/tone.dart';
-import 'package:healthee/core/theme/tone_scope.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/data/honesty/citations.dart';
 import 'package:healthee/data/honesty/reading.dart';
@@ -171,19 +171,10 @@ class _BandBlock extends StatelessWidget {
 
   final SleepConsistency block;
 
-  /// The thresholds the band's own colour has always used.
-  static const double tight = 1.5;
-  static const double moderate = 2.5;
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final band = block.onsetBandH!;
-    final verdict = band <= tight
-        ? colors.fav
-        : band <= moderate
-        ? colors.unf
-        : colors.alert;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -193,7 +184,7 @@ class _BandBlock extends StatelessWidget {
           children: <Widget>[
             Text(
               '${band.toStringAsFixed(1)} h',
-              style: TypeScale.statValue.copyWith(color: verdict),
+              style: TypeScale.statValue.copyWith(color: colors.ink),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -210,12 +201,12 @@ class _BandBlock extends StatelessWidget {
                 withheldBuilder: (context, disclosure) => Text(
                   'SRI —',
                   textAlign: TextAlign.right,
-                  style: TypeScale.statUnit.copyWith(color: colors.ink3),
+                  style: TypeScale.statUnit.copyWith(color: colors.ink2),
                 ),
                 builder: (context, sri) => Text(
                   'SRI ${sri.round()}',
                   textAlign: TextAlign.right,
-                  style: TypeScale.panelTitle.copyWith(color: context.family),
+                  style: TypeScale.panelTitle.copyWith(color: colors.ink),
                 ),
               ),
             ),
@@ -227,14 +218,14 @@ class _BandBlock extends StatelessWidget {
             Flexible(
               child: Text(
                 _times(block),
-                style: TypeScale.colourKey.copyWith(color: colors.ink3),
+                style: TypeScale.tinyLabel.copyWith(color: colors.ink2),
               ),
             ),
             if (block.late) ...<Widget>[
               const SizedBox(width: 8),
               Text(
                 'VERY LATE',
-                style: TypeScale.badge.copyWith(color: colors.alert),
+                style: TypeLadder.label.copyWith(color: colors.alert),
               ),
             ],
           ],
@@ -289,14 +280,14 @@ class _OffPattern extends StatelessWidget {
                     'bed ${night.bedtime ?? 'unrecorded'}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TypeScale.colourKey.copyWith(color: colors.ink2),
+                    style: TypeScale.tinyLabel.copyWith(color: colors.ink2),
                   ),
                 ),
                 const Spacer(),
                 if (night.deltaH case final double delta)
                   Text(
                     '${delta > 0 ? '+' : ''}${delta.toStringAsFixed(1)} h',
-                    style: TypeScale.colourKey.copyWith(color: colors.alert),
+                    style: TypeScale.tinyLabel.copyWith(color: colors.alert),
                   ),
               ],
             ),

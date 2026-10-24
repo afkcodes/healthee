@@ -78,14 +78,17 @@ class WithheldCard extends StatelessWidget {
           Divider(color: colors.line, height: hairline, thickness: hairline),
           const SizedBox(height: Insets.md),
           // Names the state plainly. Not an apology, not an error heading.
-          Text('WITHHELD', style: text.labelSmall?.copyWith(letterSpacing: 0.9)),
+          Text(
+            'WITHHELD',
+            style: text.labelSmall?.copyWith(letterSpacing: 0.9),
+          ),
           const SizedBox(height: Insets.sm),
           // The remedy. The load-bearing line of the whole card, in primary ink
           // because it is the answer — not a footnote to a missing number.
           Text(disclosure.message, style: text.bodyLarge),
           if (_lastSeen(disclosure) case final String seen) ...[
             const SizedBox(height: Insets.sm),
-            Text(seen, style: text.labelSmall?.copyWith(color: colors.ink3)),
+            Text(seen, style: text.labelSmall?.copyWith(color: colors.ink2)),
           ],
           if (onExplain case final VoidCallback explain) ...[
             const SizedBox(height: Insets.md),
@@ -226,7 +229,7 @@ class ExcludedNote extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: Insets.sm),
-                Text('READ', style: HType.label(colors.accent, tracking: 0.1)),
+                Text('READ', style: HType.label(colors.accent)),
               ],
             ),
           ),

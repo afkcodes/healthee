@@ -22,10 +22,12 @@
 /// wrong when nothing is.
 library;
 
+import 'package:healthee/data/honesty/disclosure.dart';
 import 'package:healthee/data/honesty/envelope.dart';
 import 'package:healthee/data/honesty/reading.dart';
 import 'package:healthee/data/models/activity_today.dart';
 import 'package:healthee/data/models/as_of.dart';
+import 'package:healthee/data/models/bio_age_block.dart';
 import 'package:healthee/data/models/biological_age.dart';
 import 'package:healthee/data/models/data_health.dart';
 import 'package:healthee/data/models/finding.dart';
@@ -75,6 +77,7 @@ class TodaySnapshot {
     required this.routine,
     required this.findings,
     required this.recommendations,
+    required this.bioAgeBlock,
   });
 
   /// Parses `GET /api/today`.
@@ -83,14 +86,24 @@ class TodaySnapshot {
       date: json['date']! as String,
       asOf: AsOf.maybe(_block(json['as_of'])),
       action: json['action'] as String?,
-      recovery: readingFrom(_block(json['recovery_score']), RecoveryScore.maybe),
-      recoverySignals: readingFrom(_block(json['recovery']), RecoverySignals.maybe),
+      recovery: readingFrom(
+        _block(json['recovery_score']),
+        RecoveryScore.maybe,
+      ),
+      recoverySignals: readingFrom(
+        _block(json['recovery']),
+        RecoverySignals.maybe,
+      ),
       metrics: [
         for (final entry in (json['metrics'] as List? ?? const []))
           if (entry is Map<String, Object?>) MetricCard.fromJson(entry),
       ],
       vo2max: readingFrom(_block(json['vo2max']), Vo2max.maybe),
-      biologicalAge: readingFrom(_block(json['biological_age']), BiologicalAge.maybe),
+      biologicalAge: readingFrom(
+        _block(json['biological_age']),
+        BiologicalAge.maybe,
+      ),
+      bioAgeBlock: BioAgeBlock.fromJson(json['biological_age']),
       dataHealth: switch (json['data_health']) {
         final Map<String, Object?> health => DataHealth.fromJson(health),
         _ => null,
@@ -132,7 +145,6 @@ class TodaySnapshot {
   /// would be a second opinion about which day a payload is about.
   final AsOf? asOf;
 
-
   /// The AI daily-action one-liner, or null until the nightly job has warmed it.
   ///
   /// `docs/APP_DESIGN.md` §3.1: null means "show nothing, never a spinner". It is
@@ -154,6 +166,18 @@ class TodaySnapshot {
 
   /// The motivational estimate. Usually [Caveated] — it carries its own tilts.
   final Reading<BiologicalAge> biologicalAge;
+
+  /// The same block, kept whole on a day [biologicalAge] is withheld: the
+  /// current contributions, caveats, research notes and each absent term's own
+  /// reason. It never decides whether there is a number; [biologicalAge] does.
+  final BioAgeBlock bioAgeBlock;
+
+  /// The VO2max card's own refusal, or null when it is not refused. It
+  /// explains a missing biological age when the server sent no block.
+  Disclosure? get vo2maxWithheld => switch (vo2max) {
+    Withheld<Vo2max>(:final disclosure) => disclosure,
+    _ => null,
+  };
 
   /// Per-feed freshness, or null when the payload omitted it.
   final DataHealth? dataHealth;

@@ -39,6 +39,7 @@ import 'package:healthee/shared/charts/v02/chart_curve.dart';
 import 'package:healthee/shared/charts/v02/chart_frame.dart';
 import 'package:healthee/shared/charts/v02/chart_ink.dart';
 import 'package:healthee/shared/charts/v02/chart_ticks.dart';
+import 'package:healthee/shared/charts/v02/linked_lane_marks.dart';
 import 'package:healthee/shared/charts/v02/series_painter.dart';
 
 /// One of the two signals: what it is, and the samples it took.
@@ -53,6 +54,8 @@ class LinkedPane {
     this.unit = '',
     this.digits = 0,
     this.curve = SeriesCurve.monotone,
+    this.bars = false,
+    this.reference,
   });
 
   /// Which family this signal belongs to.
@@ -73,6 +76,13 @@ class LinkedPane {
 
   /// How this signal's samples are joined. See `chart_curve.dart`.
   final SeriesCurve curve;
+
+  /// Draws the samples as columns on a zero-based axis instead of a line.
+  final bool bars;
+
+  /// A dashed line across the pane in its own colour, or null for none. It
+  /// widens the pane's axis so it can never sit off the plot.
+  final LaneReference? reference;
 
   /// The reading at [index], or null when there is none.
   double? valueAt(int? index) {
@@ -96,7 +106,11 @@ class LinkedPane {
 @immutable
 class LinkedLane {
   /// Built by the widget, which is where a `BuildContext` exists.
-  const LinkedLane({required this.pane, required this.ink, required this.ticks});
+  const LinkedLane({
+    required this.pane,
+    required this.ink,
+    required this.ticks,
+  });
 
   /// What is drawn.
   final LinkedPane pane;
@@ -172,13 +186,7 @@ class LinkedPainter extends CustomPainter {
     LinkedLane lane, {
     required bool last,
   }) {
-    paintChartFrame(
-      canvas,
-      box,
-      lane.ticks,
-      ink: lane.ink,
-      progress: progress,
-    );
+    paintChartFrame(canvas, box, lane.ticks, ink: lane.ink, progress: progress);
     // The pane's name goes in the band reserved above its plot — the same band
     // the line chart puts its bubble in, spent here on saying which signal this
     // is. Inside the plot it would sit on the trace.
@@ -186,18 +194,39 @@ class LinkedPainter extends CustomPainter {
       lane.pane.label,
       lane.ink.labelStyle.copyWith(color: revealed(lane.ink.ink3, progress)),
     ).paint(canvas, Offset(box.plot.left, box.bubble.top + 1));
-    paintSeriesInto(
-      canvas,
-      box,
-      values: lane.pane.values,
-      ticks: lane.ticks,
-      ink: lane.ink,
-      progress: progress,
-      curve: lane.pane.curve,
-      strokeWidth: 2.2,
-      fill: true,
-      lastPointDot: false,
-    );
+    if (lane.pane.bars) {
+      paintLaneBars(
+        canvas,
+        box,
+        values: lane.pane.values,
+        ticks: lane.ticks,
+        ink: lane.ink,
+        progress: progress,
+      );
+    } else {
+      paintSeriesInto(
+        canvas,
+        box,
+        values: lane.pane.values,
+        ticks: lane.ticks,
+        ink: lane.ink,
+        progress: progress,
+        curve: lane.pane.curve,
+        strokeWidth: 2.2,
+        fill: true,
+        lastPointDot: false,
+      );
+    }
+    if (lane.pane.reference case final LaneReference reference) {
+      paintLaneReference(
+        canvas,
+        box,
+        reference,
+        ticks: lane.ticks,
+        ink: lane.ink,
+        progress: progress,
+      );
+    }
     if (last) {
       paintEdgeCaptions(
         canvas,

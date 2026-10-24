@@ -1,36 +1,43 @@
-/// The mark [V02Hypnogram] draws — a continuous stepped ribbon of the night.
+/// The mark [V02Hypnogram] draws — the night as one continuous band.
 ///
-/// Split out of `v02_hypnogram.dart` when the ribbon rebuild took that file past
-/// the 400-line limit. The division is the honest one: the widget decides *what
-/// the chart is for* — its height, its empty state, what a screen reader is
-/// told — and this decides *what the ink does*.
+/// Split out of `v02_hypnogram.dart` when the chart outgrew the 400-line limit.
+/// The division is the honest one: the widget decides *what the chart is for* —
+/// its height, its empty state, what a screen reader is told — and this decides
+/// *what the ink does*.
 ///
-/// ## The shape, and what it replaced
+/// ## The shape, and the two it replaced
 ///
-/// It was pills at lane centres joined by a 2px stroke in the light-stage hue.
-/// That reads on the prototype's fixture — one tidy night of about a dozen
-/// spans — and not on a real one:
+/// First it was pills at lane centres joined by a 2px stroke in the light-stage
+/// hue. Then it was a thin ribbon that stepped between four levels on 4px
+/// risers, inside a box, over dotted level rules. Both failed on a real night
+/// for the same reason — **the furniture outdrew the data**:
 ///
-///   * **`rx: 5` eats a short bout.** A five-minute span is ~6px wide against a
-///     24px band, so the radius consumed the rectangle and it drew as a
-///     lozenge, the same visual weight as a forty-minute block.
-///   * **A saturated connector outdrew the data.** Forty risers in a stage hue
-///     is more ink than the bands they join, and every riser read as a
-///     Light-stage event reaching up to Awake.
-///   * **Two clocks are not a time axis.** A nine-hour night labelled only at
-///     its ends gives no way to say *when* the long wake happened.
+///   * **`rx: 5` ate a short bout.** A five-minute span is ~6px wide, so the
+///     radius consumed the rectangle and it drew as a lozenge with the weight
+///     of a forty-minute block.
+///   * **Saturated joins read as events.** Forty risers in a stage hue is more
+///     ink than the bands they connect. An owner looking at the ribbon saw the
+///     verticals first and called the chart broken: tall coloured bars at every
+///     change, and a thin line of actual sleep between them.
+///   * **A thin band leaves the plot empty.** At 42% of its lane the ribbon
+///     used under half the height it was given; the rest was box and rules.
 ///
-/// Now the night is **one ribbon**: a band of constant thickness that steps
-/// between four levels, each step a riser in the colour of the stage being
-/// entered. Blocks are square, so a one-minute bout draws one minute wide and a
-/// forty-minute bout draws forty. Dotted rules mark the levels, a hairline box
-/// bounds the plot, and four evenly spaced clocks run under it.
+/// Now every minute belongs to a **block that fills its level**, so the stages
+/// read as areas and their widths can be compared at a glance. Consecutive
+/// blocks meet edge to edge, which is what makes the night read as one piece.
+/// The join between two levels is a **dotted hairline in the grid colour**: it
+/// carries the eye across and is never mistaken for a stage. Awake is a shorter
+/// cap above the band, because a wake is an interruption of the night rather
+/// than a fourth kind of sleep. There is no box and no level rule; the blocks
+/// are the levels.
 ///
-/// ## The lane labels are gone
+/// Corners stay small ([bandRadius], and never more than half a block's width),
+/// so a one-minute bout still draws one minute wide.
+///
+/// ## The lane labels are still gone
 ///
 /// `Awake / REM / Light / Deep` sat in a 44px gutter, repeating what the colour
-/// key under the chart already says, on the one chart in the app that has a
-/// legend directly beneath it. The gutter is the plot's now — about 15% more
+/// key under the chart already says. The gutter is the plot's — about 15% more
 /// width for the night itself.
 library;
 
@@ -45,7 +52,7 @@ import 'package:healthee/shared/charts/v02/chart_box.dart';
 import 'package:healthee/shared/charts/v02/chart_ink.dart';
 import 'package:healthee/shared/charts/v02/v02_hypnogram.dart';
 
-/// Draws the box, the dotted levels, the ribbon and the clock axis.
+/// Draws the blocks, the joins between them and the clock axis.
 class HypnogramPainter extends CustomPainter {
   /// Everything the timeline needs, already resolved from the theme.
   const HypnogramPainter({
@@ -71,21 +78,22 @@ class HypnogramPainter extends CustomPainter {
   /// The clocks under the plot, left to right, evenly spaced across the night.
   final List<String> axis;
 
-  /// The ribbon's thickness as a fraction of one lane's pitch.
-  static const double bandFraction = 0.42;
+  /// The gap between two levels. Small, so neighbouring levels read as one
+  /// band rather than as four separate rows.
+  static const double levelGap = 3;
+
+  /// Awake's height as a fraction of a sleep level's: a cap, not a fourth band.
+  static const double awakeFraction = 0.5;
 
   /// The block's corner. Square enough that a short bout keeps its width.
-  static const double bandRadius = 1.5;
-
-  /// How wide a step between levels is drawn.
-  static const double riserWidth = 4;
+  static const double bandRadius = 2.5;
 
   /// Every hairline on this chart.
   static const double hairlineWidth = 1;
 
-  /// The dotted level rule — dash, then gap.
-  static const double dash = 2;
-  static const double dashGap = 4;
+  /// The dotted join between two levels — dash, then gap.
+  static const double dash = 1.5;
+  static const double dashGap = 2.5;
 
   /// The strip under the plot that carries the clocks.
   static const double captionStrip = 22;
@@ -111,11 +119,9 @@ class HypnogramPainter extends CustomPainter {
     if (window <= 0) {
       return;
     }
-    final lane = box.plot.height / kHypnogramLanes.length;
-    final band = math.min(lane * bandFraction, lane);
-    _paintLevels(canvas, box, lane);
-    _paintFrame(canvas, box);
-    _paintRibbon(canvas, box, window, lane, band);
+    final levels = _Levels(box.plot);
+    _paintJoins(canvas, box, window, levels);
+    _paintBlocks(canvas, box, window, levels);
     _paintAxis(canvas, box);
   }
 
@@ -124,7 +130,7 @@ class HypnogramPainter extends CustomPainter {
     const top = padTop;
     final bottom = size.height - captionStrip;
     return ChartBox(
-      plot: Rect.fromLTRB(hairlineWidth, top, size.width - hairlineWidth, bottom),
+      plot: Rect.fromLTRB(0, top, size.width, bottom),
       values: Rect.zero,
       captions: Rect.fromLTRB(0, bottom, size.width, size.height),
       bubble: Rect.zero,
@@ -150,79 +156,71 @@ class HypnogramPainter extends CustomPainter {
     return start;
   }
 
-  /// A dotted rule at each level, so an empty level still reads as a level.
-  void _paintLevels(Canvas canvas, ChartBox box, double lane) {
+  /// How far along the night the reveal has reached, as an x.
+  double _reach(ChartBox box) =>
+      box.plot.left + box.plot.width * progress.clamp(0.0, 1.0);
+
+  /// The dotted hairline from one block to the next, where the level changes.
+  ///
+  /// Drawn first, so a block's own edge covers the join's ends. It runs from
+  /// the bottom of the upper block to the top of the lower one and no further:
+  /// a join that crossed a block would draw a line through a measurement.
+  void _paintJoins(Canvas canvas, ChartBox box, double window, _Levels levels) {
+    final reach = _reach(box);
     final paint = Paint()
-      ..color = revealed(ink.grid, progress)
+      ..color = revealed(ink.ink3, progress)
       ..strokeWidth = hairlineWidth;
-    for (var i = 0; i < kHypnogramLanes.length; i++) {
-      final y = box.plot.top + lane * (i + 0.5);
-      var x = box.plot.left;
-      while (x < box.plot.right) {
+    for (var i = 1; i < spans.length; i++) {
+      final x = _x(box, spans[i].startOffsetMin, window);
+      if (x > reach) {
+        break;
+      }
+      final before = levels.of(_laneOf(spans[i - 1].stage));
+      final after = levels.of(_laneOf(spans[i].stage));
+      if (before.top == after.top) {
+        continue;
+      }
+      final upper = before.top < after.top ? before : after;
+      final lower = before.top < after.top ? after : before;
+      var y = upper.bottom;
+      while (y < lower.top) {
         canvas.drawLine(
           Offset(x, y),
-          Offset(math.min(x + dash, box.plot.right), y),
+          Offset(x, math.min(y + dash, lower.top)),
           paint,
         );
-        x += dash + dashGap;
+        y += dash + dashGap;
       }
     }
   }
 
-  /// The box around the plot.
-  void _paintFrame(Canvas canvas, ChartBox box) {
-    canvas.drawRect(
-      box.plot,
-      Paint()
-        ..color = revealed(ink.grid, progress)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = hairlineWidth,
-    );
-  }
-
-  /// The night as one band that steps between levels.
+  /// One block per span, each filling its level.
   ///
   /// **The reveal sweeps along the night; it does not inflate the blocks.**
-  /// Growing every band's height at once made the whole plot pulse, and a night
-  /// is a sequence — so it arrives as one.
-  void _paintRibbon(
+  /// Growing every block's height at once made the whole plot pulse, and a
+  /// night is a sequence — so it arrives as one.
+  void _paintBlocks(
     Canvas canvas,
     ChartBox box,
     double window,
-    double lane,
-    double band,
+    _Levels levels,
   ) {
-    final t = progress.clamp(0.0, 1.0);
-    if (t <= 0) {
+    if (progress <= 0) {
       return;
     }
-    final reach = box.plot.left + box.plot.width * t;
-    for (var i = 0; i < spans.length; i++) {
-      final span = spans[i];
+    final reach = _reach(box);
+    for (final span in spans) {
       final left = _x(box, span.startOffsetMin, window);
       if (left > reach) {
         break;
       }
-      final centre = _laneCentre(box, span.stage, lane);
-      // The step INTO this stage, drawn first so the block's own square end
-      // covers the join rather than the riser overprinting it.
-      if (i > 0) {
-        final from = _laneCentre(box, spans[i - 1].stage, lane);
-        if (from != centre) {
-          final top = math.min(from, centre) - band / 2;
-          final bottom = math.max(from, centre) + band / 2;
-          canvas.drawRect(
-            Rect.fromLTRB(left, top, left + riserWidth, bottom),
-            Paint()..color = sleepStageColor(hues, span.stage),
-          );
-        }
-      }
+      final level = levels.of(_laneOf(span.stage));
       final right = math.min(_x(box, span.endOffsetMin, window), reach);
       final rect = Rect.fromLTWH(
         left,
-        centre - band / 2,
+        level.top,
         math.max(right - left, minBlockWidth),
-        band,
+        level.height,
       );
       canvas.drawRRect(
         RRect.fromRectAndRadius(
@@ -257,12 +255,6 @@ class HypnogramPainter extends CustomPainter {
     }
   }
 
-  double _laneCentre(ChartBox box, String stage, double lane) {
-    final index = kHypnogramLanes.indexOf(_laneOf(stage));
-    final row = index < 0 ? kHypnogramLanes.length - 2 : index;
-    return box.plot.top + lane * (row + 0.5);
-  }
-
   /// `core` is the server's word for the strap's `light`. One stage, one lane.
   static String _laneOf(String stage) => stage == 'core' ? 'light' : stage;
 
@@ -276,4 +268,34 @@ class HypnogramPainter extends CustomPainter {
       old.spans != spans ||
       old.axis != axis ||
       old.ink.family != ink.family;
+}
+
+/// Where each level sits in the plot: the awake cap, then three sleep levels.
+class _Levels {
+  _Levels(Rect plot)
+    : _top = plot.top,
+      _sleep =
+          (plot.height - HypnogramPainter.levelGap * 3) /
+          (3 + HypnogramPainter.awakeFraction);
+
+  final double _top;
+  final double _sleep;
+
+  double get _awake => _sleep * HypnogramPainter.awakeFraction;
+
+  /// The vertical extent of [lane]. An unknown stage sits with Light, the one
+  /// level every night has, rather than off the plot.
+  ({double top, double bottom, double height}) of(String lane) {
+    if (lane == 'awake') {
+      return (top: _top, bottom: _top + _awake, height: _awake);
+    }
+    final index = kHypnogramLanes.indexOf(lane);
+    final row = index < 1 ? 1 : index - 1;
+    final top =
+        _top +
+        _awake +
+        HypnogramPainter.levelGap +
+        row * (_sleep + HypnogramPainter.levelGap);
+    return (top: top, bottom: top + _sleep, height: _sleep);
+  }
 }

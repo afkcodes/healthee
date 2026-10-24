@@ -158,7 +158,7 @@ class ActiveMinutesPanel extends StatelessWidget {
         detail: MetricDetail(
           references: <String>[
             if (mvpa.weekTarget case final int target)
-              'Active minutes — $target min/week',
+              'Active minutes: $target min/week',
           ],
           notes: mvpa.researchNotes,
         ),
@@ -238,7 +238,7 @@ class StrengthPanel extends StatelessWidget {
         detail: MetricDetail(
           title: title,
           references: <String>[
-            'Strength — ${strength.targetLowMin}–${strength.targetHighMin} '
+            'Strength: ${strength.targetLowMin}–${strength.targetHighMin} '
                 'min/week',
           ],
           notes: <String>[

@@ -1,151 +1,50 @@
-/// Where each tracked metric has been going — and the only place `fav`/`unf`
-/// appear on this screen.
+/// Longer patterns: each tracked metric's recent window as one tile, and the
+/// only place on this screen where a change is judged better or worse.
 ///
-/// `screens-overview.js::H.screens.insights`'s **Your longer patterns**: a
-/// `.twin-panels` grid of `H.miniTrend(...)` — a figure, its recent shape, and
-/// one line about both — with an `All metrics` action on the section head.
+/// A tile is a figure (the window's mean), its shape (a domain-colour line over
+/// the owner's usual band, with one state-coloured newest dot) and one chip for
+/// how the window moved. `MetricTrend`, `verdictFor` and `metric_polarity.dart`
+/// are the same objects as before the colour pass, and the colour rule they
+/// encode is the same rule.
 ///
-/// **The presentation is v02's; the claim is unchanged.** `MetricTrend`,
-/// `verdictFor` and `metric_polarity.dart` are the same objects they were before
-/// the redesign, and the colour rule they encode is the same rule.
-///
-/// ## Why a trend may be coloured when a finding may not
+/// ## Why a trend may be coloured when a correlation may not
 ///
 /// A trend is this owner's own series against its own past, and
 /// `shared/format/metric_polarity.dart` holds the one table that says which way
 /// each metric has to move for the owner to be better off. That is a claim the
-/// product is willing to make — it is the same claim the recovery ladder makes,
-/// and `apps/mobile/README.md` licenses `fav`/`unf` for exactly it: *better or
-/// worse than the owner's own normal*.
+/// product makes (better or worse than the owner's own normal). The sign of a
+/// correlation says *moved together* or *moved opposite*, a direction and not a
+/// verdict, so "What moved together" spends the together and opposite hues and
+/// never the better and worse ones.
 ///
-/// A **finding** is a correlation, and the sign of a rank coefficient says
-/// *moved together* or *moved opposite*. That is a direction, not a verdict, and
-/// no amount of q-correction turns 105 days of one person's history into "this is
-/// good for you". `findings_section.dart` therefore spends no judgement colour at
-/// all, and `insights_sections.dart` states the split.
+/// ## The colourless chips are the point of the coloured ones
 ///
-/// ## The colourless rows are the point of the coloured ones
+/// Calories carry polarity `neutral` and their chip is the secondary ink on the
+/// neutral well, and a metric the table has never heard of gets the same. A
+/// screen that tinted everything would teach the owner that colour here is
+/// decoration, and then the chips where it is a claim would say nothing.
 ///
-/// Calories carry polarity `neutral` and render with **no** verdict colour, and a
-/// metric the table has never heard of renders with none either. That is not the
-/// leftover case: a screen that tinted everything would teach the owner that
-/// colour here is decoration, and then the two rows where it is a claim would say
-/// nothing. `metric_polarity.dart` argues it at length and
-/// `test/features/insights_trends_test.dart` breaks it on purpose.
+/// ## What the window can and cannot say
 ///
-/// ## The panel's TONE is an identity and is not the verdict
-///
-/// `toneForMetric` takes an id and nothing else, so the family a panel resolves
-/// cannot depend on which way the metric moved. The verdict lives in exactly one
-/// place on the card — the change line — which is why flipping the sign of a
-/// finding may change nothing and flipping the sign of a *trend* may change only
-/// that one colour.
+/// The server sends 14 days per metric. The change is the newest third's mean
+/// against the oldest third's within those days; it is not "against the prior
+/// 14 days", which the payload does not carry, and the chip says "over 14d".
 library;
 
 import 'package:flutter/material.dart';
+import 'package:healthee/core/theme/dimensions.dart';
 import 'package:healthee/core/theme/tokens.dart';
-import 'package:healthee/core/theme/tone.dart';
-import 'package:healthee/core/theme/type_scale.dart';
-import 'package:healthee/data/models/trend_point.dart';
-import 'package:healthee/shared/charts/v02/v02_sparkline.dart';
-import 'package:healthee/shared/format/metric_names.dart';
-import 'package:healthee/shared/format/metric_polarity.dart';
-import 'package:healthee/shared/format/number_labels.dart';
-import 'package:healthee/shared/page_section.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
+import 'package:healthee/features/insights/widgets/metric_trend.dart';
+import 'package:healthee/features/insights/widgets/pattern_tile.dart';
 import 'package:healthee/shared/reveal_once.dart';
-import 'package:healthee/shared/v02/chapter.dart';
-import 'package:healthee/shared/v02/metric_tone.dart';
-import 'package:healthee/shared/v02/panel.dart';
-import 'package:healthee/shared/v02/panel_head.dart';
-import 'package:healthee/shared/v02/panel_parts.dart';
 
-/// One metric's window: where it is now, and which way it has been going.
-///
-/// A value type rather than four positional arguments, so the arithmetic can be
-/// checked without a widget. [delta] is legacy's `vals.last - vals.first`.
-@immutable
-class MetricTrend {
-  /// Builds a trend from an already-windowed series.
-  const MetricTrend({
-    required this.metric,
-    required this.series,
-    required this.latest,
-    required this.delta,
-  });
+export 'package:healthee/features/insights/widgets/metric_trend.dart';
 
-  /// The series for [metric], or null when the payload carried fewer than two
-  /// points — one point is a reading, not a trend, and a delta over it would be
-  /// zero for a reason that has nothing to do with the owner.
-  static MetricTrend? from(String metric, List<TrendPoint> series) {
-    if (series.length < 2) {
-      return null;
-    }
-    return MetricTrend(
-      metric: metric,
-      series: series,
-      latest: series.last.value,
-      delta: _robustDelta(series),
-    );
-  }
-
-  /// The change across the window: the newest third's mean against the oldest
-  /// third's.
-  ///
-  /// **It was `last − first`, and that is two arbitrary days.** On a smooth
-  /// series — resting heart rate, sleep regularity — the endpoints are a fair
-  /// proxy and the old arithmetic read fine. On a high-variance daily count it
-  /// is noise wearing a verdict: the owner's steps swing between 1.2k and 8k,
-  /// so a fortnight's "change" was whichever way those two particular days
-  /// happened to fall, printed in verdict green.
-  ///
-  /// Thirds rather than halves so the middle of the window is excluded from
-  /// both ends — a point next to the boundary should not pull the number both
-  /// ways. [_edge] is at least one, so a two-point series still reduces to
-  /// exactly the old subtraction and the shortest windows are unchanged.
-  static double _robustDelta(List<TrendPoint> series) {
-    final n = _edge(series.length);
-    var newest = 0.0;
-    var oldest = 0.0;
-    for (var i = 0; i < n; i++) {
-      newest += series[series.length - 1 - i].value;
-      oldest += series[i].value;
-    }
-    return (newest - oldest) / n;
-  }
-
-  /// How many points each end contributes. `2 * _edge(n) <= n` for every
-  /// `n >= 2`, so the two ends never overlap and never read the same point
-  /// twice.
-  static int _edge(int length) => length < 3 ? 1 : (length + 2) ~/ 3;
-
-  /// The canonical metric id.
-  final String metric;
-
-  /// The window, oldest first.
-  final List<TrendPoint> series;
-
-  /// The newest value in the window.
-  final double latest;
-
-  /// The change across the window — see [_robustDelta].
-  ///
-  /// **No longer legacy's `last − first`.** Legacy compared two single days and
-  /// coloured the result; this compares the window's newest third with its
-  /// oldest, which is the same claim made out of enough measurement to support
-  /// it.
-  final double delta;
-
-  /// What that change means, if anything. Never inferred from the sign alone.
-  TrendVerdict get verdict => verdictFor(metric, delta);
-
-  /// How many days the window covers.
-  int get days => series.length;
-}
-
-/// `.twin-panels` of [TrendPanel]s — two across, in [trends]' order.
+/// The tiles, two across and three down, with the legend under them.
 class TrendsGrid extends StatelessWidget {
   /// [trends] may be empty, in which case nothing renders at all. A heading over
-  /// no panels reads as breakage; the honest state is silence, and
+  /// no tiles reads as breakage; the honest state is silence, and
   /// `insights_sections.dart` drops the heading with it.
   const TrendsGrid({
     required this.trends,
@@ -170,14 +69,24 @@ class TrendsGrid extends StatelessWidget {
     }
     final rows = <Widget>[];
     for (var i = 0; i < trends.length; i += 2) {
-      final left = _panel(trends[i]);
-      // An odd tail draws full width rather than beside a hole. A twin row with
-      // one live half is a half-width panel next to nothing, which reads as a
-      // card that failed to load.
+      final left = _tile(trends[i]);
+      // An odd tail draws beside an empty half rather than stretched: a tile's
+      // proportions are part of how it reads.
       rows.add(
-        i + 1 < trends.length
-            ? TwinPanels(left: left, right: _panel(trends[i + 1]))
-            : left,
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(child: left),
+              const SizedBox(width: Insets.cardGap),
+              Expanded(
+                child: i + 1 < trends.length
+                    ? _tile(trends[i + 1])
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ),
       );
     }
     return Column(
@@ -185,129 +94,65 @@ class TrendsGrid extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         for (var i = 0; i < rows.length; i++) ...<Widget>[
-          if (i > 0) const SizedBox(height: PageSpacing.panel),
+          if (i > 0) const SizedBox(height: Insets.cardGap),
           rows[i],
         ],
+        const SizedBox(height: Insets.md),
+        const PatternLegend(),
       ],
     );
   }
 
-  Widget _panel(MetricTrend trend) => TrendPanel(
+  Widget _tile(MetricTrend trend) => PatternTile(
     trend: trend,
     reveals: reveals,
-    onDetails: onOpenMetric == null
-        ? null
-        : () => onOpenMetric!(trend.metric),
+    onOpen: onOpenMetric == null ? null : () => onOpenMetric!(trend.metric),
   );
 }
 
-/// One metric's panel: its name, its newest value, its line and its change.
-///
-/// Public so a test can pump it alone with a pinned series — which is how the
-/// colour rule is asserted, rather than by scrolling a screen.
-class TrendPanel extends StatelessWidget {
-  /// Draws [trend] as a half-width v02 panel.
-  const TrendPanel({
-    required this.trend,
-    required this.reveals,
-    this.onDetails,
-    super.key,
-  });
-
-  /// `.chart` inside a twin panel, at the prototype's compact proportions.
-  static const double sparklineHeight = 30;
-
-  /// The gap between the figure and the line.
-  static const double chartGap = 8;
-
-  /// The window being drawn.
-  final MetricTrend trend;
-
-  /// The screen's reveal registry.
-  final RevealRegistry reveals;
-
-  /// Opens the metric's own history. Null draws no action.
-  final VoidCallback? onDetails;
-
-  @override
-  Widget build(BuildContext context) {
-    final tone = toneForMetric(trend.metric);
-    return Panel(
-      tone: tone,
-      label: sentenceCaseName(trend.metric),
-      head: PanelHead(
-        title: sentenceCaseName(trend.metric),
-        icon: iconForTone(tone),
-        infoKey: trend.metric,
-        actionLabel: onDetails == null ? null : 'Details',
-        onAction: onDetails,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          // The figure itself stays in ink. Only the CHANGE carries a verdict —
-          // today's value is a measurement, not a judgement, and tinting it
-          // would say the number is good rather than that the movement was.
-          PanelValue(decimalLabel(trend.latest)),
-          const SizedBox(height: chartGap),
-          RevealOnce(
-            id: 'insights.trend.${trend.metric}',
-            registry: reveals,
-            builder: (context, t) => V02Sparkline(
-              <double?>[for (final point in trend.series) point.value],
-              progress: t,
-              height: sparklineHeight,
-            ),
-          ),
-          _ChangeNote(trend: trend),
-        ],
-      ),
-    );
-  }
-}
-
-/// `+3.2 over 14 days`, tinted only where the table licenses a verdict.
-class _ChangeNote extends StatelessWidget {
-  const _ChangeNote({required this.trend});
-
-  final MetricTrend trend;
+/// `your usual range · outside, worse · better`: what the tiles' marks mean.
+class PatternLegend extends StatelessWidget {
+  /// The legend line.
+  const PatternLegend({super.key});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    // `null` is the whole safety property of this widget: an unknown or neutral
-    // metric gets the ordinary secondary ink every other caption on the screen
-    // uses, which is visibly not a claim.
-    final Color? verdict = switch (trend.verdict) {
-      TrendVerdict.favourable => colors.fav,
-      TrendVerdict.unfavourable => colors.unf,
-      TrendVerdict.none => null,
-    };
-    final sign = trend.delta > 0
-        ? '+'
-        : trend.delta < 0
-        ? '−'
-        : '';
-    return Padding(
-      padding: const EdgeInsets.only(top: PanelNote.compactTopGap),
-      child: Text(
-        '$sign${decimalLabel(trend.delta.abs())} over ${trend.days} days',
-        style: TypeScale.panelNoteCompact.copyWith(
-          color: verdict ?? colors.ink2,
-        ),
+    final style = TypeLadder.caption.copyWith(color: colors.ink2);
+    Widget item(Widget mark, String text) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        mark,
+        const SizedBox(width: Insets.sm - 2),
+        Text(text, style: style),
+      ],
+    );
+    Widget dot(Color color) => SizedBox.square(
+      dimension: 8,
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
+    );
+    return Wrap(
+      spacing: Insets.lg,
+      runSpacing: Insets.xs,
+      children: <Widget>[
+        item(
+          SizedBox(
+            width: 20,
+            height: 10,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.band,
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ),
+          'your usual range',
+        ),
+        item(dot(colors.alert), 'outside, worse'),
+        item(dot(colors.fav), 'better'),
+      ],
     );
   }
 }
-
-/// The metric's name with its first letter raised — `metric_names.dart` stores
-/// them lower-cased for use mid-sentence, and this is a panel title.
-String sentenceCaseName(String metric) {
-  final name = metricName(metric);
-  return name.isEmpty ? name : '${name[0].toUpperCase()}${name.substring(1)}';
-}
-
-/// The [Tone] the panel for [metric] resolves. Re-exported for the tests that
-/// assert a panel's family is an identity rather than a verdict.
-Tone trendTone(String metric) => toneForMetric(metric);

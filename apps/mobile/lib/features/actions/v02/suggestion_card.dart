@@ -219,7 +219,7 @@ class _SuggestionCardState extends ConsumerState<SuggestionCard> {
           if (signalLabel(rec.signalSource) case final String raised)
             Text(
               raised,
-              style: TypeScale.tinyLabel.copyWith(color: colors.ink3),
+              style: TypeScale.tinyLabel.copyWith(color: colors.ink2),
             ),
         ],
       ),

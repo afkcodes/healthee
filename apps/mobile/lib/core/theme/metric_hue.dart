@@ -50,38 +50,43 @@ Tone toneFor(String metric) => switch (metric) {
   'sleep_debt_min' ||
   'sleep_duration' ||
   'tst_min' ||
-  'sri' => Tone.sleep,
+  'sri' ||
+  'sleep_health' ||
+  'sleep_health_score_4dim' => Tone.sleep,
+  'hrv' ||
+  'hrv_sleep_avg' ||
   'rhr_daily' ||
   'resting_hr' ||
   'hr' ||
   'heart_rate' ||
-  'max_hr' => Tone.heart,
-  'cardio_load' || 'cardio_load_trimp' => Tone.load,
-  'hrv' ||
-  'hrv_sleep_avg' ||
-  'sleep_health' ||
-  'sleep_health_score_4dim' => Tone.recovery,
-  'mvpa_min' || 'moderate_min' || 'vigorous_min' => Tone.recovery,
+  'max_hr' ||
+  'vo2max_estimate' ||
+  'vo2max_submax' => Tone.heart,
+  'cardio_load' || 'cardio_load_trimp' || 'workouts' => Tone.load,
   'steps_total' ||
   'steps' ||
   'steps_per_minute' ||
   'distance_m' ||
-  'distance_m_daily' => Tone.movement,
-  'active_calories' || 'total_calories' || 'basal_calories' => Tone.movement,
-  'stress' || 'stress_daily' || 'temperature_c' || 'skin_temp_c' => Tone.stress,
+  'distance_m_daily' ||
+  'active_calories' ||
+  'total_calories' ||
+  'mvpa_min' ||
+  'moderate_min' ||
+  'vigorous_min' => Tone.movement,
   'respiratory_rate' ||
   'respiratory_rate_sleep' ||
   'spo2' ||
   'spo2_overnight' ||
   'spo2_overnight_min' => Tone.oxygen,
-  'vo2max_estimate' || 'vo2max_submax' || 'biological_age' => Tone.fitness,
+  'stress' || 'stress_daily' || 'journal' || 'meditation' => Tone.stress,
+  'biological_age' ||
+  'weight' ||
+  'basal_calories' ||
+  'temperature_c' ||
+  'skin_temp_c' => Tone.fitness,
+  'recovery' || 'readiness' => Tone.recovery,
   _ => Tone.fitness,
 };
 
-/// [toneFor], resolved against the active theme.
-///
-/// For a screen that has not moved to `ToneScope` yet and still wants a colour
-/// in hand. New code declares a tone instead: `ToneScope(tone: toneFor(id), …)`,
-/// and its contents read `context.family`.
 Color hueFor(InstrumentHues hues, String metric) =>
     toneFor(metric).family(hues);

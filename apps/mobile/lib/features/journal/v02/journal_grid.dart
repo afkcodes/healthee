@@ -18,7 +18,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:healthee/core/theme/dimensions.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/data/journal/log_kind.dart';
@@ -155,7 +154,6 @@ class _Tile extends StatelessWidget {
           color: colors.surface,
           clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
-            side: BorderSide(color: colors.line, width: hairline),
             borderRadius: BorderRadius.circular(JournalGrid.radius),
           ),
           child: InkWell(

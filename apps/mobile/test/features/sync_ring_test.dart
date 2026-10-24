@@ -111,7 +111,7 @@ void main() {
         drawn[entry.key] = _indicator(tester).color;
       }
 
-      expect(drawn[SyncRingState.idle], colors.ink3);
+      expect(drawn[SyncRingState.idle], colors.ink2);
       expect(drawn[SyncRingState.connected], colors.accent);
       expect(drawn[SyncRingState.syncing], colors.accent);
       // Full ink, never `unf` or `alert`: `README.md` reserves one red for

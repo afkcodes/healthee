@@ -211,14 +211,9 @@ void paintScrubBubble(
   if (box.bubble.height <= 0) {
     return;
   }
-  final painter = chartLabel(
-    text,
-    ink.labelStyle.copyWith(
-      color: ink.surface,
-      fontWeight: FontWeight.w700,
-      height: 1.2,
-    ),
-  );
+  // Plain micro, like every chart label: the ladder sets it at 400 on its own
+  // 14 px line, and the legacy bubbles (`h_area`, `h_debt_bars`) match.
+  final painter = chartLabel(text, ink.labelStyle.copyWith(color: ink.surface));
   final width = painter.width + 14;
   final height = painter.height + 6;
   final left = (anchorX - width / 2).clamp(0.0, box.bubble.right - width);
@@ -251,6 +246,7 @@ void paintLastPointDot(
   required ChartInk ink,
   required double progress,
   double radius = 3.5,
+  Color? color,
 }) {
   final r = radius * progress.clamp(0.0, 1.0);
   if (r <= 0) {
@@ -258,7 +254,7 @@ void paintLastPointDot(
   }
   canvas
     ..drawCircle(point, r + 1.8, Paint()..color = ink.surface)
-    ..drawCircle(point, r, Paint()..color = ink.family);
+    ..drawCircle(point, r, Paint()..color = color ?? ink.family);
 }
 
 const double _dash = 3;

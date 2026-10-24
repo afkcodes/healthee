@@ -145,13 +145,23 @@ class SignalChart extends StatelessWidget {
               keyRightInset,
               keyBottomGap,
             ),
+            // Three equal thirds, aligned start · centre · end, rather than
+            // `spaceBetween`: the middle caption then sits over the baseline
+            // whatever the outer two measure, and a caption too wide for its
+            // third wraps instead of pushing the row past the track.
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                for (final caption in captions)
-                  Text(
-                    caption,
-                    style: MeterType.signalKey.copyWith(color: colors.ink3),
+                for (final (index, caption) in captions.indexed)
+                  Expanded(
+                    child: Text(
+                      caption,
+                      textAlign: switch (index) {
+                        0 => TextAlign.start,
+                        1 => TextAlign.center,
+                        _ => TextAlign.end,
+                      },
+                      style: MeterType.signalKey.copyWith(color: colors.ink2),
+                    ),
                   ),
               ],
             ),
@@ -226,8 +236,7 @@ class _SignalTrack extends StatelessWidget {
             // track's own ground reads through where the band does not reach.
             Positioned(
               left: constraints.maxWidth * SignalChart.position(-1)!,
-              right:
-                  constraints.maxWidth * (1 - SignalChart.position(1)!),
+              right: constraints.maxWidth * (1 - SignalChart.position(1)!),
               top: -SignalChart.bandOutset,
               bottom: -SignalChart.bandOutset,
               child: DecoratedBox(
@@ -241,9 +250,7 @@ class _SignalTrack extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: colors.surface2,
-                  borderRadius: BorderRadius.circular(
-                    SignalChart.trackRadius,
-                  ),
+                  borderRadius: BorderRadius.circular(SignalChart.trackRadius),
                 ),
               ),
             ),
@@ -256,8 +263,7 @@ class _SignalTrack extends StatelessWidget {
             ),
             if (at case final double fraction)
               Positioned(
-                left:
-                    constraints.maxWidth * fraction - SignalChart.dotSize / 2,
+                left: constraints.maxWidth * fraction - SignalChart.dotSize / 2,
                 top: SignalChart.dotTop,
                 width: SignalChart.dotSize,
                 height: SignalChart.dotSize,

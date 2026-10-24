@@ -31,7 +31,7 @@ class AppearanceVariant {
   final int accent;
   final BackgroundVariant background;
   static const accentNames = [
-    'Forest',
+    'Ink',
     'Clay',
     'Amber',
     'Teal',

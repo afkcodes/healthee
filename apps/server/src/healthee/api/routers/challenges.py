@@ -46,7 +46,7 @@ from datetime import date, datetime
 from typing import Annotated, Literal
 
 from fastapi import APIRouter
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from healthee.api.gate import ChallengeUser
 from healthee.api.validation import require_ok
@@ -54,6 +54,8 @@ from healthee.challenges import ledger, lifecycle
 from healthee.core.db import tenant_transaction
 
 router = APIRouter(tags=["challenges"])
+
+SLOT_MAX = 80
 
 
 class _Wire(BaseModel):
@@ -106,6 +108,15 @@ class Challenge(_Wire):
     # this field is the only thing that can. NOT NULL with a default in the schema, so
     # it is required and non-optional here.
     kind: str
+    # `0023`. The weekly coach job's own words and bad-day floor. Required-and-nullable
+    # (rule 2): NULL is "not authored", and a challenge from the standalone generator
+    # has none of them.
+    action_text: str | None
+    slot_text: str | None
+    floor_value: float | None
+    floor_text: str | None
+    counts_when: str | None
+    days_required: int | None
 
 
 class Adaptation(_Wire):
@@ -315,6 +326,32 @@ def post_adapt(user: ChallengeUser, challenge_id: int) -> AdaptResult:
     with tenant_transaction(user.id) as cur:
         result = require_ok(lifecycle.apply_adaptation(cur, user.id, user.timezone, challenge_id))
     return AdaptResult.model_validate(result)
+
+
+class SlotRequest(BaseModel):
+    """Body of ``PATCH …/slot``: the one thing a client may say about a live challenge."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    slot: str
+
+    @field_validator("slot")
+    @classmethod
+    def _a_short_printable_label(cls, slot: str) -> str:
+        slot = slot.strip()
+        if not 1 <= len(slot) <= SLOT_MAX:
+            raise ValueError(f"slot must be 1 to {SLOT_MAX} characters")
+        if any(not ch.isprintable() for ch in slot):
+            raise ValueError("slot must not contain control characters")
+        return slot
+
+
+@router.patch("/api/challenges/{challenge_id}/slot", response_model=ChallengeResult)
+def patch_slot(user: ChallengeUser, challenge_id: int, req: SlotRequest) -> ChallengeResult:
+    """Reword when the owner will do it. Touches ``slot_text`` and nothing else."""
+    with tenant_transaction(user.id) as cur:
+        result = require_ok(lifecycle.set_slot(cur, user.id, challenge_id, req.slot))
+    return ChallengeResult.model_validate(result)
 
 
 @router.get("/api/challenges/outcomes", response_model=OutcomeLedger)

@@ -145,13 +145,9 @@ class ListRow extends StatelessWidget {
           children: <Widget>[
             // Chrome unless the row declares a reading's family.
             if (tone == null)
-              IconTile.chrome(
-                icon,
-                iconSize: 19,
-                boxSize: IconTile.compactSize,
-              )
+              IconTile.chrome(icon, boxSize: IconTile.compactSize)
             else
-              IconTile(icon, iconSize: 19, boxSize: IconTile.compactSize),
+              IconTile(icon, boxSize: IconTile.compactSize),
             const SizedBox(width: gap),
             // Expanded, never Flexible — see the library docstring.
             Expanded(
@@ -208,7 +204,7 @@ class ListRow extends StatelessWidget {
               Icon(
                 SolarIconsOutline.altArrowRight,
                 size: chevronSize,
-                color: colors.ink3,
+                color: colors.ink2,
               ),
             ],
           ],

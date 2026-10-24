@@ -27,6 +27,17 @@ class JournalRepository {
     return _write(draft.toJson());
   }
 
+  /// Removes the entry [id]. A 404 (already gone) surfaces as the Dio error.
+  Future<void> delete(String id) async {
+    final result = await _api.request(
+      '/api/log/${Uri.encodeComponent(id)}',
+      method: 'DELETE',
+    );
+    if (result['ok'] != true) {
+      throw const FormatException('The server did not remove this entry.');
+    }
+  }
+
   Future<String?> fasting({required bool end}) =>
       _write({'type': end ? 'fast_end' : 'fast_start'});
 

@@ -297,6 +297,13 @@ CREATE TABLE IF NOT EXISTS challenge (
   -- and written DO NOTHING, so a second attempt on one row cannot be recorded.
   kind              TEXT NOT NULL DEFAULT 'standard'
                       CHECK (kind IN ('standard', 'deload')),
+  -- 0023: the words a weekly coach job needs. All nullable — NULL is "not authored".
+  action_text       TEXT,
+  slot_text         TEXT,
+  floor_value       DOUBLE PRECISION,   -- bad-day threshold: met (target not) => partial
+  floor_text        TEXT,
+  counts_when       TEXT,
+  days_required     SMALLINT,
   user_id           UUID    NOT NULL  -- tenant (0003; DEFAULT dropped 0007)
                       REFERENCES app_user(id) ON UPDATE CASCADE ON DELETE CASCADE
 );

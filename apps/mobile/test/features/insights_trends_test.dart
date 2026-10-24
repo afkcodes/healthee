@@ -5,10 +5,10 @@
 /// good ask and it does not apply uniformly, so the screen splits it:
 ///
 /// ```text
-///   a trend, polarity known    coloured      the metric moved against the owner's own past
-///   a trend, polarity neutral  NO COLOUR     burning more calories is not better
-///   a trend, metric unknown    NO COLOUR     unknown is unknown, never a default verdict
-///   a finding, any state       SIGN-BLIND    a correlation's sign is a direction, not a verdict
+///   a pattern chip, polarity known    coloured      the metric moved against the owner's own past
+///   a pattern chip, polarity neutral  NO COLOUR     burning more calories is not better
+///   a pattern chip, metric unknown    NO COLOUR     unknown is unknown, never a default verdict
+///   a finding, any state              SIGN-BLIND    a correlation's sign is a direction, not a verdict
 /// ```
 ///
 /// **The colourless cases are what this file is really about.** A screen that
@@ -21,28 +21,30 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:healthee/core/theme/app_theme.dart';
-import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/data/models/finding.dart';
 import 'package:healthee/data/models/trend_point.dart';
 import 'package:healthee/data/store/local_store.dart';
 import 'package:healthee/features/insights/insights_screen.dart';
 import 'package:healthee/features/insights/insights_sections.dart';
+import 'package:healthee/features/insights/widgets/pattern_tile.dart';
 import 'package:healthee/features/insights/widgets/trends_section.dart';
 import 'package:healthee/shared/findings_section.dart';
 import 'package:healthee/shared/format/metric_polarity.dart';
-import 'package:healthee/shared/reveal_once.dart';
 
 import '../_today_stubs.dart';
 import '_today_host.dart';
 
-/// A two-point series that moves by [delta].
-List<TrendPoint> _series(double from, double delta) => <TrendPoint>[
-  TrendPoint(date: '2026-08-01', value: from),
-  TrendPoint(date: '2026-08-14', value: from + delta),
-];
-
-MetricTrend _trend(String metric, double delta) =>
-    MetricTrend.from(metric, _series(50, delta))!;
+/// A fourteen-day series that ends [delta] away from where it began.
+List<TrendPoint> _series(double from, double delta, {double? last}) =>
+    <TrendPoint>[
+      for (var i = 0; i < 14; i++)
+        TrendPoint(
+          date: '2026-08-${(i + 1).toString().padLeft(2, '0')}',
+          value: i == 13 && last != null
+              ? last
+              : from + delta * (i < 5 ? 0 : (i > 8 ? 1 : 0.5)),
+        ),
+    ];
 
 /// Every colour the widget under [finder] actually paints text in.
 Set<Color> _textColours(WidgetTester tester, Finder finder) {
@@ -53,19 +55,6 @@ Set<Color> _textColours(WidgetTester tester, Finder finder) {
       .map((text) => text.style?.color)
       .whereType<Color>()
       .toSet();
-}
-
-Widget _row(MetricTrend trend) => MaterialApp(
-  theme: AppTheme.light,
-  home: Scaffold(
-    body: TrendPanel(trend: trend, reveals: RevealRegistry()),
-  ),
-);
-
-/// The verdict colours, read from the same theme the widget is rendered in.
-({Color fav, Color unf}) _verdicts() {
-  final colors = AppTheme.light.extension<HealtheeColors>()!;
-  return (fav: colors.fav, unf: colors.unf);
 }
 
 void main() {
@@ -134,87 +123,6 @@ void main() {
         ]),
         isNull,
       );
-    });
-  });
-
-  group('a trend row spends colour only where it has a claim', () {
-    testWidgets('a polarity -1 metric RISING renders unf', (tester) async {
-      await tester.pumpWidget(_row(_trend('rhr_daily', 4)));
-      await tester.pumpAndSettle();
-
-      expect(
-        _textColours(tester, find.byType(TrendPanel)),
-        contains(_verdicts().unf),
-      );
-    });
-
-    testWidgets('a polarity -1 metric FALLING renders fav', (tester) async {
-      await tester.pumpWidget(_row(_trend('rhr_daily', -4)));
-      await tester.pumpAndSettle();
-
-      expect(
-        _textColours(tester, find.byType(TrendPanel)),
-        contains(_verdicts().fav),
-      );
-    });
-
-    testWidgets('a polarity +1 metric rising renders fav, falling unf', (
-      tester,
-    ) async {
-      await tester.pumpWidget(_row(_trend('hrv_sleep_avg', 4)));
-      await tester.pumpAndSettle();
-      expect(
-        _textColours(tester, find.byType(TrendPanel)),
-        contains(_verdicts().fav),
-      );
-
-      await tester.pumpWidget(_row(_trend('hrv_sleep_avg', -4)));
-      await tester.pumpAndSettle();
-      expect(
-        _textColours(tester, find.byType(TrendPanel)),
-        contains(_verdicts().unf),
-      );
-    });
-
-    testWidgets('MUTATION: A POLARITY-0 METRIC RENDERS NO VERDICT COLOUR', (
-      tester,
-    ) async {
-      // The load-bearing case. Calories are in the table at `neutral` on
-      // purpose: burning more is not better and burning less is not worse.
-      // Colouring this row would teach the owner that every colour on the screen
-      // is a judgement, after which the ones that are stop meaning anything.
-      //
-      // Asserted in BOTH directions, because a sign-only implementation passes
-      // one of them by accident.
-      for (final delta in <double>[400, -400]) {
-        await tester.pumpWidget(_row(_trend('total_calories', delta)));
-        await tester.pumpAndSettle();
-
-        final drawn = _textColours(tester, find.byType(TrendPanel));
-        expect(
-          drawn,
-          isNot(contains(_verdicts().fav)),
-          reason: 'a $delta calorie change is not good news',
-        );
-        expect(
-          drawn,
-          isNot(contains(_verdicts().unf)),
-          reason: 'and it is not bad news either',
-        );
-      }
-    });
-
-    testWidgets('a metric ABSENT from the table renders no verdict colour', (
-      tester,
-    ) async {
-      // Unknown is unknown. Defaulting it to a neutral-looking green, or
-      // inferring a direction from the sign, would be inventing a claim.
-      await tester.pumpWidget(_row(_trend('weight_kg', 3)));
-      await tester.pumpAndSettle();
-
-      final drawn = _textColours(tester, find.byType(TrendPanel));
-      expect(drawn, isNot(contains(_verdicts().fav)));
-      expect(drawn, isNot(contains(_verdicts().unf)));
     });
   });
 
@@ -333,14 +241,17 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(todayHost(store, home: const InsightsScreen()));
       await tester.pumpAndSettle();
-      await reveal(tester, find.text('Your longer patterns'));
+      await reveal(tester, find.text('Longer patterns'));
 
       // The prototype's own heading for this block, and one panel per metric
       // the payload carried a window for.
-      expect(find.text('Your longer patterns'), findsOneWidget);
-      expect(find.text('Overnight HRV'), findsOneWidget);
-      expect(find.text('Resting heart rate'), findsOneWidget);
-      expect(find.text('Total calories'), findsOneWidget);
+      expect(find.text('Longer patterns'), findsOneWidget);
+      for (final spec in kPatternSpecs) {
+        expect(find.text(spec.label), findsOneWidget, reason: spec.metric);
+      }
+      expect(find.text('your usual range'), findsOneWidget);
+      expect(find.text('outside, worse'), findsOneWidget);
+      expect(find.text('better'), findsOneWidget);
     });
 
     test('the screen reads ONE list, not a second copy of the table', () {
@@ -351,6 +262,13 @@ void main() {
           polarityOf(metric),
           isNotNull,
           reason: '$metric is offered as a trend with no polarity behind it',
+        );
+      }
+      for (final spec in kPatternSpecs) {
+        expect(
+          kTrendMetrics,
+          contains(spec.metric),
+          reason: '${spec.metric} has a tile and no place in the one list',
         );
       }
     });
@@ -377,14 +295,16 @@ void main() {
       // A heading over nothing reads as breakage; `insights_sections.dart`
       // drops the heading with the panels, which is v02's rule for every
       // block on every redesigned screen.
-      expect(find.text('Your longer patterns'), findsNothing);
-      expect(find.byType(TrendPanel), findsNothing);
+      expect(find.text('Longer patterns'), findsNothing);
+      expect(find.byType(PatternTile), findsNothing);
     });
 
     test('trendsOf drops a metric with fewer than two points', () {
       final trends = trendsOf(<String, List<TrendPoint>>{
         'hrv_sleep_avg': [const TrendPoint(date: '2026-08-01', value: 47)],
         'rhr_daily': _series(55, -2),
+        // Tracked elsewhere, and not one of the six tiles.
+        'sleep_score': _series(70, 2),
       });
 
       expect(trends.map((trend) => trend.metric), <String>['rhr_daily']);

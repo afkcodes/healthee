@@ -39,7 +39,7 @@ String decimalLabel(double value) {
 
 /// `7:50` from a minute count — the legacy grid's sleep figure.
 ///
-/// Deliberately NOT `durationLabel`'s `7h 50m`. A grid cell shows a figure with
+/// Deliberately NOT `durationText`'s `7 h 50 min`. A grid cell shows a figure with
 /// a small unit beside it, the same shape a heart rate has, and `7h 50m` carries
 /// its own units inside the number. The two live side by side rather than one
 /// replacing the other: the detail card below still says `7h 50m`, which is the

@@ -41,7 +41,7 @@ import 'package:healthee/data/gps/recorded_route.dart';
 import 'package:healthee/data/gps/route_point.dart';
 import 'package:healthee/features/gps/route_map.dart';
 import 'package:healthee/shared/charts/v02/v02_line_chart.dart';
-import 'package:healthee/shared/format/time_labels.dart';
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/reveal_once.dart';
 import 'package:healthee/shared/v02/data_footer.dart';
 import 'package:healthee/shared/v02/full_button.dart';
@@ -137,7 +137,7 @@ List<Stat> _summaryStats(RecordedRoute route) => <Stat>[
   if (route.distanceKm case final double km)
     Stat('Distance', km.toStringAsFixed(2), unit: 'km'),
   if (route.durationS case final int seconds)
-    Stat('Duration', durationLabel(seconds ~/ 60)),
+    Stat('Duration', durationText(seconds ~/ 60)),
   if (route.avgPaceMinKm case final double pace)
     Stat('Avg. pace', pace.toStringAsFixed(2), unit: '/km'),
 ];
@@ -197,7 +197,10 @@ List<Widget> _fitness(RecordedRoute route) {
   if (vo2max == null) {
     return <Widget>[
       const SectionGap(),
-      HNotice(title: kNoFitnessTitle, body: noFitnessBody(route.matchedHrPoints)),
+      HNotice(
+        title: kNoFitnessTitle,
+        body: noFitnessBody(route.matchedHrPoints),
+      ),
     ];
   }
   return <Widget>[

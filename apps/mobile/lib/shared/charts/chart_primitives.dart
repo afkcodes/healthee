@@ -88,10 +88,6 @@ void drawChartTooltip(
   painter.paint(canvas, Offset(left + pad, (height - painter.height) / 2));
 }
 
-/// `7h 20m` from a minute count. Ported verbatim from `_hm`.
-String hoursMinutes(num minutes) =>
-    '${minutes ~/ 60}h ${(minutes % 60).round().toString().padLeft(2, '0')}m';
-
 /// [color] at [progress] through a reveal, without destroying its own alpha.
 ///
 /// Exists because getting this wrong is invisible until one palette entry is

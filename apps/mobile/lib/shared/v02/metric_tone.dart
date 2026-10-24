@@ -26,11 +26,15 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:healthee/core/theme/metric_hue.dart';
 import 'package:healthee/core/theme/tone.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 /// The family [metric] belongs to. Never depends on its value.
-Tone toneForMetric(String metric) => _tones[metric] ?? Tone.fitness;
+///
+/// Delegates to `toneFor` in `core/theme/metric_hue.dart`, the single table, so
+/// one metric can never resolve to two tones.
+Tone toneForMetric(String metric) => toneFor(metric);
 
 /// The glyph the prototype draws beside a panel of [tone].
 ///
@@ -44,36 +48,4 @@ IconData iconForTone(Tone tone) => switch (tone) {
   Tone.oxygen => SolarIconsOutline.waterdrop,
   Tone.stress => SolarIconsOutline.sun,
   Tone.fitness || Tone.recovery => SolarIconsOutline.heartPulse,
-};
-
-/// The server's canonical ids, in the prototype's families.
-///
-/// Keyed by the ids `sparklines` and `metrics` actually carry, so a metric that
-/// gains a surface without gaining a family is visible here as an absence rather
-/// than as a panel that quietly came out green.
-const Map<String, Tone> _tones = <String, Tone>{
-  'hrv_sleep_avg': Tone.fitness,
-  'hrv_rmssd_ms': Tone.fitness,
-  'rhr_daily': Tone.heart,
-  'cardio_load': Tone.load,
-  'stress': Tone.stress,
-  'skin_temp_c': Tone.stress,
-  'spo2_overnight': Tone.oxygen,
-  'spo2_overnight_min': Tone.oxygen,
-  'respiratory_rate_sleep': Tone.oxygen,
-  'steps_total': Tone.movement,
-  'distance_m_daily': Tone.movement,
-  'active_calories': Tone.movement,
-  'basal_calories': Tone.movement,
-  'total_calories': Tone.movement,
-  'mvpa_min': Tone.movement,
-  'sleep': Tone.sleep,
-  'sleep_score': Tone.sleep,
-  'sleep_duration': Tone.sleep,
-  'sleep_regularity_index': Tone.sleep,
-  'sleep_health_score_4dim': Tone.sleep,
-  'vo2max_estimate': Tone.fitness,
-  'biological_age': Tone.fitness,
-  'recovery_score': Tone.fitness,
-  'weight_kg': Tone.fitness,
 };

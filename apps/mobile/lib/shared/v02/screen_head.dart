@@ -22,6 +22,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:healthee/core/theme/tokens.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:solar_icons/solar_icons.dart';
 
@@ -97,6 +98,7 @@ class DetailHead extends StatelessWidget {
     this.eyebrow,
     this.onBack,
     this.actions = const <Widget>[],
+    this.large = false,
     super.key,
   });
 
@@ -130,6 +132,10 @@ class DetailHead extends StatelessWidget {
   /// every other screen in the app. Use [HeaderAction], which is built to the
   /// back control's geometry.
   final List<Widget> actions;
+
+  /// Sets the title at the Title1 step instead of the detail screens' Title2,
+  /// for a screen that is a directory and opens on its name.
+  final bool large;
 
   /// `.icon { width: 22px }`.
   static const double iconSize = 22;
@@ -178,7 +184,8 @@ class DetailHead extends StatelessWidget {
                 ],
                 Text(
                   title,
-                  style: TypeScale.detailTitle.copyWith(color: colors.ink),
+                  style: (large ? TypeLadder.title1 : TypeScale.detailTitle)
+                      .copyWith(color: colors.ink),
                 ),
               ],
             ),

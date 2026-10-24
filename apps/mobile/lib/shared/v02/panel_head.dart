@@ -10,6 +10,10 @@
 ///                           font-size: 11px; }
 /// ```
 ///
+/// **The brief overrides the colours above:** the title icon is 16 px and ink2
+/// (an inline icon is not a reading), and the action and fold control are the
+/// accent (they are the interactive things). Family hues are for data marks.
+///
 /// The action is built here rather than accepted as a `Widget`, so its colour,
 /// size and minimum height cannot be bypassed — the icon and the action are the
 /// two places a panel's tone becomes visible, and a caller that passed its own
@@ -23,7 +27,6 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:healthee/core/theme/tokens.dart';
-import 'package:healthee/core/theme/tone_scope.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/data/honesty/disclosure.dart';
 import 'package:healthee/shared/metric_info/metric_detail.dart';
@@ -47,8 +50,8 @@ class PanelHead extends StatelessWidget {
     super.key,
   });
 
-  /// `.panel-title > .icon { width: 17px }`.
-  static const double iconSize = 17;
+  /// An inline icon beside text is 16 px.
+  static const double iconSize = 16;
 
   /// The `gap: 8px` shared by `.panel-head` and `.panel-title`.
   static const double gap = 8;
@@ -59,7 +62,7 @@ class PanelHead extends StatelessWidget {
   /// The panel's name.
   final String title;
 
-  /// Drawn in the resolved family colour, before the title.
+  /// Drawn 16 px in ink2, before the title.
   final IconData? icon;
 
   /// Opens the plain-language explainer for this metric, when it has one.
@@ -157,18 +160,17 @@ class PanelHead extends StatelessWidget {
     child: Icon(
       SolarIconsOutline.altArrowRight,
       size: chevronSize,
-      color: colors.ink3,
+      color: colors.ink2,
     ),
   );
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final family = context.family;
     final compact = context.compactPanel;
     final label = actionLabel;
     if (compact) {
-      return _compact(context, colors.ink, family, label);
+      return _compact(context, colors.ink, label);
     }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -178,14 +180,16 @@ class PanelHead extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               if (icon != null) ...<Widget>[
-                Icon(icon, size: iconSize, color: family),
+                Icon(icon, size: iconSize, color: colors.ink2),
                 const SizedBox(width: gap),
               ],
               Flexible(
                 child: Text(
                   title,
                   style: TypeScale.panelTitle.copyWith(color: colors.ink),
-                  maxLines: 1,
+                  // Two lines before an ellipsis: a metric's own name wraps at
+                  // 320 rather than being cut (`typography_test.dart`).
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -212,7 +216,7 @@ class PanelHead extends StatelessWidget {
                   ? SolarIconsOutline.altArrowDown
                   : SolarIconsOutline.altArrowUp,
               size: foldChevron,
-              color: family,
+              color: colors.accent,
             ),
           ),
         ],
@@ -221,7 +225,7 @@ class PanelHead extends StatelessWidget {
           TextButton(
             onPressed: onAction,
             style: TextButton.styleFrom(
-              foregroundColor: family,
+              foregroundColor: colors.accent,
               textStyle: TypeScale.textButton,
               padding: EdgeInsets.zero,
               minimumSize: const Size(0, actionMinHeight),
@@ -241,25 +245,21 @@ class PanelHead extends StatelessWidget {
   /// read aloud as an empty button, so the label travels as the icon's semantic
   /// label instead — the control keeps its name for anyone who cannot see the
   /// arrow.
-  Widget _compact(
-    BuildContext context,
-    Color ink,
-    Color family,
-    String? label,
-  ) {
+  Widget _compact(BuildContext context, Color ink, String? label) {
     final colors = context.colors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         if (icon != null) ...<Widget>[
-          Icon(icon, size: iconSize, color: family),
+          Icon(icon, size: iconSize, color: colors.ink2),
           const SizedBox(width: compactGap),
         ],
         Expanded(
           child: Text(
             title,
             style: TypeScale.panelTitleCompact.copyWith(color: ink),
-            maxLines: 1,
+            // Half a row is narrow: the name wraps rather than being cut.
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -283,7 +283,7 @@ class PanelHead extends StatelessWidget {
                   ? SolarIconsOutline.altArrowDown
                   : SolarIconsOutline.altArrowUp,
               size: foldChevron,
-              color: family,
+              color: colors.accent,
             ),
           ),
         ],
@@ -300,7 +300,7 @@ class PanelHead extends StatelessWidget {
               child: Icon(
                 SolarIconsOutline.arrowRight,
                 size: compactActionIcon,
-                color: family,
+                color: colors.accent,
               ),
             ),
           ),

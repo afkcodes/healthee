@@ -12,7 +12,7 @@ or an ``ARG001`` waiver where it genuinely does not use one — an unused parame
 is deliberate must look deliberate.
 
 ``chain`` imports these by name into its own namespace, so a test that stubs
-``chain.step_recs`` still stubs what the chain calls.
+``chain.step_coach_today`` still stubs what the chain calls.
 """
 
 from __future__ import annotations
@@ -26,8 +26,9 @@ from healthee.derive.illness import derive_illness_flag
 from healthee.insights import coaching as coaching_mod
 from healthee.insights.client import LLMClient
 from healthee.jobs import briefing as briefing_mod
+from healthee.jobs import coach_today as coach_today_mod
+from healthee.jobs import coach_weekly as coach_weekly_mod
 from healthee.jobs import correlate as correlate_mod
-from healthee.jobs import recs as recs_mod
 
 
 def step_illness(
@@ -90,9 +91,17 @@ def step_correlate(
     return correlate_mod.run_correlate(user_id, tz)
 
 
-def step_recs(day: date, user_id: UUID, tz: str, *, client: LLMClient | None = None) -> dict:
-    """Generate one owner's grounded recommendations for their local day."""
-    return recs_mod.generate_recs(user_id, tz, day, client=client)
+def step_coach_weekly(
+    day: date, user_id: UUID, tz: str, *, client: LLMClient | None = None
+) -> dict:
+    """Write the owner's weekly review and set next week's job (once per ISO week)."""
+    review, cached = coach_weekly_mod.generate_week(user_id, tz, day, client=client)
+    return {"written": review is not None, "cached": cached}
+
+
+def step_coach_today(day: date, user_id: UUID, tz: str, *, client: LLMClient | None = None) -> dict:
+    """Write the owner's daily check-in on this week's job."""
+    return coach_today_mod.generate_today(user_id, tz, day, client=client)
 
 
 def step_warm(

@@ -36,6 +36,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:healthee/core/router.dart';
+import 'package:healthee/core/theme/dimensions.dart';
 import 'package:healthee/data/history/dated_history.dart';
 import 'package:healthee/data/history/history_metric.dart';
 import 'package:healthee/data/models/activity_today.dart';
@@ -156,11 +157,11 @@ class FitnessDetail extends StatelessWidget {
     super.key,
   });
 
-  /// `.panel { margin-top: 12px }`.
-  static const double panelGap = 12;
+  /// Between two cards: [Insets.cardGap].
+  static const double panelGap = Insets.cardGap;
 
-  /// `.section { margin-top: 24px }`.
-  static const double blockGap = 24;
+  /// Between two sections: [Insets.section].
+  static const double blockGap = Insets.section;
 
   /// The payload every figure on this screen comes off.
   final TodaySnapshot snapshot;
@@ -171,9 +172,7 @@ class FitnessDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vo2max = snapshot.vo2max.valueOrNull;
-    final years = fitnessContributionYears(
-      snapshot.biologicalAge.valueOrNull,
-    );
+    final years = fitnessContributionYears(snapshot.biologicalAge.valueOrNull);
     final rhythm = RhythmPanel(
       mvpa: snapshot.mvpa.valueOrNull,
       strength: snapshot.strength,
@@ -209,8 +208,8 @@ class FitnessDetail extends StatelessWidget {
           // `H.bridge('fitness', …, 'body', 'Age contributions')` — the
           // sentence ends in the link, which is where the years it names are
           // worked out.
-          ContextBridge.link(
-            ageBridge(years),
+          ContextBridge.richLink(
+            (style) => ageBridgeSpan(years, style),
             label: 'Age contributions',
             onOpen: () => unawaited(context.push(Routes.body)),
           ),
@@ -244,7 +243,11 @@ class FitnessDetail extends StatelessWidget {
 /// The page every state of this screen is drawn in, so the head and the gutter
 /// cannot differ between them.
 class _Frame extends StatelessWidget {
-  const _Frame({required this.children, this.date, this.status = kLatestSample});
+  const _Frame({
+    required this.children,
+    this.date,
+    this.status = kLatestSample,
+  });
 
   final List<Widget> children;
   final String? date;

@@ -139,11 +139,9 @@ class MetricInfoDot extends StatelessWidget {
   /// The glyph's colour, for a card that supplies its own ink.
   ///
   /// **Not a hue a call site chose**, which is the rule this would otherwise
-  /// break. The biological-age hero has its own dark surface in BOTH themes
-  /// (`bioBackground`/`bioInk` are tokens for exactly that reason), so nothing
-  /// drawn inside it may reach for the page's ink — the same argument
-  /// `bio_hero_parts.dart` makes for the two widgets under the hero's rule.
-  /// Null, everywhere else, resolves [HealtheeColors.ink3] as before.
+  /// break: it is one of the theme's own inks, picked by a card that sets its
+  /// text a step louder or quieter than the page default (the age hero passes
+  /// `ink2`). Null, everywhere else, resolves [HealtheeColors.ink2] as before.
   final Color? ink;
 
   /// Legacy's `Icon(..., size: 16)`.
@@ -185,7 +183,7 @@ class MetricInfoDot extends StatelessWidget {
             child: Icon(
               SolarIconsOutline.infoCircle,
               size: _size,
-              color: ink ?? colors.ink3,
+              color: ink ?? colors.ink2,
             ),
           ),
         ),
@@ -294,16 +292,27 @@ class _MetricInfoSheet extends StatelessWidget {
                 child: const Text('View history and analysis'),
               ),
             Text(
-              explainer?.title ?? detail.title ?? fallbackTitle ?? 'This reading',
+              explainer?.title ??
+                  detail.title ??
+                  fallbackTitle ??
+                  'This reading',
               style: HType.serif(colors.ink, size: 24),
             ),
             const SizedBox(height: 18),
+            if (detail.figure case final Widget figure) ...<Widget>[
+              figure,
+              const SizedBox(height: 16),
+            ],
+            if (detail.action case final MetricAction action) ...<Widget>[
+              InfoActionButton(action),
+              const SizedBox(height: 8),
+            ],
             if (explainer != null) ...<Widget>[
               InfoBlock(
                 icon: SolarIconsOutline.documentText,
                 label: 'WHAT IT IS',
                 body: explainer.what,
-                accent: colors.ink3,
+                accent: colors.ink2,
               ),
               const SizedBox(height: 16),
               InfoBlock(
@@ -337,7 +346,7 @@ class _MetricInfoSheet extends StatelessWidget {
                 icon: SolarIconsOutline.documentText,
                 label: kMethodBlockLabel,
                 lines: detail.method,
-                accent: colors.ink3,
+                accent: colors.ink2,
               ),
               const SizedBox(height: 16),
             ],
@@ -345,7 +354,7 @@ class _MetricInfoSheet extends StatelessWidget {
               DisclosureBlock(
                 label: detail.disclosuresLabel ?? kDisclosureBlockLabel,
                 disclosures: detail.disclosures,
-                accent: colors.ink3,
+                accent: colors.ink2,
               ),
               const SizedBox(height: 16),
             ],

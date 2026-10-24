@@ -58,6 +58,7 @@ import 'package:flutter/material.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/data/sync/connection_health.dart';
+import 'package:healthee/features/coach/widgets/coach_fab.dart';
 import 'package:healthee/features/today/today_labels.dart';
 import 'package:healthee/features/today/v02/date_calendar_sheet.dart';
 import 'package:healthee/features/today/v02/date_control.dart';
@@ -81,8 +82,12 @@ class TodayHeader extends StatelessWidget {
     this.navigation,
     this.batteryPercent,
     this.onOpenProfile,
+    this.onOpenCoach,
     super.key,
   });
+
+  /// Between the coach button and the owner's mark.
+  static const double coachGap = 10;
 
   /// The gap under the head. It is the whole head now, so it ends once.
   static const double bottomGap = 20;
@@ -109,6 +114,9 @@ class TodayHeader extends StatelessWidget {
   /// Opens the owner's own screen, which is where `Data & sync` lives.
   final VoidCallback? onOpenProfile;
 
+  /// Opens the coach. Null draws no coach button.
+  final VoidCallback? onOpenCoach;
+
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: bottomGap),
@@ -125,6 +133,10 @@ class TodayHeader extends StatelessWidget {
             child: DayPill(date: date, navigation: navigation),
           ),
         ),
+        if (onOpenCoach case final VoidCallback open) ...<Widget>[
+          CoachFab(onTap: open),
+          const SizedBox(width: coachGap),
+        ],
         OwnerMark(
           health: health,
           batteryPercent: batteryPercent,
@@ -193,7 +205,7 @@ class DayPill extends StatelessWidget {
             Icon(
               SolarIconsOutline.altArrowDown,
               size: caretSize,
-              color: colors.ink3,
+              color: colors.ink2,
             ),
           ],
         ),
@@ -268,7 +280,7 @@ class OwnerMark extends StatelessWidget {
             // one element beside it that is still free to carry a state — and
             // it is `fav` only when the classification found nothing to say.
             style: TypeScale.deviceStrip.copyWith(
-              color: healthy ? colors.fav : colors.ink3,
+              color: healthy ? colors.fav : colors.ink2,
             ),
           ),
           const SizedBox(width: chargeGap),

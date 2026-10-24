@@ -188,7 +188,7 @@ class _CoachWaitingState extends State<CoachWaiting>
         children: <Widget>[
           Row(
             children: <Widget>[
-              _TypingDots(pulse: _pulse, color: colors.ink3),
+              _TypingDots(pulse: _pulse, color: colors.ink2),
               const SizedBox(width: Insets.md),
               Expanded(
                 child: AnimatedSwitcher(
@@ -210,7 +210,7 @@ class _CoachWaitingState extends State<CoachWaiting>
               Text(
                 _clock(_elapsed),
                 style: TypeScale.panelUnit.copyWith(
-                  color: colors.ink3,
+                  color: colors.ink2,
                   fontFeatures: const <FontFeature>[
                     FontFeature.tabularFigures(),
                   ],
@@ -223,7 +223,7 @@ class _CoachWaitingState extends State<CoachWaiting>
             Text(
               'Taking longer than most questions — broad ones need more rounds. '
               'You can leave; the answer will be here when you come back.',
-              style: TypeScale.panelNote.copyWith(color: colors.ink3),
+              style: TypeScale.panelNote.copyWith(color: colors.ink2),
             ),
           ],
         ],
@@ -250,7 +250,7 @@ class _CoachWaitingState extends State<CoachWaiting>
         children: <Widget>[
           Row(
             children: <Widget>[
-              _TypingDots(pulse: _pulse, color: colors.ink3),
+              _TypingDots(pulse: _pulse, color: colors.ink2),
               const SizedBox(width: Insets.sm),
               Expanded(
                 child: AnimatedSwitcher(

@@ -42,11 +42,7 @@ import 'package:healthee/data/honesty/citations.dart';
 /// A block of server-authored markdown. Its sources are in the surface's ⓘ.
 class GroundedMarkdown extends StatelessWidget {
   /// [text] is the raw field off the wire, markers included.
-  const GroundedMarkdown({
-    required this.text,
-    required this.accent,
-    super.key,
-  });
+  const GroundedMarkdown({required this.text, required this.accent, super.key});
 
   /// The analysis as the server sent it. Never pre-stripped by the caller.
   final String text;
@@ -78,7 +74,7 @@ class GroundedMarkdown extends StatelessWidget {
             padding: const EdgeInsets.only(top: 2, bottom: 6),
             child: Text(
               header.group(1)!.toUpperCase(),
-              style: HType.label(colors.ink2, size: 9.5, tracking: 0.1),
+              style: HType.label(colors.ink2),
             ),
           ),
         );
@@ -92,7 +88,7 @@ class GroundedMarkdown extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 9),
                 child: Text.rich(
                   TextSpan(
-                    style: HType.sans(colors.ink, height: 1.55),
+                    style: HType.sans(colors.ink),
                     children: boldSpans(line),
                   ),
                 ),
@@ -131,7 +127,7 @@ class _Bullet extends StatelessWidget {
           Expanded(
             child: Text.rich(
               TextSpan(
-                style: HType.sans(colors.ink, size: 13.5, height: 1.5),
+                style: HType.sans(colors.ink, size: 13.5),
                 children: boldSpans(text),
               ),
             ),
@@ -155,7 +151,10 @@ List<TextSpan> boldSpans(String text) {
       spans.add(TextSpan(text: text.substring(last, match.start)));
     }
     spans.add(
-      TextSpan(text: match.group(1), style: const TextStyle(fontWeight: FontWeight.w700)),
+      TextSpan(
+        text: match.group(1),
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
     );
     last = match.end;
   }

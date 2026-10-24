@@ -99,7 +99,7 @@ class _UpdateSheet extends StatelessWidget {
                 const SizedBox(height: Insets.md),
                 Text(
                   kUpdateSheetBody,
-                  style: TypeScale.small.copyWith(color: colors.ink3),
+                  style: TypeScale.small.copyWith(color: colors.ink2),
                 ),
                 const SizedBox(height: Insets.xl),
                 HButton(

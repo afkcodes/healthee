@@ -166,8 +166,8 @@ class _Body extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: TextLink(
-              label: 'See previous outcomes',
-              onPressed: () => unawaited(context.push(Routes.outcomes)),
+              label: 'Every yes, checked',
+              onPressed: () => unawaited(context.push(Routes.coachLedger)),
             ),
           ),
           const DataFooter(),
@@ -207,7 +207,7 @@ class _Progress extends StatelessWidget {
               ),
               Text(
                 '${progress.daysLeft} days left',
-                style: TypeScale.tinyLabel.copyWith(color: colors.ink3),
+                style: TypeScale.tinyLabel.copyWith(color: colors.ink2),
               ),
             ],
           ),
@@ -226,14 +226,14 @@ class _Progress extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Today · ${_trim(today)} ${progress.unit}',
-              style: TypeScale.tinyLabel.copyWith(color: colors.ink3),
+              style: TypeScale.tinyLabel.copyWith(color: colors.ink2),
             ),
           ],
           if (progress.streak case final int streak) ...<Widget>[
             const SizedBox(height: 8),
             Text(
               'Current streak · $streak days',
-              style: TypeScale.tinyLabel.copyWith(color: colors.ink3),
+              style: TypeScale.tinyLabel.copyWith(color: colors.ink2),
             ),
           ],
           if (progress.protectedToday) ...<Widget>[

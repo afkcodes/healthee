@@ -131,7 +131,7 @@ class _ThreadRow extends StatelessWidget {
               Icon(
                 SolarIconsOutline.altArrowRight,
                 size: 16,
-                color: colors.ink3,
+                color: colors.ink2,
               ),
             ],
           ),

@@ -259,7 +259,7 @@ class _AgeWaterfallPainter extends CustomPainter {
     final plot = bottom - AgeWaterfall.plotTop;
     double y(double value) => bottom - (value - low) / span * plot;
 
-    final axisStyle = TypeScale.tileMeta.copyWith(color: ink2);
+    final axisStyle = TypeScale.colourKey.copyWith(color: ink2);
     final gutter = chartLabel(formatYears(high), axisStyle).width + 6;
     const left = 4.0;
     final right = size.width - gutter;
@@ -328,7 +328,7 @@ class _AgeWaterfallPainter extends CustomPainter {
     double low,
     double running,
   ) {
-    final valueStyle = TypeScale.tileMeta.copyWith(color: ink);
+    final valueStyle = TypeScale.colourKey.copyWith(color: ink);
     final to = column.to;
     if (to == null) {
       // Excluded or missing: NO BAR, at any height. The level runs straight on.
@@ -343,7 +343,10 @@ class _AgeWaterfallPainter extends CustomPainter {
         );
         paintLabel(
           canvas,
-          chartLabel(column.valueLabel!, TypeScale.tileMeta.copyWith(color: ink2)),
+          chartLabel(
+            column.valueLabel!,
+            TypeScale.colourKey.copyWith(color: ink2),
+          ),
           Offset(x + barWidth / 2, y(running) - 16),
           anchor: LabelAnchor.middle,
         );

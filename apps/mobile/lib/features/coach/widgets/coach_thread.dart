@@ -36,7 +36,6 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:healthee/core/theme/dimensions.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/type_scale.dart';
 import 'package:healthee/data/coach/coach_answer.dart';
@@ -151,7 +150,6 @@ class CoachBubble extends StatelessWidget {
         padding: const EdgeInsets.all(CoachEntryView.padding + 2),
         decoration: BoxDecoration(
           color: colors.surface,
-          border: Border.all(color: colors.line, width: hairline),
           borderRadius: BorderRadius.circular(CoachEntryView.radius),
         ),
         child: child,

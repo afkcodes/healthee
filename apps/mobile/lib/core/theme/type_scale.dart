@@ -1,391 +1,196 @@
-/// **v02's type scale, transcribed from the prototype's CSS.**
+/// **v02's type scale: every role named, every one a step on the ladder.**
 ///
 /// `typography.dart` builds the Material [TextTheme] the un-migrated screens are
-/// written against; this file is the scale the v02 primitives use, and the two
-/// coexist on purpose. Remapping `displayLarge` from 34 to v02's 88 would resize
-/// every hero figure on every screen that has not been redesigned yet — a
-/// restyle by side effect, and the phase boundary says no. When a screen moves to
-/// v02 it moves onto these styles; when the last one has, `healtheeTextTheme`'s
-/// role sizes go.
+/// written against; this file names the roles the v02 primitives use. Both are
+/// aliases of `type_ladder.dart`: a role here says WHAT the text is (a panel's
+/// title, a tile's number), and the ladder says how big that is. The prototype's
+/// CSS sizes (8.5, 10, 10.5, 27, 36, 68 px and the rest) are gone; each role
+/// was snapped to its ladder step, which is the only size it can now have.
 ///
 /// **Every style here is colourless.** The tone system supplies the colour at the
 /// point of use (`context.family`, `context.colors.ink2`), so a style cannot
 /// carry a hue that disagrees with the card it is in.
-///
-/// Sizes and tracking are the CSS's, to the pixel:
-///
-/// ```text
-///   page h1        27px  -1px      richer.css .page-header h1
-///   section h2     18px  -0.6px    richer.css .section-head h2 (size) + styles.css h2
-///   panel title    13px  700       richer.css .panel-title
-///   panel value    36px  600  -1.8 richer.css .panel-value
-///   bio age        88px  600  -6   richer.css .bio-hero .age-value
-///   tile value     24px       -1   richer.css .summary-tile strong
-///   labels         8.5–11px        tile-meta · colour-key · panel-note · text-button
-/// ```
 library;
 
 import 'package:flutter/material.dart';
-import 'package:healthee/core/theme/typography.dart';
-
-TextStyle _style(
-  double size,
-  FontWeight weight, {
-  double height = 1.6,
-  double tracking = 0,
-}) => TextStyle(
-  fontFamily: healtheeFontFamily,
-  fontFamilyFallback: healtheeFontFallback,
-  fontSize: size,
-  fontWeight: weight,
-  // Figtree is variable: drive the wght axis, not only the weight slot.
-  fontVariations: <FontVariation>[FontVariation('wght', weight.value.toDouble())],
-  height: height,
-  letterSpacing: tracking,
-  fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-);
+import 'package:healthee/core/theme/type_ladder.dart';
 
 /// v02's type scale. Colourless; see the library docstring.
 abstract final class TypeScale {
   /// `.page-header h1` — the screen's name.
-  static final TextStyle pageTitle = _style(
-    27,
-    FontWeight.w600,
-    height: 1.2,
-    tracking: -1,
-  );
+  static final TextStyle pageTitle = TypeLadder.title1;
 
   /// `.page-header .date` — the date above it.
-  static final TextStyle pageDate = _style(11, FontWeight.w500);
+  static final TextStyle pageDate = TypeLadder.caption;
 
-  /// The date when it IS the header — Today's one-row head.
-  ///
-  /// Between [pageDate] and [pageTitle] on purpose. It has to carry the row on
-  /// its own, and at 27 it leaves no width for the strap and the avatar beside
-  /// it at 320.
-  ///
-  /// **`height: 1.2`, not the scale's 1.6.** A 1.6 line box on 17px type is
-  /// 27px tall, and Figtree's glyphs do not sit centred in that much leading —
-  /// so a `Row` centring the BOXES correctly still left the word reading ~2dp
-  /// low against the strap mark beside it. The tighter box puts the ink where
-  /// the layout says it is. Measured on the device, not guessed.
-  static final TextStyle pageDateStrong = _style(
-    17,
-    FontWeight.w600,
-    height: 1.2,
-    tracking: -0.4,
-  );
+  /// The date when it IS the header — Today's one-row head. Between [pageDate]
+  /// and [pageTitle] on purpose: it carries the row on its own, and at
+  /// [pageTitle]'s size it leaves no width for the strap and the avatar at 320.
+  static final TextStyle pageDateStrong = TypeLadder.headline;
 
   /// `.section-head h2` — a section's name.
-  static final TextStyle sectionTitle = _style(
-    18,
-    FontWeight.w700,
-    height: 1.4,
-    tracking: -0.6,
-  );
+  static final TextStyle sectionTitle = TypeLadder.headline;
 
   /// `.panel-title` — a panel's own title, beside its icon.
-  static final TextStyle panelTitle = _style(13, FontWeight.w700, height: 1.35);
+  static final TextStyle panelTitle = TypeLadder.calloutStrong;
 
   /// `.panel-value` — the number a panel exists to show.
-  static final TextStyle panelValue = _style(
-    36,
-    FontWeight.w600,
-    height: 1.2,
-    tracking: -1.8,
-  );
+  static final TextStyle panelValue = TypeLadder.metric;
 
   /// `.panel-value > small` — its unit.
-  static final TextStyle panelUnit = _style(12, FontWeight.w400, height: 1.2);
+  static final TextStyle panelUnit = TypeLadder.caption;
 
   /// `.panel-note` — the sentence under a panel's chart.
-  static final TextStyle panelNote = _style(11, FontWeight.w400, height: 1.7);
+  static final TextStyle panelNote = TypeLadder.caption;
 
-  /// `.panel .text-button` — a panel head's action.
-  static final TextStyle textButton = _style(11, FontWeight.w700, height: 1.2);
+  /// `.panel .text-button` — a panel head's action. Small, so [TypeLadder.caption]:
+  /// the ladder has no bold caption.
+  static final TextStyle textButton = TypeLadder.caption;
 
   /// `.summary-tile .tile-title` — a tile's label, in its family colour.
-  static final TextStyle tileTitle = _style(10, FontWeight.w400, height: 1.4);
+  static final TextStyle tileTitle = TypeLadder.caption;
 
   /// `.summary-tile strong` — a tile's number.
-  static final TextStyle tileValue = _style(
-    24,
-    FontWeight.w700,
-    height: 1.2,
-    tracking: -1,
-  );
+  static final TextStyle tileValue = TypeLadder.title1;
 
   /// `.summary-tile .tile-meta` — the qualifier under it.
-  static final TextStyle tileMeta = _style(8.5, FontWeight.w400, height: 1.4);
+  static final TextStyle tileMeta = TypeLadder.caption;
 
-  /// `.colour-key` — a legend entry.
-  static final TextStyle colourKey = _style(10, FontWeight.w400, height: 1.4);
+  /// `.colour-key` — a chart's axis labels and the legend under a chart.
+  /// Chart-only, which is what lets it be [TypeLadder.micro].
+  static final TextStyle colourKey = TypeLadder.micro;
 
   /// `.context-bridge p` — the connective sentence between two panels.
-  static final TextStyle bridge = _style(11, FontWeight.w400, height: 1.8);
+  static final TextStyle bridge = TypeLadder.caption;
 
   /// `.panel-summary p` — the right-hand qualifier beside a panel's number.
-  static final TextStyle panelContext = _style(11, FontWeight.w400, height: 1.5);
+  static final TextStyle panelContext = TypeLadder.caption;
 
-  /// `.twin-panels .panel-title` — a half-width panel's name.
-  static final TextStyle panelTitleCompact = _style(
-    11,
-    FontWeight.w700,
-    height: 1.35,
-  );
+  /// `.twin-panels .panel-title` — a half-width panel's name. Small, so
+  /// [TypeLadder.caption]: the ladder has no bold caption.
+  static final TextStyle panelTitleCompact = TypeLadder.caption;
 
-  /// `.twin-panels .panel-value`. The tracking scales with the size: -1.8 at 36
-  /// is -1.4 at 28, which keeps the glyphs at the same optical density.
-  static final TextStyle panelValueCompact = _style(
-    28,
-    FontWeight.w600,
-    height: 1.2,
-    tracking: -1.4,
-  );
+  /// `.twin-panels .panel-value`.
+  static final TextStyle panelValueCompact = TypeLadder.title1;
 
   /// `.twin-panels .panel-value > small`.
-  static final TextStyle panelUnitCompact = _style(
-    10,
-    FontWeight.w400,
-    height: 1.2,
-  );
+  static final TextStyle panelUnitCompact = TypeLadder.caption;
 
   /// `.twin-panels .panel-note`.
-  static final TextStyle panelNoteCompact = _style(
-    10,
-    FontWeight.w400,
-    height: 1.7,
-  );
+  static final TextStyle panelNoteCompact = TypeLadder.caption;
 
   /// `.panel .stat-label` — the label over a statistic in a `.three` row.
-  static final TextStyle statLabel = _style(10, FontWeight.w400, height: 1.4);
+  static final TextStyle statLabel = TypeLadder.caption;
 
   /// `.panel .three .stat-number`.
-  static final TextStyle statValue = _style(
-    22,
-    FontWeight.w600,
-    height: 1.4,
-    tracking: -1,
-  );
+  static final TextStyle statValue = TypeLadder.title2;
 
   /// `.stat-number > span` — its unit.
-  static final TextStyle statUnit = _style(11, FontWeight.w400, height: 1.4);
+  static final TextStyle statUnit = TypeLadder.caption;
 
   /// `.chapter-heading h2` — a chapter's name.
-  static final TextStyle chapterTitle = _style(
-    20,
-    FontWeight.w700,
-    height: 1.4,
-    tracking: -0.6,
-  );
+  static final TextStyle chapterTitle = TypeLadder.title2;
 
-  /// `.metric-list strong { font-size:20px; letter-spacing:-.6px }` over the
-  /// body's own `font: 14px/1.6` and `strong`'s 700.
-  ///
-  /// The same three numbers as [chapterTitle] and a different line box: that
-  /// one is an `h2` at `line-height: 1.4`, this one is inline text inheriting
-  /// the body's 1.6. Two transcriptions of two rules.
-  static final TextStyle metricListValue = _style(
-    20,
-    FontWeight.w700,
-    height: 1.6,
-    tracking: -0.6,
-  );
+  /// `.metric-list strong` — a reading in a metric list.
+  static final TextStyle metricListValue = TypeLadder.title2;
 
   /// `.chapter-nav button` — one jump target.
-  static final TextStyle chapterNav = _style(10, FontWeight.w400, height: 1.2);
+  static final TextStyle chapterNav = TypeLadder.caption;
 
-  /// `.factor-row` — a model component's name and its score.
-  static final TextStyle factorRow = _style(11, FontWeight.w400, height: 1.4);
+  /// `.factor-row` — a model component's name and its score, beside its bar.
+  /// Chart-only, which is what lets it be [TypeLadder.micro].
+  static final TextStyle factorRow = TypeLadder.micro;
 
   /// `.dimension-cell > span` — an independent reading's name.
-  static final TextStyle dimensionLabel = _style(
-    11,
-    FontWeight.w400,
-    height: 1.4,
-  );
+  static final TextStyle dimensionLabel = TypeLadder.caption;
 
   /// `.dimension-cell strong` — the reading.
-  static final TextStyle dimensionValue = _style(
-    22,
-    FontWeight.w600,
-    height: 1.3,
-    tracking: -0.7,
-  );
+  static final TextStyle dimensionValue = TypeLadder.title2;
 
-  /// The same reading in a LIST row rather than a grid cell.
-  ///
-  /// [dimensionValue]'s 22 is sized to be the hero of its own cell. On a row
-  /// beside a 13pt name and a reference under it, 22 stops being a figure and
-  /// becomes a headline — the owner's word was *"too big"*. The grid keeps its
-  /// own size; a list is not a smaller grid.
-  static final TextStyle dimensionReading = _style(
-    17,
-    FontWeight.w600,
-    height: 1.3,
-    tracking: -0.4,
-  );
+  /// The same reading in a LIST row rather than a grid cell: a step below
+  /// [dimensionValue], because on a row beside a name and a reference the grid's
+  /// size stops being a figure and becomes a headline (the owner: *"too big"*).
+  static final TextStyle dimensionReading = TypeLadder.headline;
 
   /// `.dimension-cell small` — the reference under it.
-  static final TextStyle dimensionNote = _style(9, FontWeight.w400, height: 1.4);
+  static final TextStyle dimensionNote = TypeLadder.caption;
 
   /// `.device-strip` — the strap row under the title.
-  static final TextStyle deviceStrip = _style(10, FontWeight.w400, height: 1.4);
+  static final TextStyle deviceStrip = TypeLadder.caption;
 
   /// `.relationship-card h3` — an entry point's name.
-  static final TextStyle entryTitle = _style(15, FontWeight.w700, height: 1.35);
+  static final TextStyle entryTitle = TypeLadder.bodyStrong;
 
   /// `.relationship-card p` — what it leads to.
-  static final TextStyle entryBody = _style(11, FontWeight.w400, height: 1.6);
+  static final TextStyle entryBody = TypeLadder.caption;
 
   /// `.data-footer` — the closing line.
-  static final TextStyle footer = _style(10, FontWeight.w400, height: 2);
-
-  /// `.data-footer span` — its second line.
-  static final TextStyle footerFine = _style(9, FontWeight.w400, height: 2);
+  static final TextStyle footer = TypeLadder.caption;
 
   /// `.page-header.detail h1` — a pushed screen's name, smaller than a tab's.
-  static final TextStyle detailTitle = _style(
-    23,
-    FontWeight.w600,
-    height: 1.2,
-    tracking: -0.8,
-  );
+  static final TextStyle detailTitle = TypeLadder.title2;
 
   /// `.small` — the prototype's one step down from body copy.
-  static final TextStyle small = _style(12, FontWeight.w400);
+  static final TextStyle small = TypeLadder.caption;
 
-  /// `.observation h3 { font-size:17px; line-height:1.5 }` — the finding
-  /// detail's two-line statement. `styles.css` gives every `h3` its −0.2px
-  /// tracking; only the size and leading are overridden here.
-  static final TextStyle observationTitle = _style(
-    17,
-    FontWeight.w400,
-    height: 1.5,
-    tracking: -0.2,
-  );
+  /// `.observation h3` — the finding detail's two-line statement.
+  static final TextStyle observationTitle = TypeLadder.headline;
 
-  /// `.observation p { font-size:12px; line-height:1.9 }` — the caveat under it.
-  ///
-  /// Not [small]: same size, looser leading. The paragraph is the one that says
-  /// a correlation is not a cause, and the prototype gives it more air than any
-  /// other body copy in the product.
-  static final TextStyle observationBody = _style(12, FontWeight.w400, height: 1.9);
+  /// `.observation p` — the caveat under it, the paragraph that says a
+  /// correlation is not a cause.
+  static final TextStyle observationBody = TypeLadder.caption;
 
   /// `.tiny-label`, `.list-row small`, `.timeline-item p`, `.stat-label`.
-  static final TextStyle tinyLabel = _style(11, FontWeight.w400);
+  static final TextStyle tinyLabel = TypeLadder.caption;
 
-  /// `.badge` — `font-size:10px; font-weight:700`.
-  static final TextStyle badge = _style(10, FontWeight.w700);
+  /// `.badge` — a short mixed-case stamp. Small, so [TypeLadder.caption]; an
+  /// UPPERCASE stamp is a [TypeLadder.label] instead.
+  static final TextStyle badge = TypeLadder.caption;
 
   /// `.notice strong`.
-  static final TextStyle noticeTitle = _style(12, FontWeight.w700);
+  static final TextStyle noticeTitle = TypeLadder.calloutStrong;
 
-  /// `.notice p`, `.focus-card p`, `.challenge-card p` — all `11px/1.8`.
-  static final TextStyle noticeBody = _style(11, FontWeight.w400, height: 1.8);
+  /// `.notice p`, `.focus-card p`, `.challenge-card p`.
+  static final TextStyle noticeBody = TypeLadder.caption;
 
-  /// `.focus-card .focus-title`.
-  static final TextStyle focusEyebrow = _style(10, FontWeight.w700);
+  /// `.focus-card .focus-title` — a mixed-case eyebrow. Small, so
+  /// [TypeLadder.caption].
+  static final TextStyle focusEyebrow = TypeLadder.caption;
 
-  /// `.focus-card h3` — the base `h3` at the focus card's own size.
-  static final TextStyle focusTitle = _style(
-    14,
-    FontWeight.w700,
-    height: 1.5,
-    tracking: -0.2,
-  );
+  /// `.focus-card h3` — the focus card's heading.
+  static final TextStyle focusTitle = TypeLadder.calloutStrong;
 
   /// `.sleep-hero .hero-number`.
-  static final TextStyle heroNumber = _style(
-    64,
-    FontWeight.w600,
-    height: 1,
-    tracking: -4,
-  );
+  static final TextStyle heroNumber = TypeLadder.display;
 
   /// `.hero-number .duration-unit`.
-  static final TextStyle heroUnit = _style(
-    30,
-    FontWeight.w400,
-    height: 1,
-    tracking: -1,
-  );
+  static final TextStyle heroUnit = TypeLadder.title1;
 
-  /// `.metric-hero .hero-number { font-size: 68px }` over the base
-  /// `.hero-number { line-height:1; font-weight:600; letter-spacing:-5px }`.
-  ///
-  /// Four pixels off [heroNumber] and a tighter track, because `screens.css`
-  /// overrides the base rule differently for the two heroes. Two transcriptions
-  /// of two rules, not two opinions about one — the same distinction
-  /// `stat_block.dart` records for `.stat` inside and outside a panel.
-  static final TextStyle metricHeroNumber = _style(
-    68,
-    FontWeight.w600,
-    height: 1,
-    tracking: -5,
-  );
+  /// `.metric-hero .hero-number` — the metric screen's hero figure.
+  static final TextStyle metricHeroNumber = TypeLadder.display;
 
-  /// `.hero-number .unit { font-size:24px; letter-spacing:-1px }`.
-  static final TextStyle metricHeroUnit = _style(
-    24,
-    FontWeight.w400,
-    height: 1,
-    tracking: -1,
-  );
+  /// `.hero-number .unit` — its unit.
+  static final TextStyle metricHeroUnit = TypeLadder.title1;
 
   /// `.list-row strong`, `.timeline-item h3`, `.journal-strip h3`,
-  /// `.check-action strong` — the base `h3` at 13.
-  static final TextStyle rowTitle = _style(
-    13,
-    FontWeight.w700,
-    height: 1.5,
-    tracking: -0.2,
-  );
+  /// `.check-action strong`.
+  static final TextStyle rowTitle = TypeLadder.calloutStrong;
 
-  /// `.challenge-card h3` — the base `h3` at 17.
-  static final TextStyle challengeTitle = _style(
-    17,
-    FontWeight.w700,
-    height: 1.5,
-    tracking: -0.2,
-  );
-
-  /// `.stat-number` — the statistic inside a `.card`, NOT the `.panel .three`
-  /// override [statValue] transcribes. Two sizes because the prototype has two.
-  static final TextStyle cardStatValue = _style(
-    27,
-    FontWeight.w600,
-    height: 1.4,
-    tracking: -1,
-  );
-
-  /// `.stat-number > span` — its unit.
-  static final TextStyle cardStatUnit = _style(
-    11,
-    FontWeight.w400,
-    height: 1.4,
-  );
+  /// `.challenge-card h3`.
+  static final TextStyle challengeTitle = TypeLadder.headline;
 
   /// `.button`.
-  static final TextStyle buttonLabel = _style(13, FontWeight.w700);
+  static final TextStyle buttonLabel = TypeLadder.calloutStrong;
 
-  /// `.text-button` — the page-level link, not [textButton]'s in-panel 11px.
-  static final TextStyle textLink = _style(12, FontWeight.w700);
+  /// `.text-button` — the page-level link.
+  static final TextStyle textLink = TypeLadder.calloutStrong;
 
-  /// `.coach-intro h2`.
-  static final TextStyle coachIntroTitle = _style(
-    26,
-    FontWeight.w700,
-    height: 1.35,
-    tracking: -1,
-  );
-
-  /// `.coach-intro p` and `.coach-message` — both `12px/1.9`.
-  static final TextStyle coachBody = _style(12, FontWeight.w400, height: 1.9);
+  /// `.coach-intro p` and `.coach-message`.
+  static final TextStyle coachBody = TypeLadder.caption;
 
   /// `.form-note`, `.journal-strip p`.
-  static final TextStyle formNote = _style(10, FontWeight.w400);
+  static final TextStyle formNote = TypeLadder.caption;
 
-  /// `.field input` — 16px, which is also what keeps iOS from zooming a form.
-  static final TextStyle inputText = _style(16, FontWeight.w400);
+  /// `.field input` — what is typed into a field.
+  static final TextStyle inputText = TypeLadder.body;
 }

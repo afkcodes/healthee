@@ -60,6 +60,7 @@ AI_ROUTES: list[tuple[str, str, dict | None, dict | None, str]] = [
         {"messages": [{"role": "user", "content": "hi"}]},
         gate.COACH,
     ),
+    ("POST", "/api/coach/review", None, None, gate.COACH),
     ("POST", "/api/today/action", None, None, gate.DAILY_ACTION),
     ("GET", "/api/sleep/insight", None, None, gate.INSIGHT),
     ("GET", "/api/activity/insight", None, None, gate.INSIGHT),
@@ -77,6 +78,7 @@ AI_ROUTES: list[tuple[str, str, dict | None, dict | None, str]] = [
     ("POST", "/api/challenges/999999/adopt", None, None, gate.CHALLENGES),
     ("POST", "/api/challenges/999999/abandon", None, None, gate.CHALLENGES),
     ("POST", "/api/challenges/999999/adapt", None, None, gate.CHALLENGES),
+    ("PATCH", "/api/challenges/999999/slot", None, {"slot": "After lunch"}, gate.CHALLENGES),
     ("GET", "/api/programs", None, None, gate.CHALLENGES),
     ("POST", "/api/programs/999999/adopt", None, None, gate.CHALLENGES),
     ("POST", "/api/programs/999999/abandon", None, None, gate.CHALLENGES),
@@ -103,12 +105,18 @@ FREE_PATHS: dict[str, str] = {
     "/api/account": "authenticated identity for durable local data ownership",
     "/api/log": "free tier — manual logging",
     "/api/log/recent": "free tier — manual logging",
+    "/api/log/{entry_id}": "free tier — manual logging (undo one entry)",
     "/api/workout/gps": "free tier — GPS routes",
     "/api/workout/gps/{track_id}": "free tier — GPS routes",
     "/api/map": "free tier — the basemap's credit line and zoom range, not owner data",
     "/api/map/tiles/{z}/{x}/{y}": (
         "free tier — a proxied public map tile. It is context, never data or AI output, "
         "and paywalling it would leave a free owner's recorded track drawn on nothing"
+    ),
+    "/api/coach/ledger": (
+        "free tier — nothing here is generated: every verdict is the owner's own strap "
+        "data checked by a deterministic rule (challenges.day_verdicts), and the stored "
+        "weekly-review `pattern` was written, and paid for, when that review was made"
     ),
     "/api/me": "identity",
     "/api/device": "identity — device pairing, and the list of what is paired",

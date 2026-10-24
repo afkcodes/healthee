@@ -135,10 +135,7 @@ class _FindingDetail extends StatelessWidget {
             // not a metric the corpus has an entry for. `findings_section.dart`
             // makes the same call for the same reason.
             null,
-            detail: MetricDetail(
-              title: title,
-              notes: finding.researchNoteIds,
-            ),
+            detail: MetricDetail(title: title, notes: finding.researchNoteIds),
             fallbackTitle: title,
           ),
         ),
@@ -148,9 +145,8 @@ class _FindingDetail extends StatelessWidget {
           // The finding is the subject. It rides in the location as the
           // conversation's opening message, which is the only place
           // `/api/coach` has for it — `coach_screen.dart` argues that.
-          onPressed: () => unawaited(
-            context.push(coachLocation(findingTopic(title))),
-          ),
+          onPressed: () =>
+              unawaited(context.push(coachLocation(findingTopic(title)))),
         ),
         const SizedBox(height: Insets.xl),
         const DataFooter(),
@@ -186,7 +182,8 @@ class _NoLongerListed extends StatelessWidget {
       SizedBox(height: Insets.lg),
       Notice(
         title: 'Patterns are recomputed each night',
-        body: 'A pair that cleared the correction for the size of the search '
+        body:
+            'A pair that cleared the correction for the size of the search '
             'yesterday may not clear it today. Nothing is wrong — this one is '
             'simply not among the current findings.',
       ),

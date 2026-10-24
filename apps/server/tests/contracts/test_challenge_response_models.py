@@ -215,6 +215,12 @@ def _challenge_fixture(cadence: str) -> dict[str, Any]:
         "program_id": None,
         "rung_index": None,
         "kind": "standard",
+        "action_text": None,
+        "slot_text": None,
+        "floor_value": None,
+        "floor_text": None,
+        "counts_when": None,
+        "days_required": None,
     }
 
 

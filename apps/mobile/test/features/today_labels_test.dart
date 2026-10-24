@@ -7,6 +7,7 @@ library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:healthee/features/today/today_labels.dart';
+import 'package:healthee/shared/format/duration.dart';
 
 void main() {
   group('the figures', () {
@@ -18,8 +19,8 @@ void main() {
 
     test('a duration reads as a clock in a tile and as words elsewhere', () {
       expect(clockDuration(380), '6:20');
-      expect(hoursMinutes(380), '6h 20m');
-      expect(decimalHours(380), '6.3h');
+      expect(durationText(380), '6\u00A0h 20\u00A0min');
+      expect(hoursText(380 / 60), '6.3\u00A0h');
     });
 
     test(

@@ -87,8 +87,8 @@ void main() {
     ) async {
       await _pump(tester, const WorkoutHistoryScreen());
       // `H.row('walk','Morning run','30 min · 4.2 km · 135 bpm avg','workout')`
-      // in the app's own duration vocabulary — `durationLabel`, not a third one.
-      expect(find.text('30m · 4.2 km · 135 bpm avg'), findsOneWidget);
+      // in the app's own duration vocabulary — `durationText`, not a third one.
+      expect(find.text('30\u00A0min · 4.2 km · 135 bpm avg'), findsOneWidget);
     });
 
     testWidgets('a day with sessions draws no empty notice', (tester) async {
@@ -172,14 +172,14 @@ void main() {
       // are the strings a reader actually sees rather than two boxes.
       final said = textsOn(tester);
       for (final figure in <String>[
-        '4.2 km',
-        '30 min',
-        '7:08 /km', // the server's 7.14, as a clock
-        '135 bpm',
-        '250 kcal',
+        '4.2\u00A0km',
+        '30\u00A0min',
+        '7:08\u00A0/km', // the server's 7.14, as a clock
+        '135\u00A0bpm',
+        '250\u00A0kcal',
         '36.9', // TRIMP is unitless
-        '8.4 km/h',
-        '+10 bpm',
+        '8.4\u00A0km/h',
+        '+10\u00A0bpm',
       ]) {
         expect(said, contains(figure));
       }

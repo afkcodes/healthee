@@ -71,7 +71,7 @@ class StatBlock extends StatelessWidget {
             children: <InlineSpan>[
               if (unit != null && unit.isNotEmpty)
                 TextSpan(
-                  text: ' $unit',
+                  text: '\u00A0$unit',
                   style: FormType.statUnit.copyWith(color: colors.ink2),
                 ),
             ],

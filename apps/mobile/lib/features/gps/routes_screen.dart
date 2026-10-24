@@ -20,6 +20,7 @@ import 'package:healthee/core/theme/tone_scope.dart';
 import 'package:healthee/data/gps/route_repository.dart';
 import 'package:healthee/data/gps/route_summary.dart';
 import 'package:healthee/shared/format/date_labels.dart';
+import 'package:healthee/shared/format/duration.dart';
 import 'package:healthee/shared/format/time_labels.dart';
 import 'package:healthee/shared/states/account_async_view.dart';
 import 'package:healthee/shared/states/state_scaffold.dart';
@@ -111,9 +112,10 @@ class _RouteRow extends StatelessWidget {
   String _detail() {
     final List<String> parts = <String>[
       if (route.distanceKm case final double km) '${km.toStringAsFixed(2)} km',
-      if (route.durationS case final int seconds)
-        durationLabel(seconds ~/ 60),
+      if (route.durationS case final int seconds) durationText(seconds ~/ 60),
     ];
-    return parts.isEmpty ? 'Distance and duration unavailable' : parts.join(' · ');
+    return parts.isEmpty
+        ? 'Distance and duration unavailable'
+        : parts.join(' · ');
   }
 }

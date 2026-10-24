@@ -37,10 +37,10 @@ import '../shared/_v02_chart_probe.dart';
 import '_workouts_host.dart';
 
 /// `DetailPage`'s own page padding, both sides.
-const double kPagePadding = Insets.lg * 2;
+const double kPagePadding = Insets.gutter * 2;
 
-/// `.card { padding: 20px; border: 1px }`, both sides of both.
-const double kCardPadding = (SurfaceCard.padding + hairline) * 2;
+/// `.card { padding: 20px }` with no border, both sides.
+const double kCardPadding = SurfaceCard.padding * 2;
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -130,7 +130,7 @@ void main() {
         },
       );
       // `StatBlock` draws its figure and unit as one rich span.
-      expect(textsOn(tester), contains('30 min'));
+      expect(textsOn(tester), contains('30\u00A0min'));
       expect(
         find.textContaining(
           'Distance — The strap recorded no distance for this session',

@@ -8,6 +8,7 @@
     },
     {
       "amount": 10.0,
+      "id": "63272462-0cce-4a33-a9f7-3c05124dcfb1",
       "name": "mindfulness",
       "notes": null,
       "ts": 1785503025185,
@@ -16,6 +17,7 @@
     },
     {
       "amount": 80.0,
+      "id": "7f360cce-ef88-49f7-ad04-7a918d4addac",
       "name": null,
       "notes": null,
       "ts": 1785499425185,
@@ -24,6 +26,7 @@
     },
     {
       "amount": 45.0,
+      "id": "9e300177-bb41-4eb6-b7c1-a03abecb1cb0",
       "name": "strength",
       "notes": null,
       "ts": 1785423825087,

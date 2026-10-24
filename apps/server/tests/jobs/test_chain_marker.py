@@ -157,7 +157,7 @@ def test_the_marker_never_moves_backwards(two_owners: None) -> None:  # noqa: AR
 
 def _stub_steps(monkeypatch: pytest.MonkeyPatch) -> dict[str, int]:
     """Stub every step (and entitlement); the MARKER stays real — it is the subject."""
-    calls = {"challenges": 0, "correlate": 0, "recs": 0, "warm": 0, "briefing": 0}
+    calls = {"challenges": 0, "correlate": 0, "coach_today": 0, "warm": 0, "briefing": 0}
     monkeypatch.setattr(chain, "is_premium", lambda _user_id: True)
 
     def make(name: str):

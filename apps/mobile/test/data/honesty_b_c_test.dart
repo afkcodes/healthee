@@ -98,7 +98,7 @@ void main() {
       // the same constant, which is the point of there being one.
       expect(find.textContaining('No sleep need yet'), findsWidgets);
       // And nowhere on the panel does the deleted assumption reappear.
-      expect(find.textContaining('8h 00m'), findsNothing);
+      expect(find.textContaining('8\u00A0h'), findsNothing);
     });
 
     testWidgets('WITH A NEED THE PANEL MEASURES AGAINST THAT NEED', (
@@ -119,7 +119,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('7h 30m'), findsWidgets);
+      expect(find.textContaining('7\u00A0h 30\u00A0min'), findsWidgets);
       expect(find.byType(WithheldPanel), findsNothing);
     });
   });
@@ -184,14 +184,17 @@ void main() {
 
     test('and the wire does not carry them either', () {
       final buckets =
-          loadJson('../../packages/contracts/snapshots/today.json')['today_step_buckets']!
+          loadJson(
+                '../../packages/contracts/snapshots/today.json',
+              )['today_step_buckets']!
               as List<Object?>;
       expect(buckets, isNotEmpty);
       for (final bucket in buckets) {
-        expect(
-          (bucket! as Map<String, Object?>).keys.toSet(),
-          <String>{'bucket', 'time', 'steps'},
-        );
+        expect((bucket! as Map<String, Object?>).keys.toSet(), <String>{
+          'bucket',
+          'time',
+          'steps',
+        });
       }
     });
   });

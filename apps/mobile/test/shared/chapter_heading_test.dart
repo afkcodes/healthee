@@ -62,7 +62,7 @@ const List<double> kHandsetWidths = <double>[320, 360, 390, 414];
 const String kShortTitle = 'Night';
 
 /// The page's own horizontal padding — `instrument_screen.dart`'s `Insets.lg`.
-const double kPagePadding = 15;
+const double kPagePadding = 16;
 
 void main() {
   Future<void> pumpHeading(

@@ -62,13 +62,11 @@
 /// value computed from the branch stacks would have to be recomputed on every
 /// push anywhere in the app.
 ///
-/// ## The Coach FAB is Today's, and only Today's
+/// ## No floating button
 ///
-/// `~/projects/healthee-legacy/app/lib/main.dart:399` — `if (_tab == 0) return
-/// CoachFab(...)`. It sits in the shell rather than on the Today screen because
-/// the `Scaffold` with the bottom bar is here, and a FAB inside the branch would
-/// float over the bar instead of above it. Legacy also has a record-workout FAB on
-/// Activity; this app has no workout recorder, so there is none.
+/// The coach button used to float here, over Today's content. The owner found
+/// it covering what it floated over, and the approved redesign moved it into
+/// Today's header (`today_header.dart`). Nothing floats over a screen now.
 ///
 /// ## The bar is in the `bottomNavigationBar` slot, not over the content
 ///
@@ -87,14 +85,10 @@
 /// says the owner is somewhere they are not.
 library;
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:healthee/core/router.dart';
 import 'package:healthee/core/tabs.dart';
-import 'package:healthee/features/coach/widgets/coach_fab.dart';
 import 'package:healthee/features/settings/widgets/update_sheet.dart';
 import 'package:healthee/shared/app_tab_bar.dart';
 
@@ -108,7 +102,6 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onHome = navigationShell.currentIndex == kHomeTabIndex;
     // Wrapped here and nowhere else: the update sheet is over the APP, so it
     // needs a context under the root navigator — the same reason `showAppSheet`
     // passes `useRootNavigator: true`. It draws nothing of its own.
@@ -126,9 +119,6 @@ class AppShell extends StatelessWidget {
         },
         child: Scaffold(
           body: navigationShell,
-          floatingActionButton: onHome
-              ? CoachFab(onTap: () => unawaited(context.push(Routes.coach)))
-              : null,
           bottomNavigationBar: AppTabBar(
             currentIndex: navigationShell.currentIndex,
             onSelect: (index) => navigationShell.goBranch(

@@ -35,7 +35,9 @@ const InstrumentHues _hues = InstrumentHues.light();
 
 Widget _host(Widget child, {ThemeData? theme}) => MaterialApp(
   theme: theme ?? AppTheme.light,
-  home: Scaffold(body: Center(child: SizedBox(width: 320, child: child))),
+  home: Scaffold(
+    body: Center(child: SizedBox(width: 320, child: child)),
+  ),
 );
 
 /// A host with NO width constraint, for widgets that size themselves.
@@ -70,12 +72,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      double scale() => tester
-          .widget<AnimatedScale>(find.byType(AnimatedScale))
-          .scale;
+      double scale() =>
+          tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale;
       expect(scale(), 1);
 
-      final gesture = await tester.startGesture(tester.getCenter(find.text('press')));
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('press')),
+      );
       await tester.pump();
       expect(scale(), 0.975, reason: 'legacy’s `.tap:active { scale(0.975) }`');
 
@@ -101,14 +104,16 @@ void main() {
       expect(tester.widget<Icon>(find.byType(Icon)).size, 20);
     });
 
-    testWidgets('the avatar is 38 px of accent with the letter at 42%', (
+    testWidgets('the avatar is 38 px of accent with the letter on the ladder', (
       tester,
     ) async {
       await tester.pumpWidget(_tightHost(const HAvatar('A')));
       await tester.pumpAndSettle();
 
       expect(tester.getSize(find.byType(HAvatar)), const Size(38, 38));
-      expect(_styleOf(tester, 'A').fontSize, closeTo(38 * 0.42, 1e-9));
+      // 42% of 38 is a 15.96 px bold request, which snaps to bodyStrong.
+      expect(_styleOf(tester, 'A').fontSize, 15);
+      expect(_styleOf(tester, 'A').fontWeight, FontWeight.w600);
       expect(_styleOf(tester, 'A').color, _light.onAccent);
     });
   });
@@ -127,10 +132,12 @@ void main() {
       await tester.pumpAndSettle();
 
       final padding = tester.widget<Padding>(
-        find.descendant(
-          of: find.byType(InstrumentModule),
-          matching: find.byType(Padding),
-        ).first,
+        find
+            .descendant(
+              of: find.byType(InstrumentModule),
+              matching: find.byType(Padding),
+            )
+            .first,
       );
       expect(padding.padding, const EdgeInsets.all(14));
 
@@ -154,32 +161,37 @@ void main() {
       );
     });
 
-    testWidgets('the eyebrow is uppercase on screen and NOT to a screen reader', (
-      tester,
-    ) async {
-      await tester.pumpWidget(_host(const ModuleLabel('Resting HR')));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'the eyebrow is uppercase on screen and NOT to a screen reader',
+      (tester) async {
+        await tester.pumpWidget(_host(const ModuleLabel('Resting HR')));
+        await tester.pumpAndSettle();
 
-      expect(find.text('RESTING HR'), findsOneWidget);
-      expect(_styleOf(tester, 'RESTING HR').fontSize, 9);
-      final handle = tester.ensureSemantics();
-      expect(find.bySemanticsLabel('Resting HR'), findsOneWidget);
-      handle.dispose();
-    });
+        expect(find.text('RESTING HR'), findsOneWidget);
+        expect(_styleOf(tester, 'RESTING HR').fontSize, 12);
+        expect(_styleOf(tester, 'RESTING HR').fontWeight, FontWeight.w700);
+        final handle = tester.ensureSemantics();
+        expect(find.bySemanticsLabel('Resting HR'), findsOneWidget);
+        handle.dispose();
+      },
+    );
 
-    testWidgets('the value is 27 px with its unit at 10 on the baseline', (
+    testWidgets('the value is title1 with its unit a caption on the baseline', (
       tester,
     ) async {
       await tester.pumpWidget(
         _host(const ModuleValue(value: '7:50', unit: 'hrs')),
       );
       await tester.pumpAndSettle();
-      expect(_styleOf(tester, '7:50').fontSize, 27);
-      expect(_styleOf(tester, 'hrs').fontSize, 10);
-      expect(_styleOf(tester, 'hrs').color, _light.ink3);
+      expect(_styleOf(tester, '7:50').fontSize, 28);
+      expect(_styleOf(tester, 'hrs').fontSize, 12);
+      expect(_styleOf(tester, 'hrs').fontWeight, FontWeight.w400);
+      expect(_styleOf(tester, 'hrs').color, _light.ink2);
     });
 
-    testWidgets('a module that opens PRESSES, it does not ripple', (tester) async {
+    testWidgets('a module that opens PRESSES, it does not ripple', (
+      tester,
+    ) async {
       var opened = 0;
       await tester.pumpWidget(
         _host(
@@ -193,19 +205,23 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(InkWell), findsNothing, reason: 'legacy scales, not ripples');
+      expect(
+        find.byType(InkWell),
+        findsNothing,
+        reason: 'legacy scales, not ripples',
+      );
       expect(find.byType(HTap), findsOneWidget);
       await tester.tap(find.byType(InstrumentModule));
       await tester.pumpAndSettle();
       expect(opened, 1);
     });
 
-    testWidgets('the foot is legacy’s 9 px at 0.04 em, 8 px above', (tester) async {
+    testWidgets('the foot is the label step, 8 px above', (tester) async {
       await tester.pumpWidget(_host(const ModuleFoot('goal 10,000 · 84%')));
       await tester.pumpAndSettle();
       final style = _styleOf(tester, 'GOAL 10,000 · 84%');
-      expect(style.fontSize, 9);
-      expect(style.letterSpacing, closeTo(0.36, 1e-9));
+      expect(style.fontSize, 12);
+      expect(style.letterSpacing, 0.72);
       expect(
         tester.widget<Padding>(find.byType(Padding).first).padding,
         const EdgeInsets.only(top: 8),

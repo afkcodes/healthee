@@ -22,7 +22,6 @@ import 'package:healthee/shared/charts/v02/v02_bar_chart.dart';
 import 'package:healthee/shared/charts/v02/v02_bucket_chart.dart';
 import 'package:healthee/shared/charts/v02/v02_linked_chart.dart';
 import 'package:healthee/shared/charts/v02/v02_sparkline.dart';
-import 'package:healthee/shared/v02/instruments/age_scale.dart';
 import 'package:healthee/shared/v02/instruments/vo2max_rail.dart';
 
 import '../_today_stubs.dart';
@@ -33,7 +32,7 @@ import '_today_host.dart';
 /// Replays a painter that IS the finder, rather than one inside it.
 ///
 /// `paintedBy` and `paintedAt` both look for a `CustomPaint` **descending from**
-/// what they are given. `AgeScale` and `Vo2maxRail` publish a key on the
+/// what they are given. `Vo2maxRail` publishes a key on the
 /// `CustomPaint` itself, so the descendant search finds nothing — this replays
 /// the one that was found, at the size the layout gave it.
 List<RecordedInvocation> replayKeyed(WidgetTester tester, Finder paint) {
@@ -177,17 +176,6 @@ void main() {
   });
 
   group('the hero instruments', () {
-    testWidgets('THE AGE RULER IS LAID OUT AT ITS OWN HEIGHT AND PAINTS', (
-      tester,
-    ) async {
-      await openToday(tester);
-      final scale = find.byKey(AgeScale.plotKey);
-      await reveal(tester, scale);
-
-      expect(tester.getSize(scale).height, AgeScale.height);
-      expect(replayKeyed(tester, scale), isNotEmpty);
-    });
-
     testWidgets('THE VO2MAX RAIL PAINTS AT ITS LAID-OUT SIZE', (tester) async {
       await openToday(tester);
       final rail = find.byKey(Vo2maxRail.plotKey);

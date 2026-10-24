@@ -39,9 +39,9 @@
 /// stays.
 library;
 
+import 'package:flutter/widgets.dart';
 import 'package:healthee/data/honesty/citations.dart';
 import 'package:healthee/data/honesty/disclosure.dart';
-import 'package:meta/meta.dart';
 
 /// One card's own provenance, bound for its ⓘ sheet.
 @immutable
@@ -58,6 +58,8 @@ class MetricDetail {
     this.method = const <String>[],
     this.disclosures = const <Disclosure>[],
     this.disclosuresLabel,
+    this.figure,
+    this.action,
   });
 
   /// The bundle for a card whose prose was written by a model.
@@ -78,6 +80,8 @@ class MetricDetail {
     List<String> method = const <String>[],
     List<Disclosure> disclosures = const <Disclosure>[],
     String? disclosuresLabel,
+    Widget? figure,
+    MetricAction? action,
   }) => MetricDetail(
     title: title,
     notes: grounding.noteIds,
@@ -89,6 +93,8 @@ class MetricDetail {
     method: method,
     disclosures: disclosures,
     disclosuresLabel: disclosuresLabel,
+    figure: figure,
+    action: action,
   );
 
   /// The bundle a card with nothing to disclose passes. Also the default.
@@ -159,6 +165,14 @@ class MetricDetail {
   /// What to call [disclosures] on the sheet. Defaults in the sheet itself.
   final String? disclosuresLabel;
 
+  /// A picture the sheet draws above its text blocks: the ladder a number was
+  /// read off, the rail it sits on. Drawn at rest, never animated.
+  final Widget? figure;
+
+  /// One button at the foot of the heading: where the owner can go from here.
+  /// For a metric with a history the sheet's own history button is enough.
+  final MetricAction? action;
+
   /// True when there is nothing here worth an ⓘ of its own.
   bool get isEmpty =>
       notes.isEmpty &&
@@ -168,7 +182,9 @@ class MetricDetail {
       source == null &&
       references.isEmpty &&
       method.isEmpty &&
-      disclosures.isEmpty;
+      disclosures.isEmpty &&
+      figure == null &&
+      action == null;
 
   /// The negation, for a call site that reads better positively.
   bool get isNotEmpty => !isEmpty;
@@ -194,5 +210,23 @@ class MetricDetail {
     method: method,
     disclosures: disclosures,
     disclosuresLabel: disclosuresLabel ?? this.disclosuresLabel,
+    figure: figure,
+    action: action,
   );
+}
+
+/// A sheet's one button: its words and where it goes.
+///
+/// The sheet closes itself before calling [onTap], so the callback may push a
+/// route from the screen that opened the sheet.
+@immutable
+class MetricAction {
+  /// Builds the button.
+  const MetricAction(this.label, this.onTap);
+
+  /// The button's words.
+  final String label;
+
+  /// Where it goes.
+  final VoidCallback onTap;
 }

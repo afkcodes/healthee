@@ -1,12 +1,12 @@
-/// The Insights relationship card opens the finding, and carries it there.
+/// The Insights pattern tile opens the finding, and carries it there.
 ///
 /// The owner, on the installed build: *"click ing on it nothing happens where as
-/// in our design demo on clicked it shows data related."* `EntryCard` had
-/// carried `actionLabel`/`onOpen` since it was built and nothing ever passed
-/// them, so the card looked complete and did nothing. Nothing failed, because a
-/// widget that is never handed a callback cannot fail.
+/// in our design demo on clicked it shows data related."* The card had carried
+/// an `onOpen` since it was built and nothing ever passed it, so the card looked
+/// complete and did nothing. Nothing failed, because a widget that is never
+/// handed a callback cannot fail.
 ///
-/// This is the guard: tap the card, assert the location changed to the finding's
+/// This is the guard: tap the tile, assert the location changed to the finding's
 /// own route, and assert the finding travelled with it — the screen must draw
 /// the numbers the card was showing rather than re-deriving them.
 library;
@@ -36,7 +36,7 @@ const Finding _finding = Finding(
 );
 
 void main() {
-  testWidgets('THE RELATIONSHIP CARD OPENS THE FINDING', (tester) async {
+  testWidgets('THE PATTERN TILE OPENS THE FINDING', (tester) async {
     String? landed;
     Object? carried;
     final router = GoRouter(
@@ -44,7 +44,7 @@ void main() {
         GoRoute(
           path: '/',
           builder: (context, state) => const Scaffold(
-            body: Center(child: FindingEntryCard(finding: _finding)),
+            body: Center(child: PatternHeroTile(finding: _finding)),
           ),
         ),
         GoRoute(
@@ -64,19 +64,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // The affordance, which is now the chevron rather than the word. An
-    // `EntryCard` has always been one tap target and printed `Explore` under
-    // its own title as well; the mark says the card opens and costs no row.
-    // The word survives as the control's semantics, for a reader who cannot
-    // see the mark.
-    expect(find.text('Explore'), findsNothing);
+    // The tile is one tap target; its words are in the semantics, for a reader
+    // who cannot see it.
     expect(
-      find.bySemanticsLabel(RegExp('Explore')),
+      find.bySemanticsLabel(RegExp('HRV and Recovery')),
       findsOneWidget,
       reason: 'the destination must still be announced',
     );
 
-    await tester.tap(find.byType(FindingEntryCard));
+    await tester.tap(find.byType(PatternHeroTile));
     await tester.pumpAndSettle();
 
     expect(find.text('opened'), findsOneWidget);

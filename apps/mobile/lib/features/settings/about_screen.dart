@@ -123,7 +123,7 @@ class AboutScreen extends ConsumerWidget {
                   children: <Widget>[
                     Text(
                       versionLine(ref.watch(appVersionProvider)),
-                      style: FormType.fieldHint.copyWith(color: colors.ink3),
+                      style: FormType.fieldHint.copyWith(color: colors.ink2),
                     ),
                     const SizedBox(height: 8),
                     const UpdateNotice(),

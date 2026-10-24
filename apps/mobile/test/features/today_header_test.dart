@@ -19,6 +19,7 @@ import 'dart:ui' show Tristate;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:healthee/core/router.dart';
+import 'package:healthee/core/routes.dart';
 import 'package:healthee/core/tabs.dart';
 import 'package:healthee/core/theme/app_theme.dart';
 import 'package:healthee/core/theme/tokens.dart';
@@ -177,7 +178,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         tester.widget<Text>(find.text('71%')).style!.color,
-        _light.ink3,
+        _light.ink2,
         reason: 'nothing has classified a link, so nothing may read healthy',
       );
 
@@ -297,12 +298,12 @@ void main() {
         'Sleep',
         'Activity',
         'Insights',
-        'Actions',
+        'Coach',
       ]);
-      // Coach is not among them. It is a FAB on Today and a sheet behind it,
-      // which is what legacy does (`app/lib/main.dart:399`) and what
-      // `docs/APP_DESIGN.md` §2 describes.
-      expect(kAppTabs.map((tab) => tab.label), isNot(contains('Coach')));
+      // The Coach tab is the weekly plan on `/actions`. The chat is still a
+      // FAB on Today and its own route (`/coach`), never a tab.
+      expect(kAppTabs.last.route, Routes.actions);
+      expect(kAppTabs.map((tab) => tab.route), isNot(contains(Routes.coach)));
     });
 
     test('EVERY TAB NAMES A ROUTE THE ROUTER WIRES', () {

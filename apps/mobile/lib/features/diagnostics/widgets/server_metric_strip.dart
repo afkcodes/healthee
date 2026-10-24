@@ -248,7 +248,7 @@ class _Value extends StatelessWidget {
         ),
         if (card.unit case final String unit) ...[
           const SizedBox(width: Insets.xs),
-          Text(unit, style: text.labelSmall?.copyWith(color: colors.ink3)),
+          Text(unit, style: text.labelSmall?.copyWith(color: colors.ink2)),
         ],
       ],
     );

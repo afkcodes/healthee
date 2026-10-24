@@ -51,11 +51,19 @@ import 'package:healthee/core/theme/sleep_type_scale.dart';
 import 'package:healthee/core/theme/tokens.dart';
 import 'package:healthee/core/theme/tone.dart';
 import 'package:healthee/core/theme/tone_scope.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 import 'package:healthee/core/theme/type_scale.dart';
+import 'package:healthee/core/theme/type_scale_keys.dart';
 import 'package:healthee/data/honesty/reading.dart';
 import 'package:healthee/data/models/sleep_night.dart';
 import 'package:healthee/features/sleep/sleep_format.dart';
-import 'package:healthee/shared/v02/colour_key.dart';
+import 'package:healthee/features/today/v02/today_key_numbers.dart'
+    show kSleepTrackMax, kSleepTrackMin;
+import 'package:healthee/shared/format/duration.dart';
+import 'package:healthee/shared/usual_range.dart';
+import 'package:healthee/shared/v02/key_number_card.dart';
+import 'package:healthee/shared/v02/range_bar.dart';
+import 'package:healthee/shared/v02/steps_bar.dart' show kLearningUsual;
 
 /// What the strap's own number is, said where the number is.
 const String kDeviceScoreCaption = 'Amazfit score\nDevice estimate';
@@ -63,10 +71,30 @@ const String kDeviceScoreCaption = 'Amazfit score\nDevice estimate';
 /// The night's headline: time asleep, and the strap's own score beside it.
 class SleepReading extends StatelessWidget {
   /// [night] is the most recent session on the payload.
-  const SleepReading({required this.night, super.key});
+  const SleepReading({
+    required this.night,
+    this.usual,
+    this.needMin,
+    super.key,
+  });
 
   /// The night being read.
   final SleepNight night;
+
+  /// The owner's usual time asleep (`sleep_usual.dart`), or null while there
+  /// are too few nights to have one.
+  final UsualRange? usual;
+
+  /// The server's sleep need, minutes, when it sent one.
+  final int? needMin;
+
+  /// Between the range bar's line and the three small figures.
+  static const double statsGap = 14;
+
+  /// The three small figures' gap, corner and padding.
+  static const double statGap = 8;
+  static const double statRadius = 16;
+  static const EdgeInsets statPadding = EdgeInsets.fromLTRB(12, 10, 12, 12);
 
   /// `padding: 8px 4px 20px`.
   static const EdgeInsets padding = EdgeInsets.fromLTRB(4, 8, 4, 20);
@@ -116,8 +144,17 @@ class SleepReading extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: keyGap),
-        ColourKey(keys(night)),
+        if (night.tstMin.valueOrNull case final double minutes) ...<Widget>[
+          const SizedBox(height: keyGap),
+          _bar(minutes),
+          const SizedBox(height: 10),
+          _verdictLine(colors, minutes),
+        ],
+        if (stats(night) case final List<(String, String)> figures
+            when figures.isNotEmpty) ...<Widget>[
+          const SizedBox(height: statsGap),
+          _stats(colors, figures),
+        ],
         if (refusals(night) case final List<String> lines when lines.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: noteGap),
@@ -130,14 +167,107 @@ class SleepReading extends StatelessWidget {
     );
   }
 
-  /// `bedtime`, `wake`, `in bed` — each dropped when it was not recorded.
-  static List<ColourKeyEntry> keys(SleepNight night) => <ColourKeyEntry>[
-    if (night.start case final DateTime start)
-      ColourKeyEntry('${clock(start)} bedtime', tone: Tone.sleep),
-    if (night.end case final DateTime end)
-      ColourKeyEntry('${clock(end)} wake', tone: Tone.movement),
+  /// The night against the owner's usual, on the 4 to 9 hour track Today uses.
+  Widget _bar(double minutes) {
+    final band = usual;
+    return RangeBar(
+      value: minutes,
+      min: kSleepTrackMin.toDouble(),
+      max: kSleepTrackMax.toDouble(),
+      band: band,
+      startLabel: hoursText(4),
+      endLabel: hoursText(9),
+      usualLabel: band == null
+          ? null
+          : 'usual ${durationText(band.low)} to ${durationText(band.high)}',
+      pendingLabel: kLearningUsual,
+      semanticLabel: 'Asleep ${durationText(minutes)}.',
+    );
+  }
+
+  /// The verdict, and how far the night was from the server's need.
+  Widget _verdictLine(HealtheeColors colors, double minutes) {
+    final side = usual?.sideOf(minutes);
+    final need = needMin;
+    final gap = need == null ? null : (need - minutes).round();
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: <Widget>[
+        if (side != null)
+          VerdictChip(
+            Verdict(
+              side.words,
+              side == UsualSide.below ? VerdictTone.worse : VerdictTone.neutral,
+            ),
+          ),
+        if (need != null && gap != null)
+          Text.rich(
+            TextSpan(
+              style: KeyType.line.copyWith(color: colors.ink2),
+              children: <InlineSpan>[
+                TextSpan(
+                  text: gap == 0
+                      ? 'Exactly'
+                      : '${durationText(gap.abs())} ${gap > 0 ? 'short' : 'over'}',
+                  style: TypeLadder.calloutStrong.copyWith(color: colors.ink),
+                ),
+                TextSpan(
+                  text:
+                      ' ${gap == 0 ? 'your' : 'of your'} ${durationText(need)} need.',
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _stats(HealtheeColors colors, List<(String, String)> figures) => Row(
+    children: <Widget>[
+      for (var i = 0; i < figures.length; i++) ...<Widget>[
+        if (i > 0) const SizedBox(width: statGap),
+        Expanded(
+          child: DecoratedBox(
+            decoration: ShapeDecoration(
+              color: colors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(statRadius),
+              ),
+            ),
+            child: Padding(
+              padding: statPadding,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    figures[i].$1,
+                    style: TypeScale.small.copyWith(color: colors.ink2),
+                  ),
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      figures[i].$2,
+                      style: KeyType.name.copyWith(color: colors.ink),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    ],
+  );
+
+  /// `In bed`, `Up`, `Time in bed` — each dropped when it was not recorded.
+  static List<(String, String)> stats(SleepNight night) => <(String, String)>[
+    if (night.start case final DateTime start) ('In bed', clock(start)),
+    if (night.end case final DateTime end) ('Up', clock(end)),
     if (night.tibMin.valueOrNull case final double minutes)
-      ColourKeyEntry.plain('${hoursMinutes(minutes)} in bed'),
+      ('Time in bed', durationText(minutes)),
   ];
 
   /// The server's own reason for every field this block could not draw.
@@ -161,7 +291,6 @@ class _Asleep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final family = context.family;
     final narrow = MediaQuery.sizeOf(context).width < SleepType.narrowWidth;
     final figure = narrow ? SleepType.durationNarrow : SleepType.duration;
     final minutes = night.tstMin.valueOrNull;
@@ -178,9 +307,13 @@ class _Asleep extends StatelessWidget {
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
           child: minutes == null
-              ? Text('—', style: figure.copyWith(color: colors.ink3))
+              ? Text('—', style: figure.copyWith(color: colors.ink2))
               : Text.rich(
-                  _spans(minutes, figure.copyWith(color: colors.ink), family),
+                  _spans(
+                    minutes,
+                    figure.copyWith(color: colors.ink),
+                    colors.ink2,
+                  ),
                   maxLines: 1,
                 ),
         ),
@@ -188,18 +321,20 @@ class _Asleep extends StatelessWidget {
     );
   }
 
-  /// `6h 20m` — the digits at figure size, the two letters at 22 in the family.
-  static TextSpan _spans(double minutes, TextStyle figure, Color family) {
-    final unit = SleepType.durationUnit.copyWith(color: family);
-    final whole = minutes.round();
+  /// `7 h 1 min` — the digits at figure size, the units smaller in ink3, each
+  /// joined to its figure by U+00A0. The hours and minutes rule is
+  /// `durationParts`, shared with `durationText`.
+  static TextSpan _spans(double minutes, TextStyle figure, Color unitColor) {
+    final unit = SleepType.durationUnit.copyWith(color: unitColor);
+    final parts = durationParts(minutes.round());
     return TextSpan(
       style: figure,
       children: <InlineSpan>[
-        TextSpan(text: '${whole ~/ 60}'),
-        TextSpan(text: 'h', style: unit),
-        const TextSpan(text: ' '),
-        TextSpan(text: (whole % 60).toString().padLeft(2, '0')),
-        TextSpan(text: 'm', style: unit),
+        for (var i = 0; i < parts.length; i++) ...<InlineSpan>[
+          if (i > 0) const TextSpan(text: ' '),
+          TextSpan(text: '${parts[i].$1}'),
+          TextSpan(text: '\u00A0${parts[i].$2}', style: unit),
+        ],
       ],
     );
   }
@@ -222,7 +357,7 @@ class _DeviceScore extends StatelessWidget {
         Text(
           score == null ? '—' : score.round().toString(),
           style: SleepType.deviceScore.copyWith(
-            color: score == null ? colors.ink3 : context.family,
+            color: score == null ? colors.ink2 : colors.ink,
           ),
         ),
         Text(

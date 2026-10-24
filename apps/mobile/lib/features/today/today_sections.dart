@@ -124,9 +124,9 @@ class TodayExtras {
     this.onOpenActions,
     this.onOpenRecovery,
     this.onOpenBody,
-    this.onOpenTerm,
     this.onOpenSleep,
     this.onOpenActivity,
+    this.onOpenTrends,
     this.onOpenMetric,
     this.onOpenFitness,
     this.onOpenWorkouts,
@@ -175,17 +175,17 @@ class TodayExtras {
   /// Opens the recovery detail — the hero's first summary row.
   final VoidCallback? onOpenRecovery;
 
-  /// Opens the biological-age detail — the hero's eyebrow arrow.
+  /// Opens the biological-age detail — a tap anywhere on the hero.
   final VoidCallback? onOpenBody;
-
-  /// Opens one age term's own screen, by the term's name.
-  final void Function(String term)? onOpenTerm;
 
   /// Opens the sleep tab — the hero's second summary row.
   final VoidCallback? onOpenSleep;
 
   /// Opens the activity tab — the hero's third summary row.
   final VoidCallback? onOpenActivity;
+
+  /// Opens `Your trends`, from the head of Today's three.
+  final VoidCallback? onOpenTrends;
 
   /// Opens one metric's own dated series, by its canonical id.
   ///
@@ -238,6 +238,7 @@ List<PageSection> todaySections(ScreenData data, TodayExtras extras) {
       navigation: extras.navigation,
       batteryPercent: extras.batteryPercent ?? data.day.batteryPercent,
       onOpenProfile: extras.onOpenProfile,
+      onOpenCoach: extras.onOpenCoach,
     ),
   );
   // The live-feed trust card is an age measured against right now, so it belongs

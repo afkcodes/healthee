@@ -11,6 +11,8 @@
 /// the paths are wanted — `core/parent_tabs.dart` does.
 library;
 
+import 'package:healthee/core/profile_field.dart';
+
 /// Every route's path, in one place. Screens reference these, never string
 /// literals — Standards section 3 bans the string-literal habit for user
 /// constants and the reasoning is the same here: a typo'd path fails at
@@ -22,7 +24,17 @@ abstract final class Routes {
   static const route = '/route';
   static const String challenge = '/challenge';
   static const String program = '/program';
-  static const String outcomes = '/outcomes';
+
+  /// The coach ledger, "Every yes, checked". Not `/coach`: that is the chat.
+  static const String coachLedger = '/coach-ledger';
+
+  /// The breathing plan: four items, the patterns, and the owner's switches.
+  static const String breathingPlan = '/breathing';
+
+  /// One breathing session. Carries `item=<morning|midday|night|onDemand>` for
+  /// a plan item or `pattern=<id>` for an ad hoc one; see
+  /// [breathingPlayerLocation].
+  static const String breathingPlayer = '/breathing/play';
   static const String workouts = '/workouts';
   static const String workout = '/workout';
   static const String profile = '/profile';
@@ -79,6 +91,9 @@ abstract final class Routes {
   /// The recovery model, opened up: its weights, its factors, and each signal
   /// against the owner's own baseline.
   static const String recovery = '/recovery';
+
+  /// `Your trends`: the main readings over a week, a month or six months.
+  static const String trends = '/trends';
 
   /// Every night in the window, and the way into one of them.
   static const String sleepHistory = '/sleep-history';
@@ -197,6 +212,48 @@ String? coachTopicOf(Uri uri) {
   return subject.isEmpty ? null : subject;
 }
 
+/// The breathing player's location for a plan [item] (a `BreathingItemKind`
+/// name) or an ad hoc [pattern] id. [item] wins when both are given.
+String breathingPlayerLocation({String? item, String? pattern}) {
+  final String key = item != null ? 'item' : 'pattern';
+  final String? value = item ?? pattern;
+  return value == null
+      ? Routes.breathingPlayer
+      : '${Routes.breathingPlayer}?$key=${Uri.encodeQueryComponent(value)}';
+}
+
+/// Where a tapped notification with [payload] leads. Anything this app did not
+/// schedule goes to the actions list, as it always did.
+String notificationRoute(String payload) => switch (payload) {
+  'sleep' => Routes.sleep,
+  'breathing' => Routes.breathingPlan,
+  _ => Routes.actions,
+};
+
+/// The query parameter the profile's focused field rides in.
+const String kFocusParameter = 'focus';
+
+/// The profile's location, opened on [focus] when there is one.
+///
+/// `/profile?focus=weight`. The same pattern as [coachLocation]: one builder,
+/// so a caller cannot spell the field a way [profileFocusOf] does not read.
+String profileLocation({ProfileField? focus}) => focus == null
+    ? Routes.profile
+    : '${Routes.profile}?$kFocusParameter=${focus.name}';
+
+/// [profileLocation] read back: the field named in [uri], or null for the
+/// plain profile. An unknown name is no field, the same answer a link that
+/// carried none gets, rather than a guess at which field was meant.
+ProfileField? profileFocusOf(Uri uri) {
+  final String? raw = uri.queryParameters[kFocusParameter];
+  for (final ProfileField field in ProfileField.values) {
+    if (field.name == raw) {
+      return field;
+    }
+  }
+  return null;
+}
+
 /// The query parameter the selected day rides in — `?date=2026-07-29`.
 ///
 /// The prototype's own name for it (`history-data.js`), kept so a URL read off
@@ -222,6 +279,7 @@ const Set<String> kDateAwareRoutes = <String>{
   Routes.fitness,
   Routes.history,
   Routes.sleepHistory,
+  Routes.trends,
   Routes.workouts,
   Routes.journal,
   Routes.recommendations,

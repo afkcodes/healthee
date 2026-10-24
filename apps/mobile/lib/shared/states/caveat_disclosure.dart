@@ -119,8 +119,12 @@ Future<void> showCaveats(
   }
   await showAppSheet<void>(
     context: context,
-    builder: (context) =>
-        _CaveatSheet(caveats: caveats, label: label, title: title, blurb: blurb),
+    builder: (context) => _CaveatSheet(
+      caveats: caveats,
+      label: label,
+      title: title,
+      blurb: blurb,
+    ),
   );
 }
 
@@ -165,14 +169,11 @@ class CaveatNote extends StatelessWidget {
                 Expanded(
                   child: Text(
                     caveatHeadline(caveats.length),
-                    style: HType.sans(colors.ink2, size: 11.5, height: 1.4),
+                    style: HType.sans(colors.ink2, size: 11.5),
                   ),
                 ),
                 const SizedBox(width: Insets.sm),
-                Text(
-                  'READ',
-                  style: HType.label(colors.accent, tracking: 0.1),
-                ),
+                Text('READ', style: HType.label(colors.accent)),
               ],
             ),
           ),
@@ -241,10 +242,7 @@ class _CaveatSheet extends StatelessWidget {
             // the value looked suspicious must not leave thinking a caveated
             // number was withheld, nor that an exclusion is something they can
             // fix by syncing.
-            Text(
-              blurb,
-              style: HType.sans(colors.ink3, size: 12.5, height: 1.45),
-            ),
+            Text(blurb, style: HType.sans(colors.ink2, size: 12.5)),
             const SizedBox(height: 18),
             for (final caveat in caveats) _CaveatBlock(caveat: caveat),
           ],
@@ -271,10 +269,7 @@ class _CaveatBlock extends StatelessWidget {
             _Eyebrow(term),
             const SizedBox(height: 7),
           ],
-          Text(
-            caveat.message,
-            style: HType.sans(colors.ink, size: 14.5, height: 1.55),
-          ),
+          Text(caveat.message, style: HType.sans(colors.ink, size: 14.5)),
         ],
       ),
     );
@@ -298,10 +293,7 @@ class _Eyebrow extends StatelessWidget {
     return Semantics(
       label: text,
       child: ExcludeSemantics(
-        child: Text(
-          text.toUpperCase(),
-          style: HType.label(colors.ink3, tracking: 0.12),
-        ),
+        child: Text(text.toUpperCase(), style: HType.label(colors.ink2)),
       ),
     );
   }

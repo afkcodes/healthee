@@ -23,7 +23,7 @@ import '_v02_harness.dart';
 
 void main() {
   group('.card and .card.flush', () {
-    testWidgets('a card is 22px round, surface, with one hairline', (
+    testWidgets('a card is 20px round, surface, with NO border', (
       tester,
     ) async {
       await pumpV02(tester, const PlainCard(child: SizedBox(height: 40)));
@@ -31,7 +31,8 @@ void main() {
       final box = boxOf(tester, find.byType(Container).first);
       expect(radiusOf(box), PlainCard.radius);
       expect(groundOf(box), kColors.surface);
-      expect(edgeOf(box)!.width, 1);
+      expect(PlainCard.radius, 20);
+      expect(edgeOf(box), isNull);
     });
 
     testWidgets('.card { padding: 20px } is what the child is inset by', (
@@ -45,9 +46,9 @@ void main() {
 
       final card = tester.getRect(find.byType(PlainCard));
       final child = tester.getRect(find.byKey(key));
-      // The 1px border sits outside the padding — `box-sizing: border-box`.
-      expect(child.left - card.left, closeTo(PlainCard.padding + 1, 0.01));
-      expect(card.right - child.right, closeTo(PlainCard.padding + 1, 0.01));
+      // There is no border, so the padding is the whole inset.
+      expect(child.left - card.left, closeTo(PlainCard.padding, 0.01));
+      expect(card.right - child.right, closeTo(PlainCard.padding, 0.01));
     });
 
     testWidgets('a flush card draws the rule BETWEEN rows, never outside', (
@@ -101,9 +102,9 @@ void main() {
           matching: find.byType(ColoredBox),
         ),
       );
-      // The 1px border is the only thing between the rule and the card's edge.
-      expect(rule.left - card.left, closeTo(1, 0.5));
-      expect(card.right - rule.right, closeTo(1, 0.5));
+      // The card has no border, so the rule reaches the edge itself.
+      expect(rule.left - card.left, closeTo(0, 0.5));
+      expect(card.right - rule.right, closeTo(0, 0.5));
       expect(rule.height, 1);
     });
 
@@ -130,11 +131,8 @@ void main() {
       expect(row.height, greaterThanOrEqualTo(ListRow.minHeight));
 
       final tile = tester.getRect(find.byIcon(SolarIconsOutline.refresh));
-      // 16 of padding, then a 34 tile — the compact row. The CSS's 20/40 sized
-      // a row whose subtitle wrapped to two lines; these rows carry a value
-      // opposite the title instead, and nine of them at 72 ran a section past
-      // the fold.
-      expect(tile.center.dx - row.left, closeTo(16 + 34 / 2, 0.5));
+      // 16 of padding, then the bare 24 px icon (no tile around it any more).
+      expect(tile.center.dx - row.left, closeTo(16 + 24 / 2, 0.5));
     });
 
     testWidgets('THE TITLE TAKES THE ROW, and the subtitle stays on one line', (
@@ -157,9 +155,9 @@ void main() {
 
       final row = tester.getRect(find.byType(ListRow));
       final subtitle = tester.getRect(find.textContaining('Every baseline'));
-      // 16 padding + 34 tile + 12 gap on the left; 12 gap + 16 chevron + 16 on
+      // 16 padding + 24 icon + 12 gap on the left; 12 gap + 16 chevron + 16 on
       // the right. The subtitle fills exactly what is left.
-      expect(subtitle.left - row.left, closeTo(16 + 34 + 12, 0.5));
+      expect(subtitle.left - row.left, closeTo(16 + 24 + 12, 0.5));
       expect(row.right - subtitle.right, closeTo(16 + 16 + 12, 0.5));
       // **One line, and that is the change.** The CSS sets `white-space:
       // normal` and the subtitle used to wrap; a sentence running to three
@@ -176,7 +174,11 @@ void main() {
       expect(find.byIcon(SolarIconsOutline.altArrowRight), findsNothing);
     });
 
-    testWidgets('a row that DECLARES a tone takes that family', (tester) async {
+    testWidgets('a row that DECLARES a tone still draws a bare ink2 icon', (
+      tester,
+    ) async {
+      // A family hue is for data marks. The tone no longer tints the icon, and
+      // there is no tile (no Container ground) behind it.
       await pumpV02(
         tester,
         const ListRow(
@@ -187,51 +189,49 @@ void main() {
         tone: Tone.sleep,
       );
 
-      final tile = boxOf(
-        tester,
-        find
-            .ancestor(
-              of: find.byIcon(SolarIconsOutline.moonSleep),
-              matching: find.byType(Container),
-            )
-            .first,
+      final icon = tester.widget<Icon>(
+        find.byIcon(SolarIconsOutline.moonSleep),
       );
-      expect(groundOf(tile), kHues.sleepSoft);
-      expect(
-        tester.widget<Icon>(find.byIcon(SolarIconsOutline.moonSleep)).color,
-        kHues.sleep,
+      expect(icon.color, kColors.ink2);
+      expect(icon.size, 24);
+      final grounds = find.ancestor(
+        of: find.byIcon(SolarIconsOutline.moonSleep),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Container && w.decoration != null ||
+              w is DecoratedBox && w.decoration is ShapeDecoration,
+        ),
       );
+      for (final element in grounds.evaluate()) {
+        final w = element.widget;
+        final decoration = w is Container
+            ? w.decoration!
+            : (w as DecoratedBox).decoration;
+        expect(
+          groundOf(decoration),
+          isNot(anyOf(kHues.sleepSoft, kColors.accentSoft)),
+          reason: 'an icon is never inside a tinted tile',
+        );
+      }
     });
 
-    testWidgets('A ROW THAT DECLARES NONE IS CHROME, IN THE OWNER’S ACCENT', (
+    testWidgets('A ROW THAT DECLARES NONE IS CHROME: THE SAME BARE ICON', (
       tester,
     ) async {
-      // **The reason `IconTile.chrome` exists.** A settings row is not a
-      // reading. With no tone of its own it resolved the enclosing scope — and
-      // outside one, `Tone.fitness`, the `:root` default — so every row on
-      // every settings screen wore the colour of recovery and VO₂max. A phone
-      // set to Amber showed an amber tab bar and twelve green settings rows.
+      // **Why `IconTile.chrome` still exists.** A settings row is not a
+      // reading, so it must not fall through to the `fitness` family of the
+      // enclosing scope. Both variants are now ink2, so neither can.
       await pumpV02(
         tester,
         const ListRow(icon: SolarIconsOutline.moonSleep, title: 'Sleep'),
         tone: Tone.sleep,
       );
 
-      final tile = boxOf(
-        tester,
-        find
-            .ancestor(
-              of: find.byIcon(SolarIconsOutline.moonSleep),
-              matching: find.byType(Container),
-            )
-            .first,
+      final icon = tester.widget<Icon>(
+        find.byIcon(SolarIconsOutline.moonSleep),
       );
-      expect(groundOf(tile), isNot(kHues.sleepSoft));
-      expect(
-        tester.widget<Icon>(find.byIcon(SolarIconsOutline.moonSleep)).color,
-        isNot(kHues.sleep),
-        reason: 'chrome follows the accent, never the surrounding family',
-      );
+      expect(icon.color, kColors.ink2);
+      expect(icon.color, isNot(kHues.sleep));
     });
   });
 }

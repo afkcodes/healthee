@@ -197,6 +197,6 @@ class SyncRing extends StatelessWidget {
     SyncRingState.syncing || SyncRingState.connected => colors.accent,
     // Full ink, never `unf` or `alert` — see the library docstring.
     SyncRingState.needsAttention => colors.ink,
-    SyncRingState.idle => colors.ink3,
+    SyncRingState.idle => colors.ink2,
   };
 }

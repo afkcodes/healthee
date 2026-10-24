@@ -133,13 +133,15 @@ void main() {
         for (final line in file.readAsLinesSync())
           // Comments are excluded on purpose: `instrument_type.dart` explains
           // the removal at length and must be allowed to name what it removed.
-          if (!line.trimLeft().startsWith('//') && line.contains('FontStyle.italic'))
+          if (!line.trimLeft().startsWith('//') &&
+              line.contains('FontStyle.italic'))
             '${file.path}: ${line.trim()}',
     ];
     expect(
       asking,
       isEmpty,
-      reason: 'an italic that renders upright is emphasis the reader never sees',
+      reason:
+          'an italic that renders upright is emphasis the reader never sees',
     );
     for (final style in _themeStyles()) {
       expect(style!.fontStyle ?? FontStyle.normal, FontStyle.normal);
@@ -161,8 +163,8 @@ void main() {
     }
   });
 
-  test('HType asks for exactly the five roles’ weights, and gets them', () {
-    // The five roles ported from legacy's `HType`, at legacy's own weights.
+  test('HType asks for exactly the four roles’ weights, and gets them', () {
+    // The four roles ported from legacy's `HType`, at their ladder steps.
     // `number` is the one that was broken.
     final vendored = _drawableWeights();
     const ink = Color(0xFF000000);
@@ -171,7 +173,6 @@ void main() {
       'sans': HType.sans(ink),
       'number': HType.number(ink),
       'label': HType.label(ink),
-      'eyebrow': HType.eyebrow(ink),
     };
     for (final role in roles.entries) {
       expect(
@@ -180,7 +181,11 @@ void main() {
         reason: 'HType.${role.key} asks for a weight the bundle does not have',
       );
     }
-    expect(roles['number']!.fontWeight, FontWeight.w700, reason: 'legacy’s num');
+    expect(
+      roles['number']!.fontWeight,
+      FontWeight.w700,
+      reason: 'legacy’s num',
+    );
   });
 }
 
@@ -196,6 +201,7 @@ List<TextStyle?> _themeStyles() {
     theme.displayMedium,
     theme.headlineMedium,
     theme.headlineSmall,
+    theme.titleLarge,
     theme.titleMedium,
     theme.titleSmall,
     theme.bodyLarge,

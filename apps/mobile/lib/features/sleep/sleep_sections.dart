@@ -53,12 +53,15 @@ library;
 import 'package:flutter/material.dart';
 import 'package:healthee/data/models/sleep_consistency.dart';
 import 'package:healthee/data/models/sleep_page.dart';
+import 'package:healthee/features/sleep/sleep_chapters.dart';
 import 'package:healthee/features/sleep/sleep_windows.dart';
+import 'package:healthee/features/sleep/v02/bed_wake_week.dart';
 import 'package:healthee/features/sleep/v02/checks_panel.dart';
 import 'package:healthee/features/sleep/v02/naps_panel.dart';
 import 'package:healthee/features/sleep/v02/need_panel.dart';
 import 'package:healthee/features/sleep/v02/night_panels.dart';
 import 'package:healthee/features/sleep/v02/sleep_reading.dart';
+import 'package:healthee/features/sleep/v02/sleep_usual.dart';
 import 'package:healthee/features/sleep/v02/tail_panels.dart';
 import 'package:healthee/features/sleep/v02/timing_panel.dart';
 import 'package:healthee/features/sleep/v02/trend_panels.dart';
@@ -88,7 +91,8 @@ const String kSleepDebtPast =
     'is not carried backward.';
 
 /// The tail of the screen — the lever, the analysis, the correlations.
-const String kSleepTonightPastTitle = 'Tonight’s lever and this week’s analysis';
+const String kSleepTonightPastTitle =
+    'Tonight’s lever and this week’s analysis';
 
 /// When the chosen day is older than every night the window holds.
 const String kNoNightTitle = 'No night on or before this day';
@@ -96,7 +100,7 @@ const String kNoNightTitle = 'No night on or before this day';
 /// Why that is an answer rather than an empty screen.
 const String kNoNightBody =
     'Your nights are sent as a window, and this one begins after the day you '
-    'chose. A later night is not shown in its place — that would be a different '
+    'chose. A later night is not shown in its place, because that would be a different '
     'night under a date you did not pick.';
 
 /// Everything Sleep needs that is not on the payloads.
@@ -110,6 +114,7 @@ class SleepExtras {
     this.onOpenJournal,
     this.onOpenHistory,
     this.onOpenAllMetrics,
+    this.chapters,
   });
 
   /// Opens settings. The avatar's destination.
@@ -121,7 +126,6 @@ class SleepExtras {
   /// Opens the journal.
   final VoidCallback? onOpenJournal;
 
-
   /// Opens the sleep history.
   ///
   /// `H.panel('How your night unfolded', …, 'sleep-history', …)` and
@@ -132,6 +136,9 @@ class SleepExtras {
 
   /// Opens the metric DIRECTORY — `H.panel('Your body overnight',…,'metrics')`.
   final VoidCallback? onOpenAllMetrics;
+
+  /// The chapter anchors. Null draws no chapter nav.
+  final SleepChapters? chapters;
 }
 
 /// Builds the ordered section list for one render of Sleep.
@@ -154,13 +161,17 @@ List<PageSection> sleepSections({
   }
   final night = windows.latest;
   final sections = SectionList()
-    ..add(
-      V02PageHeader(
-        title: 'Sleep',
-        date: night.date,
-        status: view.status,
+    ..add(V02PageHeader(title: 'Sleep', date: night.date, status: view.status));
+  final chapters = extras.chapters;
+  if (chapters != null) {
+    sections.addPinned(
+      SleepChapterNav(
+        chapters: chapters,
+        patterns: !past && page.findings.isNotEmpty,
       ),
+      ChapterNav.extentOf,
     );
+  }
   // **The analysis opens the screen.** It was the last panel on a page that
   // scrolls for four screens, so the one thing on Sleep written FOR the owner
   // — a grounded reading of these nights, citation-validated — was the thing
@@ -185,7 +196,18 @@ List<PageSection> sleepSections({
       ..gap(PageSpacing.panel);
   }
   sections
-    ..add(SleepReading(night: night))
+    ..add(
+      SleepReading(
+        key: chapters?.night,
+        night: night,
+        usual: usualOfNights(
+          page.nights,
+          night.date,
+          (n) => n.tstMin.valueOrNull,
+        ),
+        needMin: page.sleepDebt?.needMin,
+      ),
+    )
     ..gap(PageSpacing.panel)
     ..add(
       NightTimelinePanel(
@@ -195,7 +217,9 @@ List<PageSection> sleepSections({
       ),
     )
     ..gap(PageSpacing.panel)
-    ..add(StageTablePanel(night: night, reveals: reveals))
+    ..add(
+      StageTablePanel(night: night, reveals: reveals, recent: windows.recent),
+    )
     ..gap(PageSpacing.panel)
     ..add(
       OvernightPanel(
@@ -214,7 +238,13 @@ List<PageSection> sleepSections({
         notes: page.researchNotes,
       ),
     )
-    ..gap(PageSpacing.panel)
+    ..add(
+      ChapterHeading(
+        key: chapters?.week,
+        title: kSleepWeekChapter,
+        icon: SolarIconsOutline.calendar,
+      ),
+    )
     // `sleep-history-view.js` refuses exactly this panel on a past day:
     // *"Historical sleep-need and debt analyses are not included. The latest
     // debt is not carried backward."* Debt is a fourteen-night model computed
@@ -222,7 +252,10 @@ List<PageSection> sleepSections({
     // honestly carry.
     ..add(
       past
-          ? const PastDayNotice(title: kSleepDebtPastTitle, body: kSleepDebtPast)
+          ? const PastDayNotice(
+              title: kSleepDebtPastTitle,
+              body: kSleepDebtPast,
+            )
           : SleepNeedPanel(
               night: night,
               nights: windows.debt,
@@ -240,6 +273,10 @@ List<PageSection> sleepSections({
           reveals: reveals,
           onDetails: extras.onOpenHistory,
         ),
+      )
+      ..gap(PageSpacing.panel)
+      ..add(
+        BedWakeWeekPanel(nights: bedWakeWeek(windows.recent), reveals: reveals),
       );
   }
   sections
@@ -259,7 +296,8 @@ List<PageSection> sleepSections({
     )
     ..gap(PageSpacing.block)
     ..add(
-      const ChapterHeading(
+      ChapterHeading(
+        key: chapters?.longer,
         title: kSleepTrendsChapter,
         icon: SolarIconsOutline.chartSquare,
       ),
@@ -270,6 +308,7 @@ List<PageSection> sleepSections({
         SleepTrendPanel(
           trend: trend,
           recent: windows.recent,
+          earlier: windows.earlier,
           reveals: reveals,
           onDetails: extras.onOpenMetric,
         ),
@@ -282,9 +321,7 @@ List<PageSection> sleepSections({
   // night. None of them takes a day, so none of them may wear an older one.
   if (!past) {
     sections
-      ..add(
-        NapsPanel(naps: page.naps, onOpenJournal: extras.onOpenJournal),
-      )
+      ..add(NapsPanel(naps: page.naps, onOpenJournal: extras.onOpenJournal))
       ..gap(PageSpacing.block);
   }
   // **No `Sleep recommendations` link.** It sat between the naps card and the
@@ -305,7 +342,9 @@ List<PageSection> sleepSections({
     if (page.findings.isNotEmpty) {
       sections
         ..gap(PageSpacing.block)
-        ..add(FindingsSection(findings: page.findings));
+        ..add(
+          FindingsSection(key: chapters?.patterns, findings: page.findings),
+        );
     }
   }
   sections
@@ -320,11 +359,7 @@ List<PageSection> sleepSections({
 /// read as a night of no sleep, and this is a fact about the WINDOW.
 List<PageSection> _noNight(ViewDay view, SleepExtras extras) => <PageSection>[
   PageSection(
-    V02PageHeader(
-      title: 'Sleep',
-      date: view.day,
-      status: view.status,
-    ),
+    V02PageHeader(title: 'Sleep', date: view.day, status: view.status),
     gap: 0,
   ),
   const PageSection(

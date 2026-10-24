@@ -52,7 +52,7 @@ abstract final class AppearancePalette {
   /// recovery chart and VO₂max reading is drawn in. Making it "more vibrant"
   /// would repaint measurements, not chrome.
   static const accents = <List<Color>>[
-    [LightFamilies.fitness, DarkFamilies.fitness],
+    [LightPalette.ink, DarkPalette.ink],
     [Color(0xFFA62F0C), Color(0xFFFF8A50)],
     [Color(0xFF9A6A00), Color(0xFFFFC02E)],
     [Color(0xFF00786F), Color(0xFF1FD9C0)],

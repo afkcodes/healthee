@@ -1,17 +1,16 @@
-/// The halo is IN the hero, it RUNS there, and it STOPS when it leaves.
+/// The orb is IN the hero, it TURNS there, and it STOPS when it leaves.
 ///
-/// `bio_halo.dart` already proves the three ways the field stops, against a
-/// pumped clock and a scripted scroll position. What it cannot prove is that
-/// Today wired any of it up: a hero that dropped the halo, or placed it outside
-/// the scroll it watches, would pass every one of those tests.
+/// `age_sphere.dart` turns its dots slowly and stops under reduced
+/// motion. What a widget test of it alone cannot prove is that Today wired it
+/// up: a hero that dropped the orb would pass every one of those tests.
 ///
 /// So this suite asks the screen. The observable is **whether the tree ever goes
 /// idle**, which is the one thing a running ticker changes and the one thing a
 /// presence check cannot see:
 ///
 ///   * with motion allowed, `pumpAndSettle` on Today times out — something is
-///     animating, and the halo is the only ambient thing on the screen;
-///   * scrolled far past the hero, it settles — the field paused itself.
+///     animating, and the orb is the only ambient thing on the screen;
+///   * scrolled far past the hero, it settles — the lazy list let it go.
 ///
 /// Every other suite in this directory pumps `todayHost` with reduced motion on
 /// for exactly this reason (see its docstring). This one turns it off.
@@ -22,12 +21,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:healthee/data/store/local_store.dart';
 import 'package:healthee/features/today/steps_plateau.dart';
 import 'package:healthee/features/today/today_labels.dart';
-import 'package:healthee/features/today/v02/today_hero.dart';
+import 'package:healthee/features/today/v02/today_key_numbers.dart';
 import 'package:healthee/shared/metric_info/metric_info_sheet.dart';
-import 'package:healthee/shared/v02/bio_hero.dart';
-import 'package:healthee/shared/v02/bio_hero_parts.dart';
-import 'package:healthee/shared/v02/instruments/bio_halo.dart';
-import 'package:healthee/shared/v02/summary_tile.dart';
+import 'package:healthee/shared/v02/age_orb_hero.dart';
+import 'package:healthee/shared/v02/instruments/age_sphere.dart';
+import 'package:healthee/shared/v02/key_number_card.dart';
 
 import '../_today_stubs.dart';
 import '_today_host.dart';
@@ -80,20 +78,24 @@ void main() {
     addTearDown(tester.view.reset);
   }
 
-  testWidgets('THE HALO IS INSIDE THE HERO, NOT BESIDE IT', (tester) async {
+  testWidgets('THE SPHERE IS INSIDE THE HERO, AROUND THE FIGURE', (
+    tester,
+  ) async {
     phone(tester);
     await tester.pumpWidget(todayHost(store));
     await tester.pumpAndSettle();
 
-    expect(find.byType(BioHero), findsOneWidget);
+    expect(find.byType(AgeOrbHero), findsOneWidget);
     expect(
-      find.descendant(of: find.byType(BioHero), matching: find.byType(BioHalo)),
+      find.descendant(
+        of: find.byType(AgeOrbHero),
+        matching: find.byType(AgeSphere),
+      ),
       findsOneWidget,
-      reason: 'the ring belongs around the figure, not somewhere near it',
+      reason: 'the orb belongs around the figure, not somewhere near it',
     );
-    // And it is the card's art, so it is behind the number rather than over it:
-    // the figure is laid out inside the halo's own box.
-    final halo = tester.getRect(find.byType(BioHalo));
+    // The figure is laid out inside the orb's own box.
+    final halo = tester.getRect(find.byType(AgeSphere));
     final figure = tester.getRect(find.text('34.3'));
     expect(halo.contains(figure.center), isTrue);
   });
@@ -116,17 +118,17 @@ void main() {
     expect(
       await _settles(tester),
       isFalse,
-      reason: 'the halo is not ticking, so the hero is a still image',
+      reason: 'the orb is not turning, so the hero is a still image',
     );
 
-    // Off screen: the field watches the enclosing scroll and stops itself.
+    // Off screen: the lazy list drops the hero, and its ticker with it.
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -3000));
     await tester.pump();
 
     expect(
       await _settles(tester),
       isTrue,
-      reason: 'a halo that keeps ticking off screen is 30 fps of nothing',
+      reason: 'an orb that keeps turning off screen is frames of nothing',
     );
   });
 
@@ -140,11 +142,11 @@ void main() {
     await tester.pumpWidget(todayHost(store));
     await tester.pumpAndSettle();
 
-    expect(find.byType(BioHalo), findsOneWidget);
+    expect(find.byType(AgeSphere), findsOneWidget);
   });
 
   group('what the hero says about the estimate', () {
-    testWidgets('the figure, the delta and the two terms are the server’s', (
+    testWidgets('the figure, the delta and the terms are the server’s', (
       tester,
     ) async {
       phone(tester);
@@ -152,20 +154,41 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('34.3'), findsOneWidget);
+      expect(find.text('1.7 years younger'), findsOneWidget);
+      expect(find.textContaining('Fitness −1.7 years'), findsOneWidget);
+      // The sign is its own span, pulled in against the digits (a plain string
+      // leaves a gap after U+2212).
+      final line = tester.widget<Text>(
+        find.descendant(
+          of: find.byType(AgeOrbHero),
+          matching: find.textContaining('Fitness −1.7 years'),
+        ),
+      );
+      final signs = <TextSpan>[];
+      line.textSpan!.visitChildren((span) {
+        if (span is TextSpan && span.text == '−') {
+          signs.add(span);
+        }
+        return true;
+      });
+      expect(signs, isNotEmpty);
       expect(
-        find.textContaining('below your chronological age of'),
-        findsOneWidget,
+        signs.first.style!.letterSpacing,
+        lessThan(0),
+        reason: 'the minus is tightened, not left at the font default',
       );
       // The model line is ALWAYS reachable: an estimate that does not say what
       // made it is the failure the whole tier system exists to stop. It moved
       // off the card into the eyebrow's ⓘ, so this opens the ⓘ and reads it
       // there — the claim is that the owner can get to the sentence, not that
       // it is printed in nine-point grey under the contributions.
-      expect(find.byType(BioModelLabel), findsNothing);
-      final model = tester.widget<BioHero>(find.byType(BioHero)).modelLabel!;
+      final model = tester
+          .widget<AgeOrbHero>(find.byType(AgeOrbHero))
+          .modelLabel!;
+      expect(find.text(model), findsNothing, reason: 'off the face');
       await tester.tap(
         find.descendant(
-          of: find.byType(BioHero),
+          of: find.byType(AgeOrbHero),
           matching: find.byType(MetricInfoDot),
         ),
       );
@@ -194,16 +217,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('34.3'), findsOneWidget);
-      expect(find.textContaining('chronological age'), findsNothing);
+      expect(find.textContaining('years younger'), findsNothing);
+      expect(find.textContaining('your age'), findsNothing);
     });
   });
 
-  group('the three summary tiles', () {
-    testWidgets('A TILE WITH NO READING IS NAMED, HELD AND VISIBLY EMPTY', (
+  group('the three key numbers', () {
+    testWidgets('A CARD WITH NO READING IS NAMED, HELD AND VISIBLY EMPTY', (
       tester,
     ) async {
-      // Never a blank and never a zero: `—` with `Not measured` under it, in a
-      // tile that keeps its slot so the row does not change shape.
+      // Never a blank and never a zero: `—` with `Not measured.` under it, in a
+      // card that keeps its slot so the stack does not change shape.
       tall(tester);
       await tester.pumpWidget(
         todayHost(
@@ -219,13 +243,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final tiles = find.byType(SummaryTile);
-      expect(tiles, findsNWidgets(3));
-      expect(
-        find.descendant(of: tiles, matching: find.text('Not measured')),
-        findsWidgets,
+      final cards = find.byType(KeyNumberCard);
+      expect(cards, findsNWidgets(3));
+      final empty = find.byWidgetPredicate(
+        (widget) =>
+            widget is KeyNumberCard &&
+            widget.value == '—' &&
+            widget.lead == 'Not measured.',
       );
-      expect(find.byType(TodaySummaryTiles), findsOneWidget);
+      // Recovery and movement have no reading in this payload.
+      expect(empty, findsNWidgets(2));
+      expect(find.byType(TodayKeyNumbers), findsOneWidget);
     });
 
     testWidgets('THE STEP TARGET IS THE NOTE’S BAND, NEVER A GUESS', (
@@ -240,29 +268,20 @@ void main() {
       //
       // `steps_plateau.dart` supplies one now, and it is DERIVED: the age-banded
       // plateau `steps_mortality` publishes, whose top is 10,000 under 60 and
-      // 8,000 at or over it. The card may draw a bar because the band is the
+      // 8,000 at or over it. The card may name it because the band is the
       // note's, and `steps_plateau_test.dart` asserts the transcription against
       // the note file itself.
       tall(tester);
       await tester.pumpWidget(todayHost(store));
       await tester.pumpAndSettle();
 
-      final movement = find.byWidgetPredicate(
-        (widget) => widget is SummaryTile && widget.title == 'Movement',
-      );
-      expect(movement, findsOneWidget);
-      expect(
-        find.descendant(of: movement, matching: find.byType(TileMeter)),
-        findsOneWidget,
+      final movement = tester.widget<KeyNumberCard>(
+        find.byWidgetPredicate(
+          (widget) => widget is KeyNumberCard && widget.name == 'Movement',
+        ),
       );
       // The fixture's owner is 32, so the band's top is the under-60 one.
-      expect(
-        find.descendant(
-          of: movement,
-          matching: find.textContaining('of ${commaGrouped(10000)}'),
-        ),
-        findsOneWidget,
-      );
+      expect(movement.line, contains('the ${commaGrouped(10000)} plateau'));
     });
 
     testWidgets('AN UNKNOWN AGE MEANS NO BAND, AND SO NO METER', (
@@ -278,12 +297,12 @@ void main() {
       expect(stepsPlateauTop(59.9), kStepsPlateauTopUnder60);
     });
 
-    testWidgets('AND THE TILE ITSELF DRAWS NO BAR FOR AN OWNER WITH NO AGE', (
+    testWidgets('AND THE CARD ITSELF NAMES NO PLATEAU FOR AN OWNER WITH NO AGE', (
       tester,
     ) async {
       // **The function's rule, asserted where it is spent.** The unit test
-      // above proves `stepsPlateauTop` refuses; this proves the tile asks it.
-      // A tile that hard-coded 10,000 would agree with the derived answer for
+      // above proves `stepsPlateauTop` refuses; this proves the card asks it.
+      // A card that hard-coded 10,000 would agree with the derived answer for
       // every owner under 60 — including this suite's own fixture, who is 36 —
       // so the only owner who can tell the two apart is one with no age at all.
       tall(tester);
@@ -303,19 +322,20 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final movement = find.byWidgetPredicate(
-        (widget) => widget is SummaryTile && widget.title == 'Movement',
-      );
-      expect(movement, findsOneWidget);
-      expect(
-        find.descendant(of: movement, matching: find.byType(TileMeter)),
-        findsNothing,
-        reason: 'no band was published, so there is nothing to draw against',
+      final movement = tester.widget<KeyNumberCard>(
+        find.byWidgetPredicate(
+          (widget) => widget is KeyNumberCard && widget.name == 'Movement',
+        ),
       );
       expect(
-        find.descendant(of: movement, matching: find.textContaining('% of')),
-        findsNothing,
-        reason: 'and no percentage of a denominator nobody supplied',
+        movement.line,
+        isNull,
+        reason: 'no band was published, so there is no plateau to name',
+      );
+      expect(
+        movement.lead,
+        isNull,
+        reason: 'and no "to go" against a denominator nobody supplied',
       );
     });
   });

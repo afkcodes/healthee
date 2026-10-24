@@ -115,7 +115,6 @@ class _PromptChip extends StatelessWidget {
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            border: Border.all(color: colors.line, width: hairline),
             borderRadius: BorderRadius.circular(radius),
           ),
           child: Text(

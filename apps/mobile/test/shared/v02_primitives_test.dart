@@ -31,14 +31,12 @@ import 'package:healthee/shared/v02/summary_tile.dart';
 import '_v02_harness.dart';
 
 void main() {
-  group('Panel — 18px padding, 22px radius, 1px --line border', () {
-    testWidgets('the content box is inset by padding PLUS the border', (
+  group('Panel — 20px padding, 20px radius, no border (the brief)', () {
+    testWidgets('the content box is inset by the padding alone', (
       tester,
     ) async {
-      // `box-sizing: border-box`: the prototype's 18px padding sits inside a 1px
-      // border, so content starts 19 from the outer edge. Flutter's `Container`
-      // adds `decoration.padding` for exactly this reason, and this measures it
-      // rather than trusting it.
+      // The owner's brief replaced the prototype's 18px padding and 1px border
+      // with 20px and no border, so content starts 20 from the outer edge.
       const bodyKey = Key('body');
       await pumpV02(
         tester,
@@ -47,14 +45,14 @@ void main() {
       final panel = tester.getRect(find.byType(Panel));
       final body = tester.getRect(find.byKey(bodyKey));
       expect(panel.width, kContentWidth);
-      expect(body.left - panel.left, 19);
-      expect(panel.right - body.right, 19);
-      expect(body.top - panel.top, 19);
-      expect(panel.bottom - body.bottom, 19);
-      expect(panel.height, 40 + 2 * 19);
+      expect(body.left - panel.left, 20);
+      expect(panel.right - body.right, 20);
+      expect(body.top - panel.top, 20);
+      expect(panel.bottom - body.bottom, 20);
+      expect(panel.height, 40 + 2 * 20);
     });
 
-    testWidgets('the surface, the hairline and the 22px corner are painted', (
+    testWidgets('the surface and the 20px corner are painted, with NO border', (
       tester,
     ) async {
       await pumpV02(tester, const Panel(child: SizedBox(height: 10)));
@@ -66,9 +64,8 @@ void main() {
         ),
       );
       expect(groundOf(decoration), kColors.surface);
-      expect(radiusOf(decoration), 22);
-      expect(edgeOf(decoration)!.color, kColors.line);
-      expect(edgeOf(decoration)!.width, 1);
+      expect(radiusOf(decoration), 20);
+      expect(edgeOf(decoration), isNull);
     });
 
     testWidgets('a head sits exactly 12 above the body', (tester) async {
@@ -88,37 +85,38 @@ void main() {
       );
     });
 
-    testWidgets('a declared tone reaches the head’s icon and its action', (
-      tester,
-    ) async {
-      await pumpV02(
-        tester,
-        const Panel(
-          tone: Tone.sleep,
-          head: PanelHead(
-            title: 'Sleep',
-            icon: Icons.bedtime,
-            actionLabel: 'Details',
+    testWidgets(
+      'a declared tone does not tint the head: ink2 icon, accent action',
+      (tester) async {
+        await pumpV02(
+          tester,
+          const Panel(
+            tone: Tone.sleep,
+            head: PanelHead(
+              title: 'Sleep',
+              icon: Icons.bedtime,
+              actionLabel: 'Details',
+            ),
+            child: SizedBox(height: 10),
           ),
-          child: SizedBox(height: 10),
-        ),
-      );
-      expect(
-        tester.widget<Icon>(find.byIcon(Icons.bedtime)).color,
-        kHues.sleep,
-      );
-      final action = tester.widget<Text>(find.text('Details'));
-      final button = tester.widget<TextButton>(find.byType(TextButton));
-      expect(
-        button.style!.foregroundColor!.resolve(<WidgetState>{}),
-        kHues.sleep,
-      );
-      expect(action.data, 'Details');
-    });
+        );
+        expect(
+          tester.widget<Icon>(find.byIcon(Icons.bedtime)).color,
+          kColors.ink2,
+        );
+        final action = tester.widget<Text>(find.text('Details'));
+        final button = tester.widget<TextButton>(find.byType(TextButton));
+        expect(
+          button.style!.foregroundColor!.resolve(<WidgetState>{}),
+          kColors.accent,
+        );
+        expect(action.data, 'Details');
+      },
+    );
   });
 
-  group('PanelHead — 17px icon, 8px gaps, 13px/700 title', () {
-    testWidgets('the icon is 17 and the title starts 8 after it', (
+  group('PanelHead — 16px icon, 8px gaps, the calloutStrong title', () {
+    testWidgets('the icon is 16 and the title starts 8 after it', (
       tester,
     ) async {
       await pumpV02(
@@ -127,26 +125,30 @@ void main() {
       );
       final icon = tester.getRect(find.byIcon(Icons.favorite));
       final title = tester.getRect(find.text('Resting heart rate'));
-      expect(icon.width, 17);
-      expect(icon.height, 17);
+      expect(icon.width, 16);
+      expect(icon.height, 16);
       expect(title.left - icon.right, 8);
     });
 
-    testWidgets('the title is 13px at weight 700', (tester) async {
+    testWidgets('the title is 13px at weight 600', (tester) async {
       await pumpV02(tester, const PanelHead(title: 'Resting heart rate'));
       final style = tester.widget<Text>(find.text('Resting heart rate')).style!;
       expect(style.fontSize, 13);
-      expect(style.fontWeight, FontWeight.w700);
+      expect(style.fontWeight, FontWeight.w600);
       expect(style.color, kColors.ink);
     });
 
-    testWidgets('the action is 11px and no shorter than 28', (tester) async {
+    testWidgets('the action is a 12px caption and no shorter than 28', (
+      tester,
+    ) async {
       await pumpV02(
         tester,
         const PanelHead(title: 'Steps', actionLabel: 'History'),
       );
       final button = tester.widget<TextButton>(find.byType(TextButton));
-      expect(button.style!.textStyle!.resolve(<WidgetState>{})!.fontSize, 11);
+      final label = button.style!.textStyle!.resolve(<WidgetState>{})!;
+      expect(label.fontSize, 12);
+      expect(label.fontWeight, FontWeight.w400);
       expect(
         tester.getRect(find.byType(TextButton)).height,
         greaterThanOrEqualTo(28),
@@ -190,7 +192,7 @@ void main() {
       );
     });
 
-    testWidgets('the value is 24px and the meta 8.5px, 10 and 4 apart', (
+    testWidgets('the value is 28px and the meta 12px, 10 and 24 apart', (
       tester,
     ) async {
       await pumpV02(
@@ -210,11 +212,8 @@ void main() {
       // meta sits on the same baseline as a tile that has one. Three tiles of
       // different internal rhythm in one row read as three kinds of thing.
       expect(meta.top - value.bottom, closeTo(24, 0.5));
-      expect(tester.widget<Text>(find.text('8,214')).style!.fontSize, 24);
-      expect(
-        tester.widget<Text>(find.text('goal 10,000')).style!.fontSize,
-        8.5,
-      );
+      expect(tester.widget<Text>(find.text('8,214')).style!.fontSize, 28);
+      expect(tester.widget<Text>(find.text('goal 10,000')).style!.fontSize, 12);
     });
 
     testWidgets('the micro-track is 5 high, 14 down, gapped 3, first 4 solid', (

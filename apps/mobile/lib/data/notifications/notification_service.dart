@@ -5,6 +5,8 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:healthee/core/logging.dart';
 import 'package:healthee/data/api/account_api.dart';
 import 'package:healthee/data/background/background_store.dart';
+import 'package:healthee/data/basics/breathing/breathing_plan.dart';
+import 'package:healthee/data/notifications/breathing_reminder.dart';
 import 'package:healthee/data/notifications/reminder_preferences.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -58,7 +60,9 @@ class NotificationService {
   }
 
   void _open(String? payload) {
-    if (payload == 'actions' || payload == 'sleep') destinations.add(payload!);
+    if (payload == 'actions' || payload == 'sleep' || payload == 'breathing') {
+      destinations.add(payload!);
+    }
   }
 
   Future<ReminderPreferences> preferences() async =>
@@ -74,6 +78,7 @@ class NotificationService {
         await api.ensureCurrent();
         await plugin.cancelAll();
         await _schedule(value);
+        await _scheduleBreathing(await _savedBreathing());
         await api.ensureCurrent();
         await store.write('reminder_preferences', value.encode());
       });
@@ -83,7 +88,41 @@ class NotificationService {
     await plugin.cancelAll();
     final value = await preferences();
     if (scope != null && value.scope == scope) await _schedule(value);
+    if (scope != null) await _scheduleBreathing(await _savedBreathing());
   });
+
+  /// Makes the breathing reminders match [plan]: one daily reminder per enabled
+  /// item with a time, none for on demand, the rest cancelled. Asks for
+  /// notification permission only when there is a reminder to schedule.
+  Future<void> syncBreathingReminders(BreathingPlan plan) =>
+      _serialize(() async {
+        await initialize();
+        final reminders = BreathingReminder.fromPlan(plan);
+        if (reminders.isNotEmpty) await _permission();
+        for (final id in BreathingReminder.ids) {
+          await plugin.cancel(id: id);
+        }
+        await _scheduleBreathing(reminders);
+        await store.write(
+          _breathingKey,
+          BreathingReminder.encode(reminders),
+        );
+      });
+
+  static const _breathingKey = 'breathing_reminders';
+
+  Future<List<BreathingReminder>> _savedBreathing() async =>
+      BreathingReminder.decode(await store.read(_breathingKey));
+
+  Future<void> _scheduleBreathing(List<BreathingReminder> reminders) async {
+    if (reminders.isEmpty) return;
+    tz.setLocalLocation(
+      tz.getLocation((await FlutterTimezone.getLocalTimezone()).identifier),
+    );
+    for (final r in reminders) {
+      await _daily(r.id, r.minute, 'Breathing', r.body, 'breathing');
+    }
+  }
 
   Future<void> _permission() async {
     final android = plugin

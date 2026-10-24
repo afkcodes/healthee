@@ -1,117 +1,62 @@
-/// The Sleep screen's own v02 type, transcribed from `richer.css`.
+/// The Sleep screen's own v02 roles, each an alias of a `type_ladder.dart` step.
 ///
 /// These belong with [TypeScale] and are only in a second file because that one
-/// is 364 lines against the standards' 400-line ceiling; a screen-shaped block
-/// of fifteen more styles would have pushed it over. Nothing here invents a
-/// size — every entry names the rule it came from, the same way `TypeScale`'s
-/// do, and a call site uses whichever of the two files has the rule it needs.
-///
-/// ```css
-/// .sleep-reading .big-duration        { font-size:64px; line-height:1;
-///                                       font-weight:600; letter-spacing:-3px }
-/// .sleep-reading .big-duration small  { font-size:22px; font-weight:400 }
-/// .sleep-device strong                { font-size:27px }
-/// .sleep-device span                  { font-size:9px }
-/// .sleep-check h3                     { font-size:12px }   /* h3 → bold */
-/// .sleep-check strong                 { font-size:13px }
-/// .check-target                       { font-size:11px }
-/// .check-detail                       { font-size:10px; line-height:1.7 }
-/// .check-result                       { font-size:18px; font-weight:600 }
-/// .data-table                         { font-size:11px }
-/// .vital-row .vital-label             { font-size:11px }
-/// .vital-row strong                   { font-size:14px }
-/// .vital-row strong small             { font-size:9px; font-weight:400 }
-/// @media(max-width:359px) .sleep-reading .big-duration { font-size:54px }
-/// ```
+/// sat at the standards' 400-line ceiling when they were written. Every entry
+/// names the `richer.css` rule it came from, the same way `TypeScale`'s do, and
+/// a call site uses whichever of the two files has the role it needs.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:healthee/core/theme/typography.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 
-TextStyle _style(
-  double size,
-  FontWeight weight, {
-  double height = 1.6,
-  double tracking = 0,
-}) => TextStyle(
-  fontFamily: healtheeFontFamily,
-  fontFamilyFallback: healtheeFontFallback,
-  fontSize: size,
-  fontWeight: weight,
-  // Figtree is variable: drive the wght axis, not only the weight slot.
-  fontVariations: <FontVariation>[FontVariation('wght', weight.value.toDouble())],
-  height: height,
-  letterSpacing: tracking,
-  fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-);
-
-/// The Sleep screen's type, in v02's own sizes.
+/// The Sleep screen's type, on the ladder.
 abstract final class SleepType {
   /// `.sleep-reading .big-duration` — the night's headline figure.
-  static final TextStyle duration = _style(
-    64,
-    FontWeight.w600,
-    height: 1,
-    tracking: -3,
-  );
+  static final TextStyle duration = TypeLadder.display;
 
-  /// The same figure under the prototype's 359 px breakpoint.
-  static final TextStyle durationNarrow = _style(
-    54,
-    FontWeight.w600,
-    height: 1,
-    tracking: -3,
-  );
+  /// The same figure under the prototype's 359 px breakpoint. The prototype
+  /// dropped to 54 px there; 54 snaps to the same display step, so the two are
+  /// one size now and the name is kept for the call site that chooses.
+  static final TextStyle durationNarrow = TypeLadder.display;
 
-  /// `.sleep-reading .big-duration small` — the `h` and the `m`, in the family.
-  static final TextStyle durationUnit = _style(22, FontWeight.w400, height: 1);
+  /// The `h` and the `min` beside the headline figure: a unit is 13 px, set in
+  /// ink3 by the caller (the brief; the prototype set them at 22 in the family).
+  static final TextStyle durationUnit = TypeLadder.callout;
 
   /// `.sleep-device strong` — the strap's own score.
-  static final TextStyle deviceScore = _style(27, FontWeight.w600, height: 1.2);
+  static final TextStyle deviceScore = TypeLadder.title1;
 
   /// `.sleep-device span` — the two lines naming that instrument.
-  static final TextStyle deviceCaption = _style(9, FontWeight.w400, height: 1.5);
+  static final TextStyle deviceCaption = TypeLadder.caption;
 
   /// `.sleep-check h3` — one check's name.
-  static final TextStyle checkName = _style(
-    12,
-    FontWeight.w700,
-    height: 1.5,
-    tracking: -0.2,
-  );
+  static final TextStyle checkName = TypeLadder.calloutStrong;
 
   /// `.sleep-check strong` — its reading.
-  static final TextStyle checkValue = _style(13, FontWeight.w700, height: 1.5);
+  static final TextStyle checkValue = TypeLadder.calloutStrong;
 
   /// `.check-target` — the published range it was read against.
-  static final TextStyle checkTarget = _style(11, FontWeight.w400, height: 1.5);
+  static final TextStyle checkTarget = TypeLadder.caption;
 
   /// `.check-detail` — how far outside it, in words.
-  static final TextStyle checkDetail = _style(10, FontWeight.w400, height: 1.7);
-
-  /// `.check-result` — the tick, or the dash that is not one.
-  static final TextStyle checkMark = _style(18, FontWeight.w600, height: 1);
+  static final TextStyle checkDetail = TypeLadder.caption;
 
   /// `.data-table th` and `td`.
-  static final TextStyle tableCell = _style(11, FontWeight.w400, height: 1.5);
+  static final TextStyle tableCell = TypeLadder.caption;
 
   /// The stage duration on a share row — the number the reader came for, so it
   /// is the largest thing on its line rather than one cell of a table.
-  static final TextStyle shareDuration = _style(
-    17,
-    FontWeight.w700,
-    height: 1.2,
-  );
+  static final TextStyle shareDuration = TypeLadder.headline;
 
   /// `.vital-row .vital-label`.
-  static final TextStyle vitalLabel = _style(11, FontWeight.w400, height: 1.4);
+  static final TextStyle vitalLabel = TypeLadder.caption;
 
   /// `.vital-row strong`.
-  static final TextStyle vitalValue = _style(14, FontWeight.w700, height: 1.3);
+  static final TextStyle vitalValue = TypeLadder.calloutStrong;
 
   /// `.vital-row strong small`.
-  static final TextStyle vitalUnit = _style(9, FontWeight.w400, height: 1.3);
+  static final TextStyle vitalUnit = TypeLadder.caption;
 
-  /// Below this width the prototype drops the duration to 54 px.
+  /// Below this width the prototype dropped the duration to 54 px.
   static const double narrowWidth = 360;
 }

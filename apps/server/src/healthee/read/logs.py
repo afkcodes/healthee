@@ -181,14 +181,18 @@ def log_recent(cur: Cur, user_id: UUID, days: int = 7) -> dict:
     """
     entries: list[dict] = []
     cur.execute(
-        "SELECT kind, ts, name, amount, unit, notes FROM manual_entry "
+        "SELECT id, kind, ts, name, amount, unit, notes FROM manual_entry "
         "WHERE user_id = %s AND kind <> 'fasting' AND ts >= now() - (%s || ' days')::interval "
         "ORDER BY ts DESC LIMIT 80",
         (user_id, max(1, min(days, MAX_LOG_DAYS))),
     )
-    for k, ts, name, amount, unit, notes in cur.fetchall():
+    for entry_id, k, ts, name, amount, unit, notes in cur.fetchall():
         entries.append(
             {
+                # The handle `DELETE /api/log/{id}` takes. Weight rows carry none: they
+                # live in `weight_log`, keyed by (user, ts), and the feed shows only the
+                # latest — there is nothing to delete by id.
+                "id": str(entry_id),
                 "type": k,
                 "ts": int(ts.timestamp() * 1000),
                 "name": name,
@@ -212,6 +216,20 @@ def log_recent(cur: Cur, user_id: UUID, days: int = 7) -> dict:
         )
     entries.sort(key=lambda e: e["ts"], reverse=True)
     return {"entries": entries, "fast": _fast_status(cur, user_id)}
+
+
+def delete_entry(cur: Cur, user_id: UUID, entry_id: UUID) -> bool:
+    """Delete ONE of ``user_id``'s manual log entries. False means no such entry.
+
+    False covers "never existed" and "belongs to someone else" alike, so the caller
+    cannot tell which. Fasting rows are excluded: they are not in the feed, so no
+    client can hold their id, and an open fast has its own start/end protocol.
+    """
+    cur.execute(
+        "DELETE FROM manual_entry WHERE user_id = %s AND id = %s AND kind <> 'fasting'",
+        (user_id, entry_id),
+    )
+    return cur.rowcount == 1
 
 
 def _fast_status(cur: Cur, user_id: UUID) -> dict:

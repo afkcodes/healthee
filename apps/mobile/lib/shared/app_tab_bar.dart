@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:healthee/core/tabs.dart';
 import 'package:healthee/core/theme/dimensions.dart';
 import 'package:healthee/core/theme/tokens.dart';
+import 'package:healthee/core/theme/type_ladder.dart';
 
 /// The bottom bar. One instance, in the shell.
 class AppTabBar extends StatelessWidget {
@@ -58,7 +59,9 @@ class AppTabBar extends StatelessWidget {
       // shows through even while a scroll overshoots.
       decoration: BoxDecoration(
         color: colors.chrome,
-        border: Border(top: BorderSide(color: colors.line2, width: hairline)),
+        border: Border(
+          top: BorderSide(color: colors.line2, width: hairline),
+        ),
       ),
       child: SafeArea(
         top: false,
@@ -83,7 +86,11 @@ class AppTabBar extends StatelessWidget {
 }
 
 class _TabItem extends StatelessWidget {
-  const _TabItem({required this.tab, required this.active, required this.onTap});
+  const _TabItem({
+    required this.tab,
+    required this.active,
+    required this.onTap,
+  });
 
   final AppTab tab;
   final bool active;
@@ -92,8 +99,7 @@ class _TabItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final text = Theme.of(context).textTheme;
-    final tint = active ? colors.accent : colors.ink3;
+    final tint = active ? colors.accent : colors.ink2;
     return Semantics(
       button: true,
       selected: active,
@@ -110,7 +116,9 @@ class _TabItem extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   tab.label,
-                  style: text.labelSmall?.copyWith(color: tint, fontSize: 10),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TypeLadder.caption.copyWith(color: tint),
                 ),
               ],
             ),

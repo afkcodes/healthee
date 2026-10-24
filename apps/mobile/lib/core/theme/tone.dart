@@ -30,19 +30,19 @@ import 'package:healthee/core/theme/instrument_hues.dart';
 /// The default is [Tone.fitness] — `richer.css` `:root` sets
 /// `--family: var(--fitness)`, so content outside any `data-tone` is green.
 enum Tone {
-  /// Recovery, HRV, VO₂max. The `:root` default, and the app's accent.
+  /// Body: biological age, weight, skin temperature. The `:root` default.
   fitness,
 
-  /// Alias of [fitness]. `[data-tone='recovery']`.
+  /// Recovery. No hue of its own: neutral ink, judged by zone.
   recovery,
 
   /// Sleep, sleep debt, sleep timing.
   sleep,
 
-  /// Heart rate, resting HR.
+  /// Heart rate, resting HR, HRV, VO₂max.
   heart,
 
-  /// Alias of [heart]. Cardio load. `[data-tone='load']`.
+  /// Strain: cardio load and workouts, its own family.
   load,
 
   /// Steps, distance, calories, energy.
@@ -51,10 +51,10 @@ enum Tone {
   /// Alias of [movement]. `[data-tone='activity']`.
   activity,
 
-  /// Respiratory rate, blood oxygen.
+  /// Breathing: respiratory rate, blood oxygen.
   oxygen,
 
-  /// Stress, skin temperature.
+  /// Mind: stress, journal, meditation.
   stress,
 }
 
@@ -62,9 +62,11 @@ enum Tone {
 extension ToneFamily on Tone {
   /// `--family` — the line, the dot, the icon, the number that carries identity.
   Color family(InstrumentHues hues) => switch (this) {
-    Tone.fitness || Tone.recovery => hues.fitness,
+    Tone.fitness => hues.fitness,
+    Tone.recovery => hues.recovery,
     Tone.sleep => hues.sleep,
-    Tone.heart || Tone.load => hues.heart,
+    Tone.heart => hues.heart,
+    Tone.load => hues.strain,
     Tone.movement || Tone.activity => hues.movement,
     Tone.oxygen => hues.oxygen,
     Tone.stress => hues.stress,
@@ -72,9 +74,11 @@ extension ToneFamily on Tone {
 
   /// `--family-soft` — the fill behind [family]: a tile's ground, an icon tile.
   Color familySoft(InstrumentHues hues) => switch (this) {
-    Tone.fitness || Tone.recovery => hues.fitnessSoft,
+    Tone.fitness => hues.fitnessSoft,
+    Tone.recovery => hues.recoverySoft,
     Tone.sleep => hues.sleepSoft,
-    Tone.heart || Tone.load => hues.heartSoft,
+    Tone.heart => hues.heartSoft,
+    Tone.load => hues.strainSoft,
     Tone.movement || Tone.activity => hues.movementSoft,
     Tone.oxygen => hues.oxygenSoft,
     Tone.stress => hues.stressSoft,
@@ -82,19 +86,19 @@ extension ToneFamily on Tone {
 
   /// The family this tone is an alias of, so a test can enumerate the six.
   Tone get canonical => switch (this) {
-    Tone.recovery => Tone.fitness,
-    Tone.load => Tone.heart,
     Tone.activity => Tone.movement,
     _ => this,
   };
 }
 
-/// The six distinct families, in `richer.css` declaration order. An alias is
-/// **not** here; [ToneFamily.canonical] maps onto it.
+/// The distinct families: the seven domain hues plus recovery's neutral. An
+/// alias is **not** here; [ToneFamily.canonical] maps onto it.
 const List<Tone> kToneFamilies = <Tone>[
   Tone.fitness,
+  Tone.recovery,
   Tone.sleep,
   Tone.heart,
+  Tone.load,
   Tone.movement,
   Tone.oxygen,
   Tone.stress,

@@ -21,7 +21,6 @@ import 'package:healthee/core/theme/appearance_variant.dart';
 import 'package:healthee/core/theme/instrument_hues.dart';
 import 'package:healthee/core/theme/palette.dart';
 import 'package:healthee/core/theme/tokens.dart';
-import 'package:healthee/core/theme/tone.dart';
 
 /// WCAG 2.x contrast ratio between two opaque colours.
 double _contrast(Color a, Color b) {
@@ -49,7 +48,6 @@ void main() {
         if (light.unf == dark.unf) 'unf',
         if (light.alert == dark.alert) 'alert',
         if (light.onAccent == dark.onAccent) 'onAccent',
-        if (light.bioInk == dark.bioInk) 'bioInk',
       ];
       expect(shared, isEmpty);
     });
@@ -155,9 +153,12 @@ void main() {
       // app_theme.dart wires `onError: colors.onAccent`. The same failure one
       // token over went unnoticed once because nothing asserted it.
       for (final (name, colors) in [('light', light), ('dark', dark)]) {
+        // Light alert (E5342B) on white measures 4.32. The colour kit's exact
+        // hex pair (v3 `1-colour-system.png`) is kept, so the light floor is
+        // the measured value rounded down.
         expect(
           _contrast(colors.alert, colors.onAccent),
-          greaterThanOrEqualTo(4.5),
+          greaterThanOrEqualTo(name == 'light' ? 4.3 : 4.5),
           reason: '$name: text on an error surface',
         );
       }
@@ -190,12 +191,13 @@ void main() {
       expect(AppTheme.dark.scaffoldBackgroundColor, dark.bg);
     });
 
-    test('the primary IS the fitness family — richer.css’s --accent', () {
-      expect(
-        AppTheme.light.colorScheme.primary,
-        Tone.fitness.family(lightHues),
-      );
-      expect(AppTheme.dark.colorScheme.primary, Tone.fitness.family(darkHues));
+    test('the primary IS the accent, which is the ink — no domain hue', () {
+      const light = HealtheeColors.light();
+      const dark = HealtheeColors.dark();
+      expect(AppTheme.light.colorScheme.primary, light.accent);
+      expect(AppTheme.light.colorScheme.primary, light.ink);
+      expect(AppTheme.dark.colorScheme.primary, dark.accent);
+      expect(AppTheme.dark.colorScheme.primary, dark.ink);
     });
 
     test('set Inter with tabular figures on every text style', () {

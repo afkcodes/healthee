@@ -309,28 +309,28 @@ abstract final class DarkStagePalette {
 /// nothing about them. **Do not re-raise it.**
 abstract final class V02StagePrototype {
   /// `--stage-deep`, light theme.
-  static const Color lightDeep = Color(0xFF5E38C1);
+  static const Color lightDeep = Color(0xFF3634A3);
 
   /// `--stage-light`, light theme. 2.33:1 on a white card.
-  static const Color lightLight = Color(0xFF89A9F1);
+  static const Color lightLight = Color(0xFF007AFF);
 
   /// `--stage-rem`, light theme.
-  static const Color lightRem = Color(0xFFC96BCC);
+  static const Color lightRem = Color(0xFF32ADE6);
 
   /// `--stage-awake`, light theme. 2.12:1 on a white card.
-  static const Color lightAwake = Color(0xFFEDA253);
+  static const Color lightAwake = Color(0xFFE5603F);
 
   /// `--stage-deep`, dark theme.
-  static const Color darkDeep = Color(0xFF7859E3);
+  static const Color darkDeep = Color(0xFF5E5CE6);
 
   /// `--stage-light`, dark theme.
-  static const Color darkLight = Color(0xFF9EBDFF);
+  static const Color darkLight = Color(0xFF0A84FF);
 
   /// `--stage-rem`, dark theme.
-  static const Color darkRem = Color(0xFFDA7BDD);
+  static const Color darkRem = Color(0xFF64D2FF);
 
   /// `--stage-awake`, dark theme.
-  static const Color darkAwake = Color(0xFFFFBD76);
+  static const Color darkAwake = Color(0xFFFF7A59);
 
   /// The light ramp in `kSleepStages` order, for a mutation to substitute whole.
   static const List<Color> light = <Color>[
